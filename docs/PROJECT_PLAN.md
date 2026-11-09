@@ -1,8 +1,8 @@
 # Schednd — Piano di progetto
 
-> Webapp (PWA) per organizzare sessioni ricorrenti di giochi da tavolo, giochi di ruolo, giochi online e meetup fisici: chi c'è, quando si gioca, a cosa si gioca. Si usa da browser su qualsiasi telefono o PC e si può "installare" sulla schermata home.
+> Webapp (PWA) per organizzare sessioni ricorrenti di giochi da tavolo, giochi di ruolo, giochi online e meetup fisici: chi c'è, quando si gioca e a cosa si gioca. Si usa da browser su qualsiasi telefono o PC e si può "installare" sulla schermata home.
 
-Stato: **bozza v0.2**. Le scelte segnate con ❓ dipendono dalle [domande aperte](#14-domande-aperte).
+Stato: **v0.3**. Le scelte principali sono decise (§1). Restano poche [domande aperte](#14-domande-aperte), segnate con ❓.
 
 ---
 
@@ -29,32 +29,42 @@ Stato: **bozza v0.2**. Le scelte segnate con ❓ dipendono dalle [domande aperte
 
 | # | Tema | Decisione |
 |---|---|---|
-| D1 | Piattaforma | **Webapp PWA** invece di un'app Android nativa: funziona su Android, iPhone e PC, gli inviti passano da un link e non serve il Play Store. |
-| D2 | Stack | **Next.js + TypeScript + Tailwind**, **Supabase** (database, login, tempo reale), **Vercel** (hosting). Account già creati e collegati a GitHub. |
-| D3 | Approvazione proposte | **Configurabile gruppo per gruppo** dall'owner: maggioranza, unanimità dei presenti, oppure decide l'owner/admin. |
-| D4 | Composizione del gruppo | I membri si aggiungono e si tolgono liberamente. In più, per un singolo incontro si possono invitare **ospiti "una tantum"** tramite link: vedono solo le informazioni di quell'incontro. |
-| D5 | Cambio giorno | La **proposta** di cambio data vale per **un solo incontro**. Il cambio fisso del giorno (la ricorrenza) si fa dalle **impostazioni del gruppo** e non passa dal voto. |
-| D6 | Numero minimo | Il gruppo può impostare un **minimo di presenti**. L'app controlla le presenze **2 giorni prima** e **il giorno prima** dell'incontro e avvisa se il minimo non è raggiunto. |
+| D1 | Piattaforma | **Webapp PWA**, non app Android nativa. |
+| D2 | Stack | **Next.js + TypeScript + Tailwind**, **Supabase**, **Vercel**. |
+| D3 | Approvazione delle proposte | **Configurabile per gruppo**: maggioranza, unanimità dei presenti, oppure decide l'owner. |
+| D4 | Composizione del gruppo | Membri liberi; **ospiti "una tantum"** invitati con un link a un solo incontro. |
+| D5 | Cambio giorno | La proposta vale per **un solo incontro**. Il cambio fisso del giorno si fa dalle **impostazioni**. |
+| D6 | Minimo presenti | Facoltativo per gruppo. Gli avvisi partono a **2 giorni** e a **1 giorno** dall'incontro (dettagli in D11). |
+| D7 | Ospiti | Devono fare **login**, possono **segnare la presenza** e **contano nel minimo**. **Qualsiasi membro** può invitarli. |
+| D8 | Ruoli | Solo **owner** e **membro**: niente admin. |
+| D9 | Proposte | **Più opzioni da subito**: più date o più giochi tra cui scegliere. Si vota fino a **24 ore prima** dell'incontro. |
+| D10 | Dopo un cambio data | Chi aveva votato Sì alla data scelta **resta segnato presente**. Gli altri devono rispondere di nuovo. |
+| D11 | Avvisi | **2 giorni prima**: se manca il minimo, avviso a chi non ha risposto e all'owner. **Quando il minimo è raggiunto**: messaggio "si gioca!". **1 giorno prima**: promemoria a tutti i presenti. Se il minimo non c'è, **decide l'owner** (gioca comunque, salta, cambia gioco). |
+| D12 | Cambio fisso del giorno | Le presenze degli incontri futuri coinvolti si **azzerano** e i membri ricevono un **avviso**. |
+| D13 | Ricorrenza | **Ogni N settimane** (1, 2, 4…). Le ricorrenze mensili non servono. |
+| D14 | Host | Il luogo può **cambiare di volta in volta** (host a rotazione). |
+| D15 | Login | Link via email subito; **Google** appena possibile (è gratuito, circa mezz'ora di configurazione). |
+| D16 | Lingua | **Italiano**, con il codice predisposto per la **traduzione** (inglese come seconda lingua). |
+| D17 | Pubblico | **Solo tra amici**, per ora. |
+| D18 | Grafica | Più avanti. Direzione: **tema pixel art**. |
+| D19 | Giochi | **Librerie personali** dei giochi, **preferiti** e **voto sul gioco** da fare all'incontro. |
 
 ---
 
 ## 2. Visione e obiettivi
 
-**Problema.** Chi gioca in più gruppi coordina tutto su chat (WhatsApp, Telegram, Discord). Le presenze si perdono tra i messaggi, i cambi di data si decidono "a voce" e non è mai chiaro chi viene e a cosa si gioca.
+**Problema.** Chi gioca in più gruppi coordina tutto in chat: le presenze si perdono, i cambi di data si decidono "a voce" e non è mai chiaro chi viene e a cosa si gioca.
 
-**Soluzione.** Una webapp in cui ogni gruppo ha una sessione ricorrente con un calendario. Ogni incontro mostra le presenze, il gioco in programma e le proposte di modifica (cambio giorno, salto, cambio gioco), che si votano e si applicano in modo trasparente.
+**Soluzione.** Ogni gruppo ha una sessione ricorrente con un calendario. In ogni incontro sono visibili presenze, gioco e luogo, insieme alle proposte di modifica che si votano tra più opzioni.
 
 **Obiettivi dell'MVP**
 - Vedere in un'unica schermata tutti i prossimi incontri di tutti i miei gruppi.
-- Segnare la mia presenza con un tap.
-- Creare un gruppo ricorrente e invitarci altre persone con un link.
-- Proporre e votare: cambio data di un incontro, salto, cambio gioco.
-- Ricevere un avviso se un incontro non raggiunge il numero minimo di presenti.
+- Segnare la presenza con un tap.
+- Creare un gruppo ricorrente e invitarci altre persone con un link; invitare ospiti a un singolo incontro.
+- Proporre e votare: date alternative, salto, giochi alternativi.
+- Avvisi automatici su minimo presenti e promemoria.
 
-**Fuori dall'MVP (per ora)**
-- App sugli store: eventualmente in seguito, "impacchettando" la stessa webapp con Capacitor o TWA.
-- Chat interna: si continua a usare quella esistente, al massimo con un link.
-- Gestione di campagne GdR (schede, diari, mappe).
+**Fuori dall'MVP (per ora):** app sugli store, chat interna, gestione di campagne GdR (schede, diari, mappe).
 
 ---
 
@@ -62,26 +72,26 @@ Stato: **bozza v0.2**. Le scelte segnate con ❓ dipendono dalle [domande aperte
 
 | Termine | Significato |
 |---|---|
-| **Gruppo** (Sessione) | Il gruppo ricorrente, es. "Sessione A – D&D del mercoledì". Ha membri, regola di ricorrenza, gioco predefinito, luogo e regole di voto. |
-| **Incontro** | La singola data di un gruppo, es. "mercoledì 18 novembre 2026". Le presenze, gli ospiti e le proposte sono legati all'incontro. |
-| **Regola di ricorrenza** | Ogni quanto si gioca: ogni settimana, ogni 2 settimane, ecc. Ha una data di partenza (*ancora*). Si cambia solo dalle impostazioni. |
-| **Presenza** (RSVP) | La risposta per un incontro: ✅ presente, ❌ assente, ❔ forse, — non ha risposto. |
-| **Proposta** | Una richiesta di modifica di **un incontro** che i membri votano: cambio data, salto, cambio gioco. |
-| **Ospite** | Persona invitata con un link a **un solo incontro**, senza diventare membro del gruppo. |
-| **Minimo presenti** | Numero minimo di presenti perché l'incontro sia considerato "confermato". Se non è raggiunto, a 2 giorni e a 1 giorno dall'incontro parte un avviso. |
+| **Gruppo** | La sessione ricorrente, es. "Sessione A – D&D del mercoledì". |
+| **Incontro** | La singola data di un gruppo, es. "mer 18/11/2026". |
+| **Ricorrenza** | Giorno della settimana + ogni N settimane + data di partenza. |
+| **Presenza** | ✅ presente, ❌ assente, ❔ forse, — non ha risposto. |
+| **Proposta** | Richiesta di modifica di un incontro, con **una o più opzioni** da votare. |
+| **Ospite** | Utente invitato a **un solo incontro**, senza essere membro del gruppo. |
+| **Host** | Chi ospita l'incontro; il luogo può cambiare a ogni incontro. |
+| **Libreria** | I giochi che possiede un utente. |
+| **Minimo presenti** | Numero minimo di presenti (membri + ospiti) perché l'incontro sia "confermato". |
 
 ---
 
 ## 4. Esempio di riferimento
 
-| Gruppo | Giocatori | Ricorrenza | Note |
-|---|---|---|---|
-| A | 5 | ogni mercoledì | |
-| B | 4 | ogni martedì | |
-| C | 6 | ogni 2 venerdì | la data di partenza stabilisce *quali* venerdì |
-| D | variabili | ogni sabato | membri liberi più ospiti invitati di volta in volta con un link |
-
-Con la decisione D4 non serve distinguere tra gruppi "chiusi" e "aperti": tutti i gruppi funzionano allo stesso modo, e la Sessione D usa semplicemente di più gli inviti agli ospiti.
+| Gruppo | Giocatori | Ricorrenza |
+|---|---|---|
+| A | 5 | ogni settimana, mercoledì |
+| B | 4 | ogni settimana, martedì |
+| C | 6 | ogni 2 settimane, venerdì (con data di partenza) |
+| D | variabili | ogni settimana, sabato, con molti ospiti |
 
 ---
 
@@ -89,332 +99,304 @@ Con la decisione D4 non serve distinguere tra gruppi "chiusi" e "aperti": tutti 
 
 | Ruolo | Permessi |
 |---|---|
-| **Owner** (chi crea il gruppo) | Tutto: impostazioni, ricorrenza, gioco predefinito, regola di voto, minimo presenti; gestisce i membri; nomina gli admin; elimina il gruppo. |
-| **Admin** ❓ | Come l'owner, tranne eliminare il gruppo o rimuovere l'owner. |
-| **Membro** | Vede il gruppo, segna la presenza, crea proposte, vota, invita ospiti a un incontro ❓. |
-| **Ospite** | Vede **solo** l'incontro a cui è stato invitato (data, ora, luogo/link, gioco, chi c'è) e segna la propria presenza ❓. Non vede gli altri incontri, non vota e non fa proposte. |
-
-Ogni utente registrato:
-- vede **tutti** i propri gruppi e i propri incontri;
-- può **creare** nuovi gruppi, diventandone owner;
-- può **proporre** modifiche in qualsiasi gruppo di cui è membro.
+| **Owner** | Impostazioni del gruppo (ricorrenza, gioco predefinito, regola di voto, minimo); gestione dei membri; decide sugli incontri sotto il minimo; approva o respinge le proposte se la regola è "decide l'owner"; può trasferire il ruolo di owner a un altro membro; elimina il gruppo. |
+| **Membro** | Vede il gruppo, segna la presenza, crea proposte, vota, **invita ospiti**, può fare da host. |
+| **Ospite** | Fa login e vede **solo** l'incontro a cui è invitato. Segna la propria presenza, che conta nel minimo. Non vota e non fa proposte ❓. |
 
 ---
 
 ## 6. Funzionalità
 
-Priorità: **P0** = MVP, **P1** = subito dopo, **P2** = in futuro.
+**P0** = MVP · **P1** = subito dopo · **P2** = in futuro
 
 ### 6.1 Account
-- P0: Login con Google e/o link magico via email ❓.
+- ✅ P0: Login con link via email.
 - P0: Profilo con nome visualizzato, avatar e fuso orario.
-- P0: Installazione come PWA (icona sulla home, schermo intero).
-- P1: Preferenze di notifica.
-- P2: Disponibilità generica settimanale (es. "il lunedì non ci sono mai").
+- ✅ P0: Installazione come PWA.
+- P1: **Login con Google**.
+- P1: Lingua dell'interfaccia: italiano/inglese.
+- P2: Disponibilità generica settimanale.
 
 ### 6.2 Gruppi
-- P0: Creazione del gruppo: nome, descrizione, ricorrenza (giorno, ogni N settimane, data di partenza), orario e durata, gioco predefinito, modalità (fisica/online/ibrida), luogo o link.
-- P0: Regola di approvazione delle proposte (D3) e minimo presenti, facoltativo (D6).
-- P0: Invito di un membro con link o codice; aggiunta e rimozione libere dei membri.
-- P0: Modifica delle impostazioni, **compreso il cambio fisso del giorno** (D5). Vale dagli incontri futuri in poi.
-- P1: Pausa o archiviazione del gruppo (es. pausa estiva).
-- P1: Rotazione dell'host (a turno a casa di qualcuno) ❓.
-- P2: Colore e icona del gruppo.
+- P0: Creazione: nome, descrizione, ricorrenza (giorno, ogni N settimane, data di partenza), orario, durata, gioco predefinito, modalità (fisica/online/ibrida), luogo/link predefinito, regola di voto, minimo presenti.
+- P0: Link d'invito per i membri; rimozione dei membri; trasferimento del ruolo di owner.
+- P0: Modifica delle impostazioni, compreso il **cambio fisso del giorno** (D5, D12).
+- P1: Pausa/archiviazione del gruppo.
 
-### 6.3 Incontri e calendario
-- P0: **Home "Prossimi incontri"** con gli incontri di tutti i miei gruppi e il mio stato di presenza.
-- P0: Dettaglio incontro: data e ora, gioco, luogo/link, presenze (chi sì, chi no, chi forse, chi non ha risposto), ospiti, proposte attive.
-- P0: **Link ospite** per un singolo incontro (D4).
-- P1: Vista calendario mensile.
-- P1: Incontro straordinario singolo, fuori dalla ricorrenza.
-- P1: Note per l'incontro (es. "porto io le pizze").
-- P2: Esportazione nel calendario Google/Apple (iCal).
+### 6.3 Incontri
+- P0: **Home "Prossimi incontri"** di tutti i miei gruppi.
+- P0: Dettaglio: data, ora, gioco, luogo/link, host, presenze, ospiti, proposte.
+- P0: **Link ospite** per un incontro (D7).
+- P1: **Host e luogo per il singolo incontro** (D14): "questa volta da Marco".
+- P1: Vista calendario mensile; incontri straordinari; note dell'incontro.
+- P2: Esportazione iCal.
 
 ### 6.4 Presenze
-- P0: Presente / Assente / Forse con un tap, anche dalla home.
-- P0: Nota opzionale (es. "arrivo alle 22").
-- P0: Riepilogo "4/5 presenti", con indicazione del minimo raggiunto o meno.
-- P1: Assenza segnata in anticipo su più incontri (es. "in vacanza dal 10 al 24").
+- P0: ✅/❌/❔ con un tap, con nota opzionale.
+- P0: Contatore "4/5 (min. 4)", ospiti compresi.
+- P1: Assenza su più incontri (vacanze).
 
-### 6.5 Proposte e voto (solo per un singolo incontro)
-- P0: **Cambio data/ora** dell'incontro.
+### 6.5 Proposte (D9)
+- P0: **Cambio data** con **una o più date** proposte.
 - P0: **Salto** dell'incontro.
-- P0: **Cambio gioco** per l'incontro.
-- P0: Voto Sì/No, con stato e scadenza visibili.
-- P0: Approvazione secondo la regola del gruppo (D3).
-- P1: Proposta con più date alternative (stile Doodle) ❓.
+- P0: **Cambio gioco** con **uno o più giochi** proposti.
+- P0: Ognuno spunta **tutte le opzioni che gli vanno bene**; la scelta segue la regola del gruppo (§7.4).
+- P0: Voto aperto fino a **24 ore prima** dell'incontro.
 
-### 6.6 Giochi
-- P0: Il gioco è un testo libero, con suggerimenti tra i giochi già usati nel gruppo.
-- P1: Libreria giochi del gruppo (titolo, tipo, giocatori min/max, durata, immagine).
-- P2: Integrazione BoardGameGeek ❓.
-- P2: Storico delle partite (cosa, quando, chi c'era).
+### 6.6 Giochi e librerie (D19)
+- P0: Gioco come testo libero, con suggerimenti tra quelli già usati nel gruppo.
+- P1: **Libreria personale**: ognuno inserisce i giochi che possiede (titolo, tipo, giocatori min/max, durata).
+- P1: **Libreria del gruppo** = unione delle librerie dei membri ("Gloomhaven – di Luca").
+- P1: **Preferiti**: ognuno segna i giochi che vorrebbe giocare.
+- P1: Le proposte di cambio gioco pescano dalla libreria del gruppo, filtrata per numero di presenti.
+- P2: Importazione della collezione da **BoardGameGeek** ❓.
+- P2: Storico delle partite.
+
+### 6.7 Grafica
+- P2: **Tema pixel art**: font pixel, icone 8/16-bit, bordi "a blocchi". I colori sono già raccolti in variabili CSS, così il tema si potrà cambiare senza riscrivere le pagine.
 
 ---
 
 ## 7. Regole di dominio
 
-### 7.1 Ricorrenza
-- Nell'MVP: **settimanale ogni N settimane** (N=1 ogni settimana, N=2 ogni due), con giorno della settimana, orario e **data di partenza**.
-- La regola si salva come **RRULE** (standard iCalendar), es. `FREQ=WEEKLY;INTERVAL=2;BYDAY=FR`, così in futuro si possono aggiungere ricorrenze mensili ed esportare in iCal.
-- Gli incontri si **calcolano al volo** per le prossime settimane. Diventano righe nel database solo quando qualcuno ci interagisce (presenza, proposta, ospite).
-- **Cambio fisso del giorno** (D5): dalle impostazioni si chiude la regola vecchia e se ne apre una nuova a partire da una certa data. Gli incontri passati restano invariati.
-  - Gli incontri futuri che avevano già presenze vanno gestiti: proposta di default, azzerare le presenze e avvisare ❓.
-- Una modifica a un solo incontro crea un'**eccezione**: data spostata, saltato o gioco diverso, solo per quella data.
-- Fuso orario: ogni gruppo ha il suo (es. `Europe/Rome`). L'ora "di parete" resta fissa anche al cambio dell'ora legale.
+### 7.1 Ricorrenza (D13)
+- Regola: giorno della settimana + **ogni N settimane** (N ≥ 1) + data di partenza + orario + fuso orario.
+- Formato salvato: RRULE, es. `FREQ=WEEKLY;INTERVAL=4;BYDAY=SA`.
+- Gli incontri si **calcolano al volo** e diventano righe nel database al primo utilizzo (presenza, proposta, ospite, host).
+- Il **cambio fisso** chiude la regola vecchia e ne apre una nuova da una certa data (tabella `group_schedules`). Gli incontri futuri che avevano già dati vengono azzerati e i membri ricevono un avviso (D12).
+- Le modifiche a un singolo incontro sono **eccezioni**: data spostata, saltato, gioco diverso, host/luogo diverso.
 
 ### 7.2 Stato di un incontro
 ```
 programmato ──(minimo raggiunto)──▶ confermato
      │                                  │
-     ├──(salto approvato)───────────────┴──▶ saltato
-     ├──(cambio data approvato)─────────────▶ spostato (nuova data)
+     ├──(salto approvato / owner)───────┴──▶ saltato
+     ├──(cambio data approvato)─────────────▶ spostato
      └──(data passata)──────────────────────▶ concluso
 ```
-Se il gruppo non ha un minimo presenti, l'incontro resta semplicemente "programmato".
 
-### 7.3 Minimo presenti e avvisi (D6)
-- Impostazione facoltativa del gruppo: "minimo N presenti".
-- Due controlli automatici: **2 giorni prima** e **1 giorno prima** dell'orario d'inizio.
-- Se i presenti sono meno di N, parte un avviso: "Mercoledì siete solo in 3 su un minimo di 4", con l'elenco di chi non ha ancora risposto.
-- Destinatari: tutti i membri ❓, oppure solo chi non ha risposto più l'owner/admin.
-- Gli ospiti con presenza ✅ contano nel minimo ❓.
-- Se il minimo è raggiunto, si può mandare un messaggio positivo ("Confermato: si gioca!") ❓.
+### 7.3 Minimo presenti e avvisi (D6, D11)
+| Momento | Condizione | Destinatari | Messaggio |
+|---|---|---|---|
+| **2 giorni prima** | presenti < minimo | chi non ha risposto + owner | "Mercoledì siete in 3, minimo 4: segna se ci sei!" |
+| **Minimo raggiunto** (in qualsiasi momento, una volta sola) | presenti ≥ minimo | tutti i presenti | "Confermato: mercoledì si gioca! 🎲" |
+| **1 giorno prima** | sempre | tutti i presenti | "Domani si gioca a Gloomhaven, alle 21 da Marco" |
+| **1 giorno prima** | presenti < minimo | owner | "Manca ancora il minimo: decidi cosa fare" |
 
-### 7.4 Proposte e voto (D3, D5)
-- Tipi: `RESCHEDULE` (nuova data/ora), `SKIP`, `CHANGE_GAME`. Riguardano **sempre un singolo incontro**.
-- Regola di approvazione scelta dall'owner per ogni gruppo:
-  - **Maggioranza**: più della metà dei membri vota Sì.
-  - **Unanimità dei presenti**: tutti quelli segnati presenti all'incontro votano Sì. È utile per il cambio data.
-  - **Decide l'owner/admin**: i voti degli altri sono un parere, approva o respinge l'owner/admin.
-- Ogni proposta ha una scadenza, di default ❓. Alla scadenza senza approvazione è **respinta**.
-- Per lo stesso incontro può esserci **una sola proposta attiva per tipo**.
-- Dopo un cambio data **approvato**, le presenze si azzerano e chi aveva votato Sì viene segnato presente ❓.
-- Il conteggio dei voti e l'applicazione della proposta avvengono **sul server** (funzione SQL in Supabase), in modo atomico.
+- Gli ospiti presenti **contano** nel minimo.
+- Se il minimo non è raggiunto, l'incontro **non si annulla da solo**: decide l'owner (gioca comunque, salta, oppure cambia gioco con chi c'è).
+- Se dopo la conferma qualcuno si ritira e si scende sotto il minimo, l'incontro torna "programmato" e l'owner riceve un avviso ❓.
+
+### 7.4 Proposte con più opzioni (D3, D9, D10)
+- Tipi: `reschedule` (opzioni = date/ore), `skip` (nessuna opzione: Sì/No), `change_game` (opzioni = giochi).
+- **Voto per approvazione**: ognuno spunta tutte le opzioni che gli vanno bene, oppure "nessuna".
+- **Chiusura**: alla scadenza (**24 ore prima** dell'incontro originale), oppure prima, appena una delle opzioni soddisfa la regola.
+- **Quale opzione vince**, secondo la regola del gruppo:
+  - **Maggioranza**: vince l'opzione con più voti, purché abbia i voti di **più della metà dei membri**. In caso di pareggio vince la data più vicina o il gioco proposto per primo ❓.
+  - **Unanimità dei presenti**: vince un'opzione votata da **tutti** quelli segnati presenti all'incontro. Se sono più d'una, vince la più votata.
+  - **Decide l'owner**: i voti degli altri sono un parere; l'owner sceglie l'opzione o respinge la proposta.
+- Se nessuna opzione soddisfa la regola, la proposta è **respinta** e l'incontro resta com'è.
+- Per ogni incontro può esserci **una sola proposta aperta per tipo**.
+- **Cambio data approvato** (D10): chi aveva votato la data vincente resta ✅ presente, gli altri tornano a "non ha risposto". Gli ospiti ricevono un avviso.
+- Conteggio dei voti e applicazione della proposta avvengono **sul server**, in una transazione.
 
 ### 7.5 Gioco
-- Ogni gruppo ha un **gioco predefinito**, che può anche mancare. Si cambia dalle impostazioni.
-- Un incontro eredita il predefinito, salvo una proposta di cambio gioco approvata per quell'incontro.
+- Ogni gruppo ha un gioco predefinito, che si cambia dalle impostazioni.
+- Un incontro eredita il gioco predefinito, salvo una proposta approvata (o una decisione dell'owner sotto il minimo).
 
-### 7.6 Ospiti (D4)
-- Un membro (o solo owner/admin ❓) genera un **link ospite** legato a un incontro.
-- Chi apre il link vede solo quell'incontro.
-  - Per segnare la presenza basta il nome, senza account ❓, oppure un login veloce.
-- Il link scade dopo la data dell'incontro e si può revocare.
-- Se l'incontro viene spostato o saltato, anche l'ospite lo vede (e riceve un avviso, se ha lasciato un contatto).
+### 7.6 Ospiti (D4, D7)
+- Qualsiasi membro genera un **link ospite** per un incontro.
+- Chi lo apre fa login (lo stesso link via email o Google) e diventa ospite **di quell'incontro**.
+- L'ospite vede solo quell'incontro e segna la presenza.
+- Il link scade dopo l'incontro e chi l'ha creato, o l'owner, può revocarlo.
+- Un ospite può essere aggiunto come membro dall'owner (es. "è venuto 3 volte, lo aggiungiamo?").
 
 ---
 
 ## 8. Modello dati
 
-Tabelle Postgres (Supabase). L'accesso è protetto con **Row Level Security**: ognuno vede solo i dati dei propri gruppi.
+Tabelle Postgres su Supabase, protette con **Row Level Security**.
 
 ```
 profiles
-  id (= auth.users.id), display_name, avatar_url, timezone, created_at
+  id (= auth.users.id), display_name, avatar_url, timezone, locale, created_at
 
 groups
   id, name, description
-  mode (in_person | online | hybrid), location, online_link
+  mode (in_person | online | hybrid), default_location, online_link
   timezone, start_time, duration_minutes
-  default_game_id?, min_attendees?
-  approval_rule (majority | unanimous_attendees | admin_decides)
-  proposal_default_hours            ← scadenza standard delle proposte
+  default_game_title?, min_attendees?
+  approval_rule (majority | unanimous_attendees | owner_decides)
   status (active | paused | archived)
-  invite_code, created_by, created_at
+  invite_code, owner_id, created_at
 
-group_schedules                     ← storico delle ricorrenze (per il cambio fisso del giorno)
+group_schedules                   ← storico delle ricorrenze
   id, group_id, rrule, valid_from, valid_until?
 
 memberships
-  group_id, user_id, role (owner | admin | member), joined_at
+  group_id, user_id, role (owner | member), joined_at
 
-games
-  id, group_id, title, kind (board | rpg | online | other)
-
-occurrences                         ← creata solo al primo utilizzo
-  id, group_id
-  original_start                    ← data prevista dalla regola (chiave stabile)
-  actual_start                      ← diversa se spostato
+occurrences                       ← creata solo al primo utilizzo
+  id, group_id, original_start, actual_start
   status (scheduled | confirmed | skipped | moved | done)
-  game_id_override?, notes
+  game_title_override?, host_user_id?, location_override?, notes
   UNIQUE (group_id, original_start)
 
 attendances
-  occurrence_id, user_id? | guest_id?, status (yes | no | maybe), note, updated_at
+  occurrence_id, user_id, status (yes | no | maybe), note, updated_at
 
 guest_invites
   id, occurrence_id, token, created_by, expires_at, revoked_at?
 
-guests
-  id, invite_id, display_name, contact?
+occurrence_guests                 ← ospiti (utenti registrati) di un incontro
+  occurrence_id, user_id, invite_id, joined_at
 
 proposals
   id, occurrence_id, type (reschedule | skip | change_game)
-  payload jsonb                     ← { new_start } oppure { game_id }
-  created_by, created_at, expires_at
-  status (open | approved | rejected | cancelled | expired)
+  created_by, created_at, closes_at
+  status (open | approved | rejected | cancelled)
+  winning_option_id?
 
-votes
-  proposal_id, user_id, value (yes | no), created_at
+proposal_options
+  id, proposal_id, position
+  new_start?            ← per reschedule
+  game_title? / game_id?  ← per change_game
+
+votes                             ← voto per approvazione: una riga per opzione accettata
+  proposal_id, option_id, user_id, created_at
+  (per skip: option unica "sì")
+
+games                             ← P1: catalogo condiviso
+  id, title, kind (board | rpg | online | other)
+  min_players?, max_players?, duration_minutes?, image_url?, bgg_id?
+
+user_games                        ← P1: libreria personale
+  user_id, game_id, is_favorite, added_at
 
 push_subscriptions
   id, user_id, endpoint, keys jsonb, created_at
 
-notifications_log                   ← evita di mandare due volte lo stesso avviso
-  id, occurrence_id, kind (min_check_48h | min_check_24h | ...), sent_at
+notifications_log                 ← evita invii doppi
+  id, occurrence_id, kind (min_check_48h | confirmed | reminder_24h | owner_min_24h | ...), sent_at
 ```
+
+La libreria del gruppo è una **vista**: l'unione degli `user_games` dei membri, con il proprietario di ogni gioco e il numero di "preferito".
 
 ---
 
 ## 9. Schermate e flussi
 
-### 9.1 Schermate MVP (pensate prima per il telefono)
-1. **Login**
-2. **Home – Prossimi incontri**: card con data, gruppo, gioco, presenze (3/5), il mio stato e i pulsanti ✅❌❔. Badge per le proposte da votare e per gli incontri sotto il minimo.
-3. **I miei gruppi**: lista, con "+ Nuovo gruppo" ed "Entra con codice".
+### 9.1 Schermate
+1. ✅ **Login**
+2. **Home – Prossimi incontri**: card con data, gruppo, gioco, host, presenze "3/5 (min. 4)", pulsanti ✅❌❔, badge per proposte e avvisi.
+3. **I miei gruppi** + "Nuovo gruppo" / "Entra con codice".
 4. **Dettaglio gruppo**: info, prossimi incontri, membri, link d'invito.
-5. **Impostazioni gruppo**: dati base, ricorrenza (cambio fisso del giorno), gioco predefinito, regola di voto, minimo presenti, membri.
-6. **Crea gruppo**: wizard in 3 passi (info → ricorrenza e orario → gioco, luogo e regole).
-7. **Dettaglio incontro**: presenze, gioco, luogo, ospiti, proposte, pulsanti "Proponi modifica" e "Invita ospite".
-8. **Nuova proposta**: scegli il tipo (cambio data / salto / cambio gioco), poi inserisci il valore.
-9. **Dettaglio proposta**: voti, tempo rimanente, Vota Sì/No (o Approva/Respingi per l'owner, se la regola è "decide l'owner").
-10. **Pagina ospite** (pubblica, da link): info dell'incontro e la sua presenza.
-11. **Profilo**: nome, fuso orario, notifiche, "installa app".
+5. **Impostazioni gruppo** (owner).
+6. **Crea gruppo** (wizard in 3 passi).
+7. **Dettaglio incontro**: presenze, gioco, host/luogo, ospiti, proposte, "Proponi modifica", "Invita ospite".
+8. **Nuova proposta**: tipo → aggiungi 1+ date o 1+ giochi.
+9. **Dettaglio proposta**: opzioni con caselle di spunta, chi ha votato cosa, scadenza.
+10. **Pagina ospite** (`/guest/[token]`): login e poi dettaglio dell'incontro.
+11. **Profilo**: nome, fuso orario, lingua, notifiche, "installa app".
+12. P1: **La mia libreria** e **libreria del gruppo** con i preferiti.
 
-### 9.2 Flussi principali
-- **Creo un gruppo** → configuro ricorrenza e regole → copio il link d'invito → lo mando su WhatsApp → gli amici lo aprono, fanno login e sono dentro.
-- **Segno la presenza** → dalla home, un tap su ✅ → il contatore si aggiorna in tempo reale per tutti.
-- **Propongo un cambio data** → dettaglio incontro → "Proponi modifica" → nuova data → notifica ai membri → voti → se approvata secondo la regola del gruppo, l'incontro si sposta e tutti ricevono un avviso.
-- **Invito un ospite (Sessione D)** → dettaglio incontro → "Invita ospite" → copio il link → l'ospite lo apre, vede le info e segna "ci sono".
-- **Avviso minimo** → 2 giorni prima: "siete in 3, minimo 4" → qualcuno risponde → 1 giorno prima: nuovo controllo.
+### 9.2 Flussi chiave
+- **Proposta con più date**: dettaglio incontro → "Proponi modifica" → "Cambio data" → aggiungo giovedì 20:30 e venerdì 21:00 → i membri spuntano le date che vanno bene → la regola del gruppo decide → l'incontro si sposta, i voti diventano presenze e tutti ricevono un avviso.
+- **Sotto il minimo**: 2 giorni prima, avviso a chi non ha risposto e all'owner → 1 giorno prima, l'owner riceve "decidi cosa fare" → sceglie "giochiamo comunque", "saltiamo" o "cambiamo gioco".
+- **Ospite**: un membro copia il link ospite → l'amico lo apre, fa login e vede l'incontro → segna ✅ → il contatore sale.
 
 ---
 
 ## 10. Notifiche
 
-| Evento | Chi riceve | Priorità |
+| Evento | Destinatari | Priorità |
 |---|---|---|
-| Minimo presenti non raggiunto, **2 giorni prima** | membri ❓ | P0 |
-| Minimo presenti non raggiunto, **1 giorno prima** | membri ❓ | P0 |
-| Nuova proposta nel mio gruppo | membri tranne l'autore | P0 |
-| Proposta approvata/respinta | membri (e ospiti dell'incontro, se cambia la data) | P0 |
-| Promemoria "non hai ancora risposto" | chi non ha risposto | P1 |
-| Promemoria "domani si gioca!" | i presenti | P1 |
-| Nuovo membro nel gruppo | owner/admin | P1 |
+| Minimo non raggiunto, 2 giorni prima | chi non ha risposto + owner | P0 |
+| Minimo raggiunto ("si gioca!") | presenti | P0 |
+| Promemoria 1 giorno prima | presenti | P0 |
+| Minimo non raggiunto, 1 giorno prima ("decidi") | owner | P0 |
+| Nuova proposta | membri tranne l'autore | P0 |
+| Proposta chiusa (esito) | membri + ospiti coinvolti | P0 |
+| Cambio fisso del giorno | membri | P0 |
+| Nuovo ospite/membro | owner | P1 |
 
-**Come si inviano.** Su una webapp ci sono due canali:
-- **Web Push** (standard VAPID), il canale principale.
-  - Su Android (Chrome) funziona sempre.
-  - Su iPhone funziona solo se la webapp è stata **aggiunta alla schermata home** (iOS 16.4 o successivo). L'app mostrerà una breve guida.
-- **Email**, di riserva, per chi non attiva le notifiche push ❓.
+**Canali.**
+- **Web Push**. Su iPhone funziona solo con la webapp installata sulla home (iOS 16.4 o successivo).
+- **Email** di riserva, tramite **Resend** (piano gratuito), che servirà comunque per i link di accesso perché il servizio email incluso in Supabase invia pochissimi messaggi l'ora.
 
-**Controlli programmati** (avvisi a 2 giorni e a 1 giorno): un job orario che cerca gli incontri in quelle finestre e invia gli avvisi una sola volta, registrandoli in `notifications_log`. Si può realizzare con Supabase `pg_cron` + Edge Function, oppure con un Cron Job di Vercel.
+**Controlli programmati.** Un job orario (Supabase `pg_cron` + Edge Function, oppure un Cron Job di Vercel) trova gli incontri nelle finestre 48h/24h e invia gli avvisi una sola volta, registrandoli in `notifications_log`.
 
 ---
 
 ## 11. Architettura e stack tecnico
 
-| Livello | Scelta | Perché |
-|---|---|---|
-| Framework | **Next.js** (App Router) + **TypeScript** | Il più diffuso, con tantissima documentazione; frontend e backend leggero nello stesso progetto |
-| UI | **Tailwind CSS** + componenti **shadcn/ui** | Grafica pulita e adatta al telefono, senza scrivere CSS da zero |
-| PWA | Manifest + service worker (**Serwist**) | Installazione sulla home e notifiche push |
-| Database | **Supabase Postgres** | Modello relazionale, vincoli, funzioni SQL per i voti |
-| Login | **Supabase Auth** (Google e/o link via email) | Già integrato |
-| Sicurezza | **Row Level Security** | Ognuno legge e scrive solo nei propri gruppi |
-| Tempo reale | **Supabase Realtime** | Presenze e voti si aggiornano senza ricaricare |
-| Date e ricorrenze | `rrule` + `date-fns-tz` | Ricorrenze e fusi orari affidabili |
-| Logica server | Funzioni SQL (RPC) + Server Actions di Next.js | Voti, applicazione delle proposte, link ospite |
-| Job programmati | Supabase `pg_cron` + Edge Function (o Vercel Cron) | Avvisi a 2 giorni e a 1 giorno |
-| Notifiche | `web-push` (VAPID) | Standard, gratuito |
-| Hosting | **Vercel**: ogni push su GitHub va online da solo, con un'anteprima per ogni branch | Gratis per l'uso tra amici |
-| Test | Vitest (logica ricorrenze e voti), Playwright (flussi principali) | |
+| Livello | Scelta |
+|---|---|
+| Framework | **Next.js 16** (App Router, Cache Components) + **TypeScript** |
+| UI | **Tailwind CSS**; colori e font in variabili CSS, per il futuro tema pixel art |
+| Traduzioni | **next-intl**: testi in `messages/it.json`, inglese aggiunto in seguito |
+| PWA | Manifest ✅; service worker (Serwist) per le notifiche push |
+| Database / Login / Tempo reale | **Supabase** (Postgres, Auth, Realtime, RLS) |
+| Ricorrenze e date | `rrule` + `date-fns-tz` |
+| Logica server | Funzioni SQL (RPC) per voti e proposte + Server Actions di Next.js |
+| Job programmati | Supabase `pg_cron` + Edge Function |
+| Email | **Resend** (SMTP personalizzato in Supabase) |
+| Notifiche | `web-push` (VAPID) |
+| Hosting | **Vercel** (produzione da `main`, anteprime dai branch) |
+| Test | Vitest (ricorrenze e voti), Playwright (flussi) |
 
-### 11.1 Struttura del repository (bozza)
+### 11.1 Struttura del repository
 ```
 /src
-  /app                → pagine (Next.js App Router)
-    /(auth)/login
-    /(app)/page.tsx           → home "Prossimi incontri"
-    /(app)/groups/...
-    /(app)/occurrences/[id]
-    /invite/[code]            → entrata nel gruppo
-    /guest/[token]            → pagina ospite pubblica
-  /components         → componenti UI
-  /lib                → client Supabase, ricorrenze, utilità date
+  /app            → pagine (login ✅, home ✅, gruppi, incontri, ospiti…)
+  /components     → componenti UI
+  /lib            → client Supabase ✅, ricorrenze, date
+  /proxy.ts       → rinnovo della sessione e protezione delle pagine ✅
 /supabase
-  /migrations         → schema SQL, policy RLS, funzioni
-  /functions          → Edge Functions (avvisi, push)
-/public               → icone, manifest PWA
-/docs                 → questa documentazione
+  /migrations     → schema SQL, policy RLS, funzioni
+  /functions      → Edge Functions (avvisi, push)
+/messages         → traduzioni (it, en)
+/public           → icone ✅
+/docs             → questa documentazione
 ```
 
-### 11.2 Configurazione degli account (una volta sola)
-1. **Supabase**: crea un progetto (regione: Europa, es. Frankfurt). Da *Project Settings → API* servono `Project URL` e la chiave `anon`/`publishable`.
-2. **Vercel**: importa il repository GitHub `Schednd`. In *Settings → Environment Variables* inserisci:
-   - `NEXT_PUBLIC_SUPABASE_URL`
-   - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
-   - (in seguito) `SUPABASE_SERVICE_ROLE_KEY`, `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`
-3. Le chiavi **non vanno mai** scritte in chat né salvate nel codice: si inseriscono solo nei pannelli di Vercel/Supabase (e in un file `.env.local`, escluso da git, per lo sviluppo locale).
-4. **Login con Google** (facoltativo): in *Supabase → Authentication → Providers* si abilita Google e si incolla il client ID creato in Google Cloud. È una procedura guidata.
+### 11.2 Configurazione
+Le istruzioni passo passo sono nel [README](../README.md): variabili d'ambiente, URL di redirect, template email.
 
 ---
 
 ## 12. Roadmap
 
-| Fase | Contenuto | Risultato |
+| Fase | Contenuto | Stato |
 |---|---|---|
-| **0 – Fondamenta** | Progetto Next.js, Tailwind, collegamento a Supabase, login, deploy su Vercel, PWA base | Apri il sito dal telefono, fai login e lo installi sulla home |
-| **1 – Gruppi** | Schema del database, creazione gruppo con ricorrenza, link d'invito, membri, impostazioni (cambio fisso del giorno, regola di voto, minimo) | Crei la Sessione A e ci entrano 4 amici |
-| **2 – Incontri e presenze** | Calcolo degli incontri, home "Prossimi incontri", RSVP in tempo reale, dettaglio incontro | Ognuno segna se c'è mercoledì |
-| **3 – Proposte** | Cambio data, salto, cambio gioco; voto secondo la regola del gruppo; applicazione lato server | Spostate un incontro votando |
-| **4 – Ospiti** | Link ospite per un incontro, pagina pubblica, presenza dell'ospite | Sessione D con invitati una tantum |
-| **5 – Notifiche** | Web Push, avvisi minimo presenti a 2 giorni e a 1 giorno, notifiche sulle proposte | L'app avvisa da sola |
-| **6 – Beta con gli amici** | Uso reale sulle sessioni A–D, raccolta feedback, correzioni | **MVP completato** |
-| **7 – P1/P2** | Calendario mensile, incontri straordinari, assenze multiple, libreria giochi, date stile Doodle, iCal, storico partite | |
+| **0 – Fondamenta** | Next.js, Supabase, login via email, PWA base, deploy | ✅ fatto (da provare) |
+| **1 – Gruppi** | Schema database + RLS, profilo, creazione gruppo con ricorrenza ogni N settimane, invito membri, impostazioni, cambio fisso del giorno, trasferimento owner | prossima |
+| **2 – Incontri e presenze** | Calcolo incontri, home, RSVP in tempo reale, dettaglio incontro, contatore del minimo | |
+| **3 – Proposte** | Date/giochi multipli, voto per approvazione, 3 regole di approvazione, chiusura 24 ore prima, applicazione lato server | |
+| **4 – Ospiti** | Link ospite, login dell'ospite, pagina dell'incontro, presenza che conta nel minimo | |
+| **5 – Notifiche ed email** | Resend, Web Push, avvisi a 48h e 24h, conferma, promemoria, "decidi" per l'owner | |
+| **6 – Beta con gli amici** | Uso reale sulle sessioni A–D | **MVP** |
+| **7 – Extra** | Login Google, host a rotazione, librerie e preferiti, inglese, calendario | |
+| **8 – Grafica** | Tema pixel art | |
+| **9 – Futuro** | BoardGameGeek, storico partite, iCal | |
 
 ---
 
 ## 13. Rischi e punti delicati
 
-- **Ricorrenze e fusi orari**: servono test automatici sul calcolo degli incontri, incluso il cambio dell'ora legale e il cambio fisso del giorno.
-- **Voti in contemporanea**: il conteggio e l'applicazione delle proposte avvengono in una transazione SQL, così una proposta non si applica due volte.
-- **Notifiche su iPhone**: arrivano solo se la webapp è installata sulla home. Serve una guida chiara nell'app, ed eventualmente l'email come riserva.
-- **Link ospite**: vanno trattati come segreti. Token lunghi e casuali, scadenza automatica, possibilità di revocarli.
-- **Adozione**: login e ingresso nel gruppo devono richiedere pochissimi passaggi.
-- **Privacy/GDPR**: i dati personali sono pochi, ma servono un'informativa e la possibilità di cancellare l'account.
-- **Piani gratuiti**: Supabase mette in pausa i progetti gratuiti inattivi per 7 giorni. Con un uso settimanale non è un problema.
+- **Ricorrenze e fusi orari**: servono test automatici, incluso il cambio dell'ora legale.
+- **Voti in contemporanea**: chiusura delle proposte con una transazione SQL, così una proposta non si applica due volte.
+- **Notifiche su iPhone**: arrivano solo con la webapp installata sulla home. Serve una guida nell'app, con l'email come riserva.
+- **Limiti email di Supabase**: pochi messaggi l'ora. Prima della beta va configurato Resend.
+- **Link ospite**: token lunghi e casuali, con scadenza e possibilità di revoca.
+- **BoardGameGeek**: dal 2025 l'API richiede una registrazione dell'applicazione e può essere lenta. Va verificata prima di prometterla.
+- **Privacy**: un'informativa minima e la possibilità di cancellare l'account.
 
 ---
 
 ## 14. Domande aperte
 
-### Ospiti
-1. L'ospite può **segnare la presenza** (sì/no/forse) o vede solo le informazioni?
-2. L'ospite deve fare **login** o basta che scriva il proprio nome?
-3. Chi può creare un link ospite: **tutti i membri** o solo **owner/admin**?
-4. Gli ospiti presenti **contano nel minimo presenti**?
-
-### Minimo presenti e avvisi
-5. L'avviso a 2 giorni e a 1 giorno va a **tutti i membri** o solo a **chi non ha risposto** e all'owner?
-6. Quando il minimo è raggiunto, vuoi un messaggio di **conferma** ("si gioca!")?
-7. Se il giorno prima il minimo non c'è, l'incontro va **annullato in automatico**, o decide l'owner?
-
-### Proposte
-8. Che **scadenza di default** vuoi per le proposte: 48 ore, o "entro X ore dall'incontro"?
-9. Dopo un **cambio data approvato**, si azzerano le presenze? Chi ha votato Sì va segnato presente in automatico?
-10. Ti interessa (anche più avanti) la proposta con **più date** da votare, stile Doodle?
-
-### Gruppi
-11. Serve il ruolo **admin**, o basta l'owner?
-12. Quando si **cambia il giorno fisso** dalle impostazioni, gli incontri futuri con presenze già segnate vanno azzerati e va inviato un avviso?
-13. Gli incontri fisici hanno sempre lo stesso luogo, oppure **ruota l'host**?
-14. Servono ricorrenze **mensili** ("primo sabato del mese")?
-
-### Generali
-15. **Login**: Google, link via email, o entrambi?
-16. Lingua: **solo italiano**, o anche inglese?
-17. Uso **tra amici** o vuoi pubblicarla per chiunque?
-18. Preferenze di **stile grafico** (tema scuro, fantasy, minimal…)?
-19. Per il gioco basta un nome libero, o ti interessano una **libreria** e **BoardGameGeek** più avanti?
+1. Gli **ospiti** possono votare le proposte dell'incontro a cui partecipano (es. il cambio gioco)? Per ora: **no**.
+2. In caso di **pareggio** con la regola "maggioranza", vince la data più vicina o il gioco proposto per primo, oppure decide l'owner? Per ora: **decide l'owner**.
+3. Se dopo la conferma qualcuno si ritira e si scende **sotto il minimo**, l'owner va avvisato subito? Per ora: **sì**.
+4. **BoardGameGeek**: usi già BGG per registrare la tua collezione? Se no, si può lasciare per ultimo.
