@@ -108,3 +108,26 @@ describe("formatDuration", async () => {
     expect(formatDuration(240)).toBe("4 ore");
   });
 });
+
+describe("isScheduledDate / scheduledTimeFor", async () => {
+  const { isScheduledDate, scheduledTimeFor } = await import("./schedule");
+  const s = weekly("2026-11-06", { intervalWeeks: 2, startTime: "20:30:00" });
+  it("riconosce le date della ricorrenza", () => {
+    expect(isScheduledDate([s], "2026-11-20")).toBe(true);
+    expect(isScheduledDate([s], "2026-11-13")).toBe(false);
+    expect(isScheduledDate([s], "2026-10-23")).toBe(false);
+  });
+  it("rispetta la fine della ricorrenza", () => {
+    const old = { ...s, validUntil: "2026-11-20" };
+    expect(isScheduledDate([old], "2026-11-20")).toBe(false);
+    expect(scheduledTimeFor([old], "2026-11-06")).toBe("20:30:00");
+    expect(scheduledTimeFor([old], "2026-11-20")).toBeUndefined();
+  });
+});
+
+describe("capitalize", async () => {
+  const { capitalize, formatShortDate } = await import("./schedule");
+  it("solo la prima lettera", () => {
+    expect(capitalize(formatShortDate("2026-11-18"))).toBe("Mer 18 nov");
+  });
+});
