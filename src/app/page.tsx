@@ -86,6 +86,7 @@ async function Home() {
       )
       .eq("user_id", user.id),
     supabase.rpc("my_guest_meetings"),
+    closeDueProposals(supabase),
   ]);
   const guestMeetings = (guestRows ?? []) as GuestMeeting[];
 
@@ -100,7 +101,6 @@ async function Home() {
     }));
 
   const yesterday = addDays(todayInTimeZone("Europe/Rome"), -1);
-  await closeDueProposals(supabase);
   const occurrences = await fetchOccurrences(
     supabase,
     groups.map((g) => g.id),

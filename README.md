@@ -60,6 +60,13 @@ Le migrazioni sono in `supabase/migrations/`, numerate in ordine. Per ognuna non
 | `0007_i18n.sql` | lingua dell'utente (italiano/inglese) e notifiche nella lingua di chi le riceve |
 | `0008_single_events_calendar.sql` | eventi singoli, incontri straordinari, spostamento di un incontro, link segreto per il calendario del telefono |
 
+## Velocità
+Ogni pagina fa alcune richieste al database: se il server di Vercel e quello di Supabase sono lontani (es. Stati Uniti ed Europa) ogni richiesta costa ~100 ms in più.
+- Supabase → *Project Settings → General*: guarda la **Region** del progetto (es. `eu-central-1` Francoforte).
+- Vercel → progetto → *Settings → Functions → Function Region*: scegli la regione più vicina (Francoforte `fra1`, Irlanda `dub1`, Londra `lhr1`, Parigi `cdg1`, Stoccolma `arn1`) e ripubblica.
+
+Le pagine leggono i dati in parallelo e il calendario carica più mesi insieme, così cambiare giorno o mese non richiede il server.
+
 ## Lingue
 L'app è in italiano e inglese. I testi sono in `src/i18n/messages/it.ts` ed `en.ts` (stesse chiavi, controllate da TypeScript). La lingua si sceglie da **Profilo → Lingua**; se non è stata scelta si usa quella del browser.
 

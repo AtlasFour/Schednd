@@ -31,6 +31,8 @@ export type MeetingContext = {
   /** Membri del gruppo + ospiti dell'incontro. */
   participants: Participant[];
   memberCount: number;
+  /** Id dell'incontro se esiste già nel database (solo per i membri). */
+  occurrenceId: string | null;
 };
 
 function sortParticipants(list: Participant[]) {
@@ -51,19 +53,23 @@ export async function getMeetingContext(
   originalDate: string,
   userId: string,
 ): Promise<MeetingContext | null> {
-  const group = await getGroupDetail(supabase, groupId);
   const { m: msg } = await getI18n();
-
-  if (group) {
-    const { data: guests } = await supabase
+  // Le due letture non dipendono l'una dall'altra: insieme sono più veloci.
+  const [group, { data: guests }] = await Promise.all([
+    getGroupDetail(supabase, groupId),
+    supabase
       .from("occurrences")
-      .select("occurrence_guests(user_id, profiles(display_name))")
+      .select("id, occurrence_guests(user_id, profiles(display_name))")
       .eq("group_id", groupId)
       .eq("original_date", originalDate)
-      .maybeSingle();
+      .maybeSingle(),
+  ]);
+
+  if (group) {
 
     const guestRows =
       (guests as {
+        id: string;
         occurrence_guests: { user_id: string; profiles: { display_name: string } | null }[];
       } | null)?.occurrence_guests ?? [];
 
@@ -86,6 +92,7 @@ export async function getMeetingContext(
       group,
       participants: sortParticipants(participants),
       memberCount: group.memberships.length,
+      occurrenceId: (guests as { id: string } | null)?.id ?? null,
     };
   }
 
@@ -105,5 +112,6 @@ export async function getMeetingContext(
     group: ctx.group,
     participants: sortParticipants(ctx.participants),
     memberCount: ctx.participants.filter((p) => p.role !== "guest").length,
+    occurrenceId: null,
   };
 }

@@ -39,14 +39,14 @@ async function GroupDetail({ params, searchParams }: PageProps<"/groups/[id]">) 
   const { nuovo } = await searchParams;
   const { supabase, user } = await requireUser();
   const { locale, m: msg } = await getI18n();
-  const group = await getGroupDetail(supabase, id);
+  // Chiusura delle proposte scadute in parallelo con la lettura del gruppo.
+  const [group] = await Promise.all([getGroupDetail(supabase, id), closeDueProposals(supabase)]);
 
   if (!group) notFound();
 
   const me = group.memberships.find((m) => m.user_id === user.id);
   const isOwner = me?.role === "owner";
   const schedule = activeSchedule(group);
-  await closeDueProposals(supabase);
   const occurrences = await fetchOccurrences(
     supabase,
     [group.id],
