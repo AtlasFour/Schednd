@@ -130,6 +130,9 @@ async function Home() {
           </h1>
         </div>
         <div className="flex shrink-0 gap-2">
+          <ButtonLink href="/calendario" variant="secondary" small aria-label="Calendario">
+            📅
+          </ButtonLink>
           <ButtonLink href="/libreria" variant="secondary" small aria-label="La mia libreria">
             📚
           </ButtonLink>
@@ -147,7 +150,7 @@ async function Home() {
               <li key={`${m.group_id}-${m.original_date}`}>
                 <Link
                   href={`/groups/${m.group_id}/${m.original_date}`}
-                  className="flex items-center justify-between gap-3 rounded-2xl border border-brand/30 bg-brand/5 p-4"
+                  className="ui-card flex items-center justify-between gap-3 rounded-2xl border border-brand/30 bg-brand/5 p-4"
                 >
                   <div className="min-w-0">
                     <p className="font-semibold">
@@ -215,7 +218,7 @@ async function Home() {
             </p>
           </Card>
         ) : (
-          <ul className="flex flex-col divide-y divide-foreground/10 rounded-2xl border border-foreground/10">
+          <ul className="ui-card flex flex-col divide-y divide-foreground/10 rounded-2xl border border-foreground/10">
             {groups
               .slice()
               .sort((a, b) => a.name.localeCompare(b.name, "it"))

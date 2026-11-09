@@ -58,7 +58,7 @@ export function AttendanceButtons({
               disabled={disabled}
               onClick={() => choose(s)}
               className={cx(
-                "flex items-center justify-center gap-1 rounded-xl border font-medium transition disabled:opacity-50",
+                "ui-btn flex items-center justify-center gap-1 rounded-xl border font-medium transition disabled:opacity-50",
                 compact ? "h-9 text-xs" : "h-11 text-sm",
                 selected
                   ? ACTIVE[s]

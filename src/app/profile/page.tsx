@@ -7,6 +7,7 @@ import { signOut } from "../actions";
 import { getSmtpConfig } from "@/lib/notifications/config";
 import { NotificationSettings } from "./notification-settings";
 import { ProfileForm } from "./profile-form";
+import { ThemePicker } from "./theme-picker";
 
 export const metadata: Metadata = { title: "Profilo" };
 
@@ -34,6 +35,10 @@ async function Profile() {
           timezone={profile?.timezone ?? "Europe/Rome"}
           bggUsername={profile?.bgg_username ?? null}
         />
+      </Card>
+      <Card title="Tema grafico">
+        <ThemePicker />
+        <p className="mt-2 text-xs text-foreground/50">Vale per questo dispositivo.</p>
       </Card>
       <Card title="Notifiche">
         <NotificationSettings

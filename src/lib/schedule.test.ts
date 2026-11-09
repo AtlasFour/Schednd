@@ -168,3 +168,44 @@ describe("library helpers", async () => {
     expect(fitsPlayers({ min_players: null, max_players: null }, 9)).toBe(true);
   });
 });
+
+describe("meetingsBetween", async () => {
+  const { meetingsBetween } = await import("./meetings");
+  const group = {
+    id: "g",
+    name: "G",
+    timezone: "Europe/Rome",
+    default_game_title: null,
+    default_location: null,
+    min_attendees: null,
+    memberCount: 3,
+    group_schedules: [
+      { id: "s", anchor_date: "2026-10-07", interval_weeks: 1, start_time: "21:00:00", valid_until: null },
+    ],
+  };
+  it("restituisce gli incontri del mese, anche passati e spostati", () => {
+    const moved = {
+      id: "o",
+      group_id: "g",
+      original_date: "2026-11-25",
+      start_date: "2026-12-02",
+      start_time: "20:00:00",
+      status: "scheduled" as const,
+      game_title_override: null,
+      location_override: null,
+      notes: null,
+      attendances: [],
+    };
+    const ms = meetingsBetween(group, [moved], "u", "2026-11-01", "2026-11-30");
+    expect(ms.map((m) => m.date)).toEqual(["2026-11-04", "2026-11-11", "2026-11-18"]);
+    const dec = meetingsBetween(group, [moved], "u", "2026-12-01", "2026-12-31");
+    expect(dec.map((m) => m.date).sort()).toEqual([
+      "2026-12-02",
+      "2026-12-02",
+      "2026-12-09",
+      "2026-12-16",
+      "2026-12-23",
+      "2026-12-30",
+    ]);
+  });
+});

@@ -40,7 +40,7 @@ export function MeetingCard({
   return (
     <article
       className={cx(
-        "flex flex-col gap-3 rounded-2xl border border-foreground/10 p-4",
+        "ui-card flex flex-col gap-3 rounded-2xl border border-foreground/10 p-4",
         meeting.skipped && "opacity-70",
       )}
     >

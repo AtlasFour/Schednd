@@ -15,7 +15,7 @@ export function GameCard({ game, children }: { game: LibraryGame; children?: Rea
     formatPlayingTime(game.playing_minutes),
   ].filter(Boolean);
   return (
-    <article className="flex items-start gap-3 rounded-2xl border border-foreground/10 p-3">
+    <article className="ui-card flex items-start gap-3 rounded-2xl border border-foreground/10 p-3">
       {game.image_url ? (
         // eslint-disable-next-line @next/next/no-img-element
         <img

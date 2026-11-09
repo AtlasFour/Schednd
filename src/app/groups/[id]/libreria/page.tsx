@@ -99,7 +99,7 @@ function FilterChip({ href, active, children }: { href: string; active: boolean;
       href={href}
       aria-current={active ? "page" : undefined}
       className={cx(
-        "rounded-full border px-3 py-1 text-sm",
+        "ui-chip rounded-full border px-3 py-1 text-sm",
         active ? "border-brand bg-brand text-white" : "border-foreground/15 hover:bg-foreground/5",
       )}
     >

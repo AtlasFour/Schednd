@@ -60,7 +60,7 @@ export function Card({
   return (
     <section
       className={cx(
-        "rounded-2xl border border-foreground/10 bg-foreground/[0.02] p-4",
+        "ui-card rounded-2xl border border-foreground/10 bg-foreground/[0.02] p-4",
         className,
       )}
     >
@@ -81,7 +81,8 @@ export type ButtonVariant = keyof typeof buttonStyles;
 
 export function buttonClass(variant: ButtonVariant = "primary", small = false) {
   return cx(
-    "inline-flex items-center justify-center gap-2 rounded-xl font-medium transition disabled:opacity-60",
+    "ui-btn inline-flex items-center justify-center gap-2 rounded-xl font-medium transition disabled:opacity-60",
+    `ui-btn-${variant}`,
     small ? "h-9 px-3 text-sm" : "h-11 px-4",
     buttonStyles[variant],
   );
@@ -127,7 +128,7 @@ export function Field({
 }
 
 export const inputClass =
-  "h-11 w-full rounded-xl border border-foreground/15 bg-background px-3 text-base outline-none focus:border-brand focus:ring-2 focus:ring-brand/30";
+  "ui-input h-11 w-full rounded-xl border border-foreground/15 bg-background px-3 text-base outline-none focus:border-brand focus:ring-2 focus:ring-brand/30";
 
 export function Input(props: ComponentProps<"input">) {
   return <input {...props} className={cx(inputClass, props.className)} />;
@@ -161,7 +162,7 @@ export function Badge({
   return (
     <span
       className={cx(
-        "inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium",
+        "ui-badge inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium",
         tones[tone],
       )}
     >
