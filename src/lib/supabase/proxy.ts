@@ -16,6 +16,19 @@ function isPublicPath(pathname: string) {
  * chi non è autenticato.
  */
 export async function updateSession(request: NextRequest) {
+  // Se Supabase rimanda il link di accesso a una pagina diversa da
+  // /auth/confirm (es. la home, quando l'indirizzo non è tra i Redirect URLs),
+  // inoltriamo il codice alla pagina giusta.
+  const { pathname: currentPath, searchParams } = request.nextUrl;
+  if (
+    (searchParams.has("code") || searchParams.has("token_hash")) &&
+    !currentPath.startsWith("/auth/")
+  ) {
+    const url = request.nextUrl.clone();
+    url.pathname = "/auth/confirm";
+    return NextResponse.redirect(url);
+  }
+
   let response = NextResponse.next({ request });
 
   const env = getSupabaseEnv();
