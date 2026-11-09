@@ -1,10 +1,12 @@
 "use client";
 
 import { useState } from "react";
+import { useI18n } from "@/i18n/client";
 import { buttonClass } from "./ui";
 
 export function InviteBox({ url, code, groupName }: { url: string; code: string; groupName: string }) {
   const [copied, setCopied] = useState(false);
+  const { m } = useI18n();
 
   async function copy() {
     try {
@@ -12,15 +14,15 @@ export function InviteBox({ url, code, groupName }: { url: string; code: string;
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch {
-      window.prompt("Copia il link:", url);
+      window.prompt(m.common.copyPrompt, url);
     }
   }
 
   async function share() {
     try {
       await navigator.share({
-        title: `Unisciti a ${groupName} su Schednd`,
-        text: `Ti invito nel gruppo "${groupName}" su Schednd:`,
+        title: m.invite.shareTitle(groupName),
+        text: m.invite.shareText(groupName),
         url,
       });
     } catch {
@@ -33,18 +35,17 @@ export function InviteBox({ url, code, groupName }: { url: string; code: string;
   return (
     <div className="flex flex-col gap-3">
       <p className="text-sm text-foreground/70">
-        Manda questo link a chi vuoi aggiungere al gruppo. In alternativa può
-        inserire il codice <strong className="font-mono tracking-wider">{code}</strong>{" "}
-        dalla home.
+        {m.invite.explainBefore}{" "}
+        <strong className="font-mono tracking-wider">{code}</strong> {m.invite.explainAfter}
       </p>
       <p className="truncate rounded-lg bg-foreground/5 px-3 py-2 font-mono text-xs">{url}</p>
       <div className="flex gap-2">
         <button type="button" onClick={copy} className={buttonClass("secondary", true)}>
-          {copied ? "Copiato ✓" : "Copia link"}
+          {copied ? m.common.copied : m.common.copyLink}
         </button>
         {canShare && (
           <button type="button" onClick={share} className={buttonClass("primary", true)}>
-            Condividi
+            {m.common.share}
           </button>
         )}
       </div>

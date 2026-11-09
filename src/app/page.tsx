@@ -6,8 +6,8 @@ import { requireUser } from "@/lib/auth";
 import { LiveRefresh } from "@/components/live-refresh";
 import { MeetingCard } from "@/components/meeting-card";
 import type { GroupRow, MemberRole, ScheduleRow } from "@/lib/groups";
+import { getI18n } from "@/i18n/server";
 import {
-  ATTENDANCE_LABELS,
   fetchOccurrences,
   upcomingMeetings,
   type AttendanceStatus,
@@ -74,6 +74,8 @@ export default function HomePage() {
 
 async function Home() {
   const { supabase, user } = await requireUser();
+  const { locale, m } = await getI18n();
+  const msg = m;
 
   const [{ data: profile }, { data: memberships }, { data: guestRows }] = await Promise.all([
     supabase.from("profiles").select("display_name").eq("id", user.id).maybeSingle(),
@@ -124,27 +126,27 @@ async function Home() {
       <LiveRefresh />
       <header className="flex items-center justify-between gap-4">
         <div className="min-w-0">
-          <p className="text-sm text-foreground/60">Ciao 👋</p>
+          <p className="text-sm text-foreground/60">{m.home.hello}</p>
           <h1 className="truncate text-2xl font-bold tracking-tight">
             {profile?.display_name ?? user.email}
           </h1>
         </div>
         <div className="flex shrink-0 gap-2">
-          <ButtonLink href="/calendario" variant="secondary" small aria-label="Calendario">
+          <ButtonLink href="/calendario" variant="secondary" small aria-label={m.home.calendar}>
             📅
           </ButtonLink>
-          <ButtonLink href="/libreria" variant="secondary" small aria-label="La mia libreria">
+          <ButtonLink href="/libreria" variant="secondary" small aria-label={m.home.myLibrary}>
             📚
           </ButtonLink>
-          <ButtonLink href="/profile" variant="secondary" small aria-label="Profilo">
-            👤 Profilo
+          <ButtonLink href="/profile" variant="secondary" small aria-label={m.common.profile}>
+            👤 {m.common.profile}
           </ButtonLink>
         </div>
       </header>
 
       {guestMeetings.length > 0 && (
         <section className="flex flex-col gap-3">
-          <h2 className="text-lg font-semibold">Sei ospite</h2>
+          <h2 className="text-lg font-semibold">{m.home.asGuest}</h2>
           <ul className="flex flex-col gap-3">
             {guestMeetings.map((m) => (
               <li key={`${m.group_id}-${m.original_date}`}>
@@ -154,16 +156,16 @@ async function Home() {
                 >
                   <div className="min-w-0">
                     <p className="font-semibold">
-                      {capitalize(formatShortDate(m.start_date))} · {formatTime(m.start_time)}
+                      {capitalize(formatShortDate(m.start_date, locale))} · {formatTime(m.start_time)}
                     </p>
                     <p className="truncate text-sm">{m.group_name}</p>
                     {m.game && <p className="truncate text-sm text-foreground/60">🎲 {m.game}</p>}
                     <p className="mt-1 text-sm">
                       {m.skipped
-                        ? "⏭️ Incontro saltato"
+                        ? msg.home.skipped
                         : m.my_status
-                          ? `${ATTENDANCE_LABELS[m.my_status].emoji} ${ATTENDANCE_LABELS[m.my_status].label}`
-                          : "Non hai ancora risposto"}
+                          ? `${msg.labels.attendance[m.my_status].emoji} ${msg.labels.attendance[m.my_status].label}`
+                          : msg.home.notAnswered}
                     </p>
                   </div>
                   <span aria-hidden className="text-foreground/40">›</span>
@@ -177,18 +179,16 @@ async function Home() {
       {groups.length > 0 && (
         <section className="flex flex-col gap-3">
           <div className="flex items-baseline justify-between gap-2">
-            <h2 className="text-lg font-semibold">Prossimi incontri</h2>
+            <h2 className="text-lg font-semibold">{m.home.upcoming}</h2>
             {toAnswer > 0 && (
               <span className="text-sm text-brand">
-                {toAnswer === 1 ? "1 da confermare" : `${toAnswer} da confermare`}
+                {m.home.toConfirm(toAnswer)}
               </span>
             )}
           </div>
           {meetings.length === 0 ? (
             <Card>
-              <p className="text-sm text-foreground/70">
-                Nessun incontro nelle prossime tre settimane.
-              </p>
+              <p className="text-sm text-foreground/70">{m.home.noUpcoming}</p>
             </Card>
           ) : (
             <ul className="flex flex-col gap-3">
@@ -204,24 +204,21 @@ async function Home() {
 
       <section className="flex flex-col gap-3">
         <div className="flex items-center justify-between">
-          <h2 className="text-lg font-semibold">I miei gruppi</h2>
+          <h2 className="text-lg font-semibold">{m.home.myGroups}</h2>
           <ButtonLink href="/groups/new" small>
-            + Nuovo
+            {m.home.newGroup}
           </ButtonLink>
         </div>
 
         {groups.length === 0 ? (
           <Card>
-            <p className="text-sm text-foreground/70">
-              Non fai ancora parte di nessun gruppo. Creane uno, oppure apri il
-              link d&apos;invito che ti hanno mandato.
-            </p>
+            <p className="text-sm text-foreground/70">{m.home.noGroups}</p>
           </Card>
         ) : (
           <ul className="ui-card flex flex-col divide-y divide-foreground/10 rounded-2xl border border-foreground/10">
             {groups
               .slice()
-              .sort((a, b) => a.name.localeCompare(b.name, "it"))
+              .sort((a, b) => a.name.localeCompare(b.name, locale))
               .map((g) => {
                 const next = nextByGroup.get(g.id);
                 return (
@@ -233,18 +230,18 @@ async function Home() {
                       <div className="min-w-0">
                         <p className="truncate font-medium">{g.name}</p>
                         <p className="truncate text-xs text-foreground/60">
-                          {g.memberCount} {g.memberCount === 1 ? "membro" : "membri"}
+                          {m.common.members(g.memberCount)}
                           {next && (
                             <>
-                              {" · prossimo: "}
-                              {formatShortDate(next.date)}{" "}
+                              {` · ${m.home.next} `}
+                              {formatShortDate(next.date, locale)}{" "}
                               {formatTime(next.startTime)}
                             </>
                           )}
                         </p>
                       </div>
                       <span className="flex shrink-0 items-center gap-2 text-foreground/40">
-                        {g.role === "owner" && <span className="text-xs">owner</span>}
+                        {g.role === "owner" && <span className="text-xs">{m.common.owner}</span>}
                         <span aria-hidden>›</span>
                       </span>
                     </Link>
@@ -255,19 +252,19 @@ async function Home() {
         )}
       </section>
 
-      <Card title="Hai un codice d'invito?">
+      <Card title={m.home.inviteTitle}>
         <form action={goToInviteCode} className="flex gap-2">
           <input
             name="code"
             required
-            placeholder="Codice o link"
-            aria-label="Codice d'invito"
+            placeholder={m.home.invitePlaceholder}
+            aria-label={m.home.inviteLabel}
             autoCapitalize="characters"
             autoCorrect="off"
             className={`${inputClass} h-9 text-sm`}
           />
           <SubmitButton variant="secondary" small>
-            Vai
+            {m.home.go}
           </SubmitButton>
         </form>
       </Card>

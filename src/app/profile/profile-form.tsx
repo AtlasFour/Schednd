@@ -3,6 +3,7 @@
 import { useActionState } from "react";
 import { FormMessage, SubmitButton } from "@/components/form";
 import { Field, Input, Select } from "@/components/ui";
+import { useI18n } from "@/i18n/client";
 import { initialFormState } from "@/lib/form";
 import { updateProfile } from "./actions";
 
@@ -17,15 +18,16 @@ export function ProfileForm({
   timezone: string;
   bggUsername: string | null;
 }) {
+  const { m } = useI18n();
   const [state, formAction] = useActionState(updateProfile, initialFormState);
   const timezones = TIMEZONES.includes(timezone) ? TIMEZONES : [timezone, ...TIMEZONES];
 
   return (
     <form action={formAction} className="flex flex-col gap-4">
-      <Field label="Nome visualizzato" htmlFor="display_name" hint="È il nome che vedono gli altri membri.">
+      <Field label={m.profile.displayName} htmlFor="display_name" hint={m.profile.displayNameHint}>
         <Input id="display_name" name="display_name" required maxLength={50} defaultValue={displayName} />
       </Field>
-      <Field label="Fuso orario" htmlFor="timezone">
+      <Field label={m.profile.timezone} htmlFor="timezone">
         <Select id="timezone" name="timezone" defaultValue={timezone}>
           {timezones.map((tz) => (
             <option key={tz} value={tz}>
@@ -35,9 +37,9 @@ export function ProfileForm({
         </Select>
       </Field>
       <Field
-        label="Nome utente BoardGameGeek"
+        label={m.profile.bggUsername}
         htmlFor="bgg_username"
-        hint="Facoltativo. Serve per importare la tua collezione nella libreria."
+        hint={m.profile.bggUsernameHint}
       >
         <Input
           id="bgg_username"
@@ -49,7 +51,7 @@ export function ProfileForm({
         />
       </Field>
       <FormMessage state={state} />
-      <SubmitButton pendingLabel="Salvataggio…">Salva</SubmitButton>
+      <SubmitButton pendingLabel={m.common.saving}>{m.common.save}</SubmitButton>
     </form>
   );
 }

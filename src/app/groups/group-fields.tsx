@@ -1,11 +1,12 @@
+"use client";
+
 import { Field, Input, Select, Textarea } from "@/components/ui";
+import { useI18n } from "@/i18n/client";
 import {
-  APPROVAL_RULE_LABELS,
-  DURATION_OPTIONS,
-  INTERVAL_OPTIONS,
-  MODE_LABELS,
-  type ApprovalRule,
-  type GroupMode,
+  APPROVAL_RULES,
+  DURATION_MINUTES,
+  GROUP_MODES,
+  INTERVAL_WEEKS,
   type GroupRow,
 } from "@/lib/groups";
 
@@ -22,71 +23,72 @@ const TIMEZONES = [
 
 /** Campi del gruppo condivisi tra creazione e impostazioni. */
 export function GroupInfoFields({ group }: { group?: Partial<GroupRow> }) {
+  const { m } = useI18n();
   const timezone = group?.timezone ?? "Europe/Rome";
   const timezones = TIMEZONES.includes(timezone) ? TIMEZONES : [timezone, ...TIMEZONES];
 
   return (
     <>
-      <Field label="Nome del gruppo" htmlFor="name">
+      <Field label={m.groupForm.name} htmlFor="name">
         <Input
           id="name"
           name="name"
           required
           maxLength={80}
           defaultValue={group?.name ?? ""}
-          placeholder="es. D&D del mercoledì"
+          placeholder={m.groupForm.namePlaceholder}
         />
       </Field>
 
-      <Field label="Descrizione" htmlFor="description" hint="Facoltativa.">
+      <Field label={m.groupForm.description} htmlFor="description" hint={m.common.optional}>
         <Textarea
           id="description"
           name="description"
           maxLength={1000}
           defaultValue={group?.description ?? ""}
-          placeholder="es. Campagna di Curse of Strahd, livello 5"
+          placeholder={m.groupForm.descriptionPlaceholder}
         />
       </Field>
 
       <Field
-        label="Gioco"
+        label={m.groupForm.game}
         htmlFor="default_game_title"
-        hint="Il gioco abituale. Si potrà cambiare per un singolo incontro."
+        hint={m.groupForm.gameHint}
       >
         <Input
           id="default_game_title"
           name="default_game_title"
           maxLength={120}
           defaultValue={group?.default_game_title ?? ""}
-          placeholder="es. D&D 5e, Gloomhaven, Among Us"
+          placeholder={m.groupForm.gamePlaceholder}
         />
       </Field>
 
-      <Field label="Dove si gioca" htmlFor="mode">
+      <Field label={m.groupForm.mode} htmlFor="mode">
         <Select id="mode" name="mode" defaultValue={group?.mode ?? "in_person"}>
-          {(Object.keys(MODE_LABELS) as GroupMode[]).map((mode) => (
+          {GROUP_MODES.map((mode) => (
             <option key={mode} value={mode}>
-              {MODE_LABELS[mode]}
+              {m.labels.mode[mode]}
             </option>
           ))}
         </Select>
       </Field>
 
       <Field
-        label="Luogo"
+        label={m.groupForm.location}
         htmlFor="default_location"
-        hint="Per gli incontri di persona. Potrà cambiare di volta in volta."
+        hint={m.groupForm.locationHint}
       >
         <Input
           id="default_location"
           name="default_location"
           maxLength={200}
           defaultValue={group?.default_location ?? ""}
-          placeholder="es. Da Marco, via Roma 1"
+          placeholder={m.groupForm.locationPlaceholder}
         />
       </Field>
 
-      <Field label="Link online" htmlFor="online_link" hint="Discord, Roll20, Foundry…">
+      <Field label={m.groupForm.onlineLink} htmlFor="online_link" hint={m.groupForm.onlineLinkHint}>
         <Input
           id="online_link"
           name="online_link"
@@ -98,21 +100,21 @@ export function GroupInfoFields({ group }: { group?: Partial<GroupRow> }) {
       </Field>
 
       <div className="grid grid-cols-2 gap-3">
-        <Field label="Durata" htmlFor="duration_minutes">
+        <Field label={m.groupForm.duration} htmlFor="duration_minutes">
           <Select
             id="duration_minutes"
             name="duration_minutes"
             defaultValue={String(group?.duration_minutes ?? 180)}
           >
-            {DURATION_OPTIONS.map((o) => (
-              <option key={o.value} value={o.value}>
-                {o.label}
+            {DURATION_MINUTES.map((minutes) => (
+              <option key={minutes} value={minutes}>
+                {m.labels.duration(minutes)}
               </option>
             ))}
           </Select>
         </Field>
 
-        <Field label="Minimo presenti" htmlFor="min_attendees">
+        <Field label={m.groupForm.minAttendees} htmlFor="min_attendees">
           <Input
             id="min_attendees"
             name="min_attendees"
@@ -121,20 +123,20 @@ export function GroupInfoFields({ group }: { group?: Partial<GroupRow> }) {
             min={1}
             max={100}
             defaultValue={group?.min_attendees ?? ""}
-            placeholder="nessuno"
+            placeholder={m.groupForm.minAttendeesPlaceholder}
           />
         </Field>
       </div>
 
       <Field
-        label="Come si approvano le proposte"
+        label={m.groupForm.approvalRule}
         htmlFor="approval_rule"
         hint={
           <>
-            {(Object.keys(APPROVAL_RULE_LABELS) as ApprovalRule[]).map((rule) => (
+            {APPROVAL_RULES.map((rule) => (
               <span key={rule} className="block">
-                <strong>{APPROVAL_RULE_LABELS[rule].label}:</strong>{" "}
-                {APPROVAL_RULE_LABELS[rule].hint}
+                <strong>{m.labels.approvalRule[rule].label}:</strong>{" "}
+                {m.labels.approvalRule[rule].hint}
               </span>
             ))}
           </>
@@ -145,15 +147,15 @@ export function GroupInfoFields({ group }: { group?: Partial<GroupRow> }) {
           name="approval_rule"
           defaultValue={group?.approval_rule ?? "majority"}
         >
-          {(Object.keys(APPROVAL_RULE_LABELS) as ApprovalRule[]).map((rule) => (
+          {APPROVAL_RULES.map((rule) => (
             <option key={rule} value={rule}>
-              {APPROVAL_RULE_LABELS[rule].label}
+              {m.labels.approvalRule[rule].label}
             </option>
           ))}
         </Select>
       </Field>
 
-      <Field label="Fuso orario" htmlFor="timezone">
+      <Field label={m.groupForm.timezone} htmlFor="timezone">
         <Select id="timezone" name="timezone" defaultValue={timezone}>
           {timezones.map((tz) => (
             <option key={tz} value={tz}>
@@ -172,7 +174,7 @@ export function ScheduleFields({
   intervalWeeks = 1,
   startTime = "21:00",
   minDate,
-  dateLabel = "Data del primo incontro",
+  dateLabel,
 }: {
   anchorDate: string;
   intervalWeeks?: number;
@@ -180,12 +182,13 @@ export function ScheduleFields({
   minDate?: string;
   dateLabel?: string;
 }) {
+  const { m } = useI18n();
   return (
     <>
       <Field
-        label={dateLabel}
+        label={dateLabel ?? m.groupForm.firstMeeting}
         htmlFor="anchor_date"
-        hint="Il giorno della settimana viene preso da questa data."
+        hint={m.groupForm.firstMeetingHint}
       >
         <Input
           id="anchor_date"
@@ -197,20 +200,20 @@ export function ScheduleFields({
         />
       </Field>
       <div className="grid grid-cols-2 gap-3">
-        <Field label="Frequenza" htmlFor="interval_weeks">
+        <Field label={m.groupForm.frequency} htmlFor="interval_weeks">
           <Select
             id="interval_weeks"
             name="interval_weeks"
             defaultValue={String(intervalWeeks)}
           >
-            {INTERVAL_OPTIONS.map((o) => (
-              <option key={o.value} value={o.value}>
-                {o.label}
+            {INTERVAL_WEEKS.map((weeks) => (
+              <option key={weeks} value={weeks}>
+                {m.labels.interval(weeks)}
               </option>
             ))}
           </Select>
         </Field>
-        <Field label="Orario" htmlFor="start_time">
+        <Field label={m.groupForm.time} htmlFor="start_time">
           <Input
             id="start_time"
             name="start_time"

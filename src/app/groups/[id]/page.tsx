@@ -6,14 +6,12 @@ import { NavForm } from "@/components/navigation";
 import { LiveRefresh } from "@/components/live-refresh";
 import { MeetingCard } from "@/components/meeting-card";
 import { Badge, ButtonLink, Card, Page, PageSkeleton } from "@/components/ui";
+import { getI18n } from "@/i18n/server";
 import { requireUser } from "@/lib/auth";
 import {
   activeSchedule,
-  APPROVAL_RULE_LABELS,
-  formatDuration,
   getGroupDetail,
   inviteUrl,
-  MODE_LABELS,
 } from "@/lib/groups";
 import { fetchOccurrences, upcomingMeetings } from "@/lib/meetings";
 import { closeDueProposals } from "@/lib/proposals-server";
@@ -33,6 +31,7 @@ async function GroupDetail({ params, searchParams }: PageProps<"/groups/[id]">) 
   const { id } = await params;
   const { nuovo } = await searchParams;
   const { supabase, user } = await requireUser();
+  const { locale, m: msg } = await getI18n();
   const group = await getGroupDetail(supabase, id);
 
   if (!group) notFound();
@@ -57,12 +56,12 @@ async function GroupDetail({ params, searchParams }: PageProps<"/groups/[id]">) 
   return (
     <Page
       title={group.name}
-      subtitle={schedule ? describeRecurrence(schedule) : undefined}
-      back={{ href: "/", label: "Home" }}
+      subtitle={schedule ? describeRecurrence(schedule, locale) : undefined}
+      back={{ href: "/", label: msg.common.home }}
       actions={
         isOwner ? (
           <ButtonLink href={`/groups/${group.id}/settings`} variant="secondary" small>
-            ⚙️ Impostazioni
+            {msg.group.settings}
           </ButtonLink>
         ) : undefined
       }
@@ -70,7 +69,7 @@ async function GroupDetail({ params, searchParams }: PageProps<"/groups/[id]">) 
       <LiveRefresh />
       {nuovo && (
         <p className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-3 text-sm">
-          🎉 Gruppo creato! Ora invita i tuoi amici con il link qui sotto.
+          {msg.group.created}
         </p>
       )}
 
@@ -79,10 +78,10 @@ async function GroupDetail({ params, searchParams }: PageProps<"/groups/[id]">) 
       )}
 
       <section className="flex flex-col gap-3">
-        <h2 className="text-lg font-semibold">Prossimi incontri</h2>
+        <h2 className="text-lg font-semibold">{msg.group.upcoming}</h2>
         {meetings.length === 0 ? (
           <Card>
-            <p className="text-sm text-foreground/60">Nessun incontro in programma.</p>
+            <p className="text-sm text-foreground/60">{msg.group.noMeetings}</p>
           </Card>
         ) : (
           <ul className="flex flex-col gap-3">
@@ -96,21 +95,21 @@ async function GroupDetail({ params, searchParams }: PageProps<"/groups/[id]">) 
       </section>
 
       <ButtonLink href={`/groups/${group.id}/libreria`} variant="secondary" className="self-start">
-        📚 Libreria del gruppo
+        {msg.group.library}
       </ButtonLink>
 
-      <Card title="Info">
+      <Card title={msg.group.info}>
         <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-2 text-sm">
-          <dt className="text-foreground/60">Gioco</dt>
+          <dt className="text-foreground/60">{msg.group.game}</dt>
           <dd>{group.default_game_title ?? "—"}</dd>
-          <dt className="text-foreground/60">Dove</dt>
+          <dt className="text-foreground/60">{msg.group.where}</dt>
           <dd>
-            {MODE_LABELS[group.mode]}
+            {msg.labels.mode[group.mode]}
             {group.default_location && ` · ${group.default_location}`}
           </dd>
           {group.online_link && (
             <>
-              <dt className="text-foreground/60">Link</dt>
+              <dt className="text-foreground/60">{msg.group.link}</dt>
               <dd className="truncate">
                 <a href={group.online_link} target="_blank" rel="noreferrer" className="text-brand underline">
                   {group.online_link}
@@ -118,30 +117,30 @@ async function GroupDetail({ params, searchParams }: PageProps<"/groups/[id]">) 
               </dd>
             </>
           )}
-          <dt className="text-foreground/60">Durata</dt>
-          <dd>{formatDuration(group.duration_minutes)}</dd>
-          <dt className="text-foreground/60">Minimo</dt>
-          <dd>{group.min_attendees ? `${group.min_attendees} presenti` : "nessuno"}</dd>
-          <dt className="text-foreground/60">Proposte</dt>
-          <dd>{APPROVAL_RULE_LABELS[group.approval_rule].label}</dd>
+          <dt className="text-foreground/60">{msg.group.duration}</dt>
+          <dd>{msg.labels.duration(group.duration_minutes)}</dd>
+          <dt className="text-foreground/60">{msg.group.minimum}</dt>
+          <dd>{msg.group.minimumValue(group.min_attendees)}</dd>
+          <dt className="text-foreground/60">{msg.group.proposals}</dt>
+          <dd>{msg.labels.approvalRule[group.approval_rule].label}</dd>
         </dl>
       </Card>
 
-      <Card title={`Membri (${group.memberships.length})`}>
+      <Card title={msg.group.members(group.memberships.length)}>
         <ul className="flex flex-col gap-2">
           {group.memberships.map((m) => (
             <li key={m.user_id} className="flex items-center justify-between gap-2">
               <span>
-                {m.profiles?.display_name ?? "Utente"}
-                {m.user_id === user.id && <span className="text-foreground/50"> (tu)</span>}
+                {m.profiles?.display_name ?? msg.common.user}
+                {m.user_id === user.id && <span className="text-foreground/50"> {msg.common.you}</span>}
               </span>
-              {m.role === "owner" && <Badge tone="brand">owner</Badge>}
+              {m.role === "owner" && <Badge tone="brand">{msg.common.owner}</Badge>}
             </li>
           ))}
         </ul>
       </Card>
 
-      <Card title="Invita nel gruppo">
+      <Card title={msg.group.inviteTitle}>
         <InviteBox url={url} code={group.invite_code} groupName={group.name} />
       </Card>
 
@@ -150,9 +149,9 @@ async function GroupDetail({ params, searchParams }: PageProps<"/groups/[id]">) 
           <SubmitButton
             variant="danger"
             small
-            confirm={`Vuoi davvero uscire da "${group.name}"?`}
+            confirm={msg.group.confirmLeave(group.name)}
           >
-            Esci dal gruppo
+            {msg.group.leave}
           </SubmitButton>
         </NavForm>
       )}

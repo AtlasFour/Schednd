@@ -4,12 +4,16 @@ import { Suspense } from "react";
 import { SubmitButton } from "@/components/form";
 import { GameCard } from "@/components/game-card";
 import { Card, Page, PageSkeleton } from "@/components/ui";
+import { getI18n } from "@/i18n/server";
 import { requireUser } from "@/lib/auth";
 import type { MyLibraryGame } from "@/lib/library";
 import { removeGame } from "./actions";
 import { AddGameForm, BggImportButton, FavoriteButton } from "./library-client";
 
-export const metadata: Metadata = { title: "La mia libreria" };
+export async function generateMetadata(): Promise<Metadata> {
+  const { m } = await getI18n();
+  return { title: m.library.myTitle };
+}
 
 export default function LibraryPage() {
   return (
@@ -27,6 +31,7 @@ type Row = {
 
 async function Library() {
   const { supabase, user } = await requireUser();
+  const { locale, m } = await getI18n();
   const [{ data: rows }, { data: profile }] = await Promise.all([
     supabase
       .from("user_games")
@@ -40,42 +45,41 @@ async function Library() {
     .map((r) => ({ ...r.games, game_id: r.games.id, is_favorite: r.is_favorite, source: r.source }))
     .sort(
       (a, b) =>
-        Number(b.is_favorite) - Number(a.is_favorite) || a.title.localeCompare(b.title, "it"),
+        Number(b.is_favorite) - Number(a.is_favorite) || a.title.localeCompare(b.title, locale),
     );
 
   const bggReady = Boolean(process.env.BGG_API_TOKEN);
 
   return (
     <Page
-      title="La mia libreria"
-      subtitle={`${games.length} ${games.length === 1 ? "gioco" : "giochi"} · i preferiti sono in cima`}
-      back={{ href: "/", label: "Home" }}
+      title={m.library.myTitle}
+      subtitle={m.library.mySubtitle(m.common.games(games.length))}
+      back={{ href: "/", label: m.common.home }}
     >
       <Card title="BoardGameGeek">
         {!bggReady ? (
           <p className="text-sm text-foreground/70">
-            L&apos;import da BoardGameGeek non è ancora attivo sul server.{" "}
+            {m.library.bggNotActive}{" "}
             <Link href="/profile/configurazione" className="text-brand underline">
-              Vedi la configurazione
+              {m.library.seeConfig}
             </Link>
             .
           </p>
         ) : profile?.bgg_username ? (
           <div className="flex flex-col gap-2">
             <p className="text-sm text-foreground/70">
-              Importa i giochi che possiedi dalla collezione di{" "}
-              <strong>{profile.bgg_username}</strong> (espansioni escluse). Puoi ripetere
-              l&apos;import per aggiornarla.
+              {m.library.bggImportFrom} <strong>{profile.bgg_username}</strong>{" "}
+              {m.library.bggImportAfter}
             </p>
             <BggImportButton />
           </div>
         ) : (
           <p className="text-sm text-foreground/70">
-            Inserisci il tuo nome utente BoardGameGeek nel{" "}
+            {m.library.bggEnterUsernameBefore}{" "}
             <Link href="/profile" className="text-brand underline">
-              profilo
+              {m.library.bggEnterUsernameLink}
             </Link>{" "}
-            per importare la tua collezione.
+            {m.library.bggEnterUsernameAfter}
           </p>
         )}
       </Card>
@@ -84,8 +88,7 @@ async function Library() {
 
       {games.length === 0 ? (
         <p className="text-sm text-foreground/60">
-          La tua libreria è vuota. Aggiungi i giochi che possiedi: compariranno nella libreria dei
-          tuoi gruppi e nelle proposte di cambio gioco.
+          {m.library.empty}
         </p>
       ) : (
         <ul className="flex flex-col gap-2">
@@ -99,13 +102,13 @@ async function Library() {
                       variant="ghost"
                       small
                       className="h-7 px-2 text-xs"
-                      confirm={`Togliere "${g.title}" dalla tua libreria?`}
+                      confirm={m.library.confirmRemove(g.title)}
                     >
-                      Togli
+                      {m.library.remove}
                     </SubmitButton>
                   </form>
                   {g.source === "bgg" && (
-                    <span className="ml-auto text-xs text-foreground/40">da BGG</span>
+                    <span className="ml-auto text-xs text-foreground/40">{m.library.fromBgg}</span>
                   )}
                 </div>
               </GameCard>
@@ -114,7 +117,7 @@ async function Library() {
         </ul>
       )}
       <p className="text-xs text-foreground/40">
-        Dati dei giochi importati da BoardGameGeek (boardgamegeek.com).
+        {m.library.bggCredit}
       </p>
     </Page>
   );

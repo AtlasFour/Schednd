@@ -4,11 +4,15 @@ import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { GameCard } from "@/components/game-card";
 import { ButtonLink, cx, Page, PageSkeleton } from "@/components/ui";
+import { getI18n } from "@/i18n/server";
 import { requireUser } from "@/lib/auth";
 import { getGroupDetail } from "@/lib/groups";
 import { fitsPlayers, type GroupLibraryGame } from "@/lib/library";
 
-export const metadata: Metadata = { title: "Libreria del gruppo" };
+export async function generateMetadata(): Promise<Metadata> {
+  const { m } = await getI18n();
+  return { title: m.library.groupTitle };
+}
 
 const PLAYER_FILTERS = [2, 3, 4, 5, 6, 7, 8];
 
@@ -24,6 +28,7 @@ async function GroupLibrary({ params, searchParams }: PageProps<"/groups/[id]/li
   const { id } = await params;
   const { giocatori } = await searchParams;
   const { supabase } = await requireUser();
+  const { m } = await getI18n();
   const group = await getGroupDetail(supabase, id);
   if (!group) notFound();
 
@@ -37,14 +42,14 @@ async function GroupLibrary({ params, searchParams }: PageProps<"/groups/[id]/li
 
   return (
     <Page
-      title="Libreria del gruppo"
-      subtitle={`${group.name} · ${all.length} giochi dei membri`}
+      title={m.library.groupTitle}
+      subtitle={m.library.groupSubtitle(group.name, all.length)}
       back={{ href: `/groups/${id}`, label: group.name }}
     >
-      <nav aria-label="Filtra per numero di giocatori" className="flex flex-wrap items-center gap-2">
-        <span className="text-sm text-foreground/60">👥 Giocatori:</span>
+      <nav aria-label={m.library.filterLabel} className="flex flex-wrap items-center gap-2">
+        <span className="text-sm text-foreground/60">{m.library.players}</span>
         <FilterChip href={`/groups/${id}/libreria`} active={!filter}>
-          Tutti
+          {m.library.all}
         </FilterChip>
         {PLAYER_FILTERS.map((n) => (
           <FilterChip key={n} href={`/groups/${id}/libreria?giocatori=${n}`} active={filter === n}>
@@ -56,14 +61,14 @@ async function GroupLibrary({ params, searchParams }: PageProps<"/groups/[id]/li
       {all.length === 0 ? (
         <div className="flex flex-col gap-3">
           <p className="text-sm text-foreground/60">
-            Nessun membro ha ancora aggiunto giochi. Inizia dalla tua libreria!
+            {m.library.groupEmpty}
           </p>
           <ButtonLink href="/libreria" variant="secondary" small className="self-start">
-            📚 La mia libreria
+            {m.library.myLibraryButton}
           </ButtonLink>
         </div>
       ) : games.length === 0 ? (
-        <p className="text-sm text-foreground/60">Nessun gioco adatto a {filter} giocatori.</p>
+        <p className="text-sm text-foreground/60">{m.library.noneForPlayers(filter ?? 0)}</p>
       ) : (
         <ul className="flex flex-col gap-2">
           {games.map((g) => (
@@ -73,7 +78,7 @@ async function GroupLibrary({ params, searchParams }: PageProps<"/groups/[id]/li
                   {g.favorite_count > 0 && (
                     <span className="mr-2 text-amber-500">★ {g.favorite_count}</span>
                   )}
-                  di {g.owners.join(", ")}
+                  {m.library.ownedBy(g.owners.join(", "))}
                 </p>
               </GameCard>
             </li>
@@ -82,10 +87,9 @@ async function GroupLibrary({ params, searchParams }: PageProps<"/groups/[id]/li
       )}
 
       <p className="text-xs text-foreground/50">
-        I giochi più amati (★) sono in cima. Per aggiungere i tuoi giochi o segnare i preferiti
-        vai nella{" "}
+        {m.library.groupFooterBefore}{" "}
         <Link href="/libreria" className="text-brand underline">
-          tua libreria
+          {m.library.groupFooterLink}
         </Link>
         .
       </p>

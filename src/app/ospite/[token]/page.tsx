@@ -4,12 +4,15 @@ import { acceptGuestInvite } from "@/app/guests/actions";
 import { SubmitButton } from "@/components/form";
 import { NavForm } from "@/components/navigation";
 import { ButtonLink, Card, Page, PageSkeleton } from "@/components/ui";
+import { getI18n } from "@/i18n/server";
 import { requireUser } from "@/lib/auth";
 import type { GroupMode } from "@/lib/groups";
-import { MODE_LABELS } from "@/lib/groups";
 import { capitalize, formatMediumDate, formatTime } from "@/lib/schedule";
 
-export const metadata: Metadata = { title: "Invito a un incontro" };
+export async function generateMetadata(): Promise<Metadata> {
+  const { m } = await getI18n();
+  return { title: m.join.guestMetaTitle };
+}
 
 type GuestPreview = {
   group_id: string;
@@ -39,17 +42,18 @@ async function GuestInvite({ params, searchParams }: PageProps<"/ospite/[token]"
   const { token } = await params;
   const { errore } = await searchParams;
   const { supabase } = await requireUser();
+  const { locale, m } = await getI18n();
 
   const { data } = await supabase.rpc("get_guest_invite_preview", { p_token: token });
   const invite = (data as GuestPreview[] | null)?.[0];
 
   if (!invite || invite.expired) {
     return (
-      <Page title={invite?.expired ? "Incontro già passato" : "Invito non valido"} back={{ href: "/", label: "Home" }}>
+      <Page title={invite?.expired ? m.join.guestPastTitle : m.join.invalidTitle} back={{ href: "/", label: m.common.home }}>
         <p className="text-foreground/70">
           {invite?.expired
-            ? "Questo incontro si è già svolto."
-            : "Il link non è valido oppure è stato sostituito con uno nuovo. Chiedi a chi ti ha invitato di mandartelo di nuovo."}
+            ? m.join.guestPastText
+            : m.join.guestInvalidText}
         </p>
       </Page>
     );
@@ -58,47 +62,47 @@ async function GuestInvite({ params, searchParams }: PageProps<"/ospite/[token]"
   const meetingHref = `/groups/${invite.group_id}/${invite.original_date}`;
 
   return (
-    <Page title="Sei invitato a giocare! 🎲" back={{ href: "/", label: "Home" }}>
+    <Page title={m.join.guestTitle} back={{ href: "/", label: m.common.home }}>
       <Card>
         <p className="text-sm text-foreground/60">{invite.group_name}</p>
         <h2 className="mt-1 text-xl font-semibold">
-          {capitalize(formatMediumDate(invite.start_date))} · {formatTime(invite.start_time)}
+          {capitalize(formatMediumDate(invite.start_date, locale))} · {formatTime(invite.start_time)}
         </h2>
         <dl className="mt-3 grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 text-sm">
-          <dt className="text-foreground/60">Gioco</dt>
+          <dt className="text-foreground/60">{m.join.game}</dt>
           <dd>{invite.game ?? "—"}</dd>
-          <dt className="text-foreground/60">Dove</dt>
+          <dt className="text-foreground/60">{m.join.where}</dt>
           <dd>
-            {MODE_LABELS[invite.mode]}
+            {m.labels.mode[invite.mode]}
             {invite.location && ` · ${invite.location}`}
           </dd>
           {invite.invited_by && (
             <>
-              <dt className="text-foreground/60">Invito di</dt>
+              <dt className="text-foreground/60">{m.join.invitedBy}</dt>
               <dd>{invite.invited_by}</dd>
             </>
           )}
         </dl>
         {invite.skipped && (
-          <p className="mt-3 text-sm font-medium">⏭️ Attenzione: questo incontro è stato saltato.</p>
+          <p className="mt-3 text-sm font-medium">{m.join.skippedWarning}</p>
         )}
       </Card>
 
       {errore && (
         <p role="alert" className="text-sm text-red-500">
-          Non è stato possibile accettare l&apos;invito. Riprova.
+          {m.join.guestError}
         </p>
       )}
 
       {invite.is_member || invite.is_guest ? (
         <ButtonLink href={meetingHref}>
-          {invite.is_member ? "Fai già parte del gruppo: apri l'incontro" : "Apri l'incontro"}
+          {invite.is_member ? m.join.openMeetingMember : m.join.openMeeting}
         </ButtonLink>
       ) : (
         <NavForm action={acceptGuestInvite.bind(null, token)} className="flex flex-col gap-2">
-          <SubmitButton pendingLabel="Attendi…">Partecipa come ospite</SubmitButton>
+          <SubmitButton>{m.join.participate}</SubmitButton>
           <p className="text-center text-xs text-foreground/55">
-            Vedrai solo questo incontro: potrai segnare se ci sei e votare le proposte.
+            {m.join.guestExplain}
           </p>
         </NavForm>
       )}

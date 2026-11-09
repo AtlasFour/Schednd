@@ -2,14 +2,19 @@ import type { Metadata } from "next";
 import { Suspense } from "react";
 import { SubmitButton } from "@/components/form";
 import { Card, Page, PageSkeleton } from "@/components/ui";
+import { getI18n } from "@/i18n/server";
 import { requireUser } from "@/lib/auth";
 import { signOut } from "../actions";
 import { getSmtpConfig } from "@/lib/notifications/config";
 import { NotificationSettings } from "./notification-settings";
 import { ProfileForm } from "./profile-form";
+import { LanguagePicker } from "./language-picker";
 import { ThemePicker } from "./theme-picker";
 
-export const metadata: Metadata = { title: "Profilo" };
+export async function generateMetadata(): Promise<Metadata> {
+  const { m } = await getI18n();
+  return { title: m.profile.title };
+}
 
 export default function ProfilePage() {
   return (
@@ -21,6 +26,7 @@ export default function ProfilePage() {
 
 async function Profile() {
   const { supabase, user } = await requireUser();
+  const { locale, m } = await getI18n();
   const { data: profile } = await supabase
     .from("profiles")
     .select("display_name, timezone, bgg_username, notify_email")
@@ -28,7 +34,7 @@ async function Profile() {
     .maybeSingle();
 
   return (
-    <Page title="Profilo" subtitle={user.email} back={{ href: "/", label: "Home" }}>
+    <Page title={m.profile.title} subtitle={user.email} back={{ href: "/", label: m.common.home }}>
       <Card>
         <ProfileForm
           displayName={profile?.display_name ?? ""}
@@ -36,11 +42,15 @@ async function Profile() {
           bggUsername={profile?.bgg_username ?? null}
         />
       </Card>
-      <Card title="Tema grafico">
-        <ThemePicker />
-        <p className="mt-2 text-xs text-foreground/50">Vale per questo dispositivo.</p>
+      <Card title={m.profile.language}>
+        <LanguagePicker current={locale} />
+        <p className="mt-2 text-xs text-foreground/50">{m.profile.languageHint}</p>
       </Card>
-      <Card title="Notifiche">
+      <Card title={m.profile.theme}>
+        <ThemePicker />
+        <p className="mt-2 text-xs text-foreground/50">{m.profile.thisDevice}</p>
+      </Card>
+      <Card title={m.profile.notifications}>
         <NotificationSettings
           vapidPublicKey={process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY ?? null}
           emailEnabled={profile?.notify_email ?? false}
@@ -49,11 +59,11 @@ async function Profile() {
       </Card>
       <form action={signOut} className="self-start">
         <SubmitButton variant="secondary" small>
-          Esci dall&apos;account
+          {m.profile.signOut}
         </SubmitButton>
       </form>
       <a href="/profile/configurazione" className="self-start text-xs text-foreground/50 underline">
-        Configurazione del server (notifiche, cron)
+        {m.profile.serverConfig}
       </a>
     </Page>
   );

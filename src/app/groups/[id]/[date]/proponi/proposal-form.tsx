@@ -6,7 +6,8 @@ import { FormMessage, SubmitButton } from "@/components/form";
 import { useNavigateOnSuccess } from "@/components/navigation";
 import { buttonClass, Card, cx, Field, Input, Textarea } from "@/components/ui";
 import { initialFormState } from "@/lib/form";
-import { PROPOSAL_TYPE_LABELS, type ProposalType } from "@/lib/proposals";
+import { useI18n } from "@/i18n/client";
+import type { ProposalType } from "@/lib/proposals";
 
 const MAX_OPTIONS = 6;
 const TYPES: ProposalType[] = ["reschedule", "change_game", "skip"];
@@ -26,6 +27,7 @@ export function ProposalForm({
   disabledTypes: ProposalType[];
   gameSuggestions: string[];
 }) {
+  const { m } = useI18n();
   const [state, formAction] = useActionState(
     createProposal.bind(null, groupId, originalDate),
     initialFormState,
@@ -49,7 +51,7 @@ export function ProposalForm({
   return (
     <form action={formAction} className="flex flex-col gap-5">
       <fieldset className="flex flex-col gap-2">
-        <legend className="mb-2 text-sm font-medium">Cosa vuoi proporre?</legend>
+        <legend className="mb-2 text-sm font-medium">{m.propose.whatToPropose}</legend>
         {TYPES.map((t) => {
           const disabled = disabledTypes.includes(t);
           return (
@@ -75,12 +77,12 @@ export function ProposalForm({
               />
               <span>
                 <span className="font-medium">
-                  {PROPOSAL_TYPE_LABELS[t].emoji} {PROPOSAL_TYPE_LABELS[t].label}
+                  {m.labels.proposalType[t].emoji} {m.labels.proposalType[t].label}
                 </span>
                 <span className="block text-xs text-foreground/60">
                   {disabled
-                    ? "C'è già una proposta di questo tipo in corso."
-                    : PROPOSAL_TYPE_LABELS[t].hint}
+                    ? m.propose.alreadyOpen
+                    : m.labels.proposalType[t].hint}
                 </span>
               </span>
             </label>
@@ -89,14 +91,14 @@ export function ProposalForm({
       </fieldset>
 
       {type !== "skip" && (
-        <Card title={type === "reschedule" ? "Date proposte" : "Giochi proposti"}>
+        <Card title={type === "reschedule" ? m.propose.datesTitle : m.propose.gamesTitle}>
           <div className="flex flex-col gap-3">
             {rows.map((key, i) => (
               <div key={`${type}-${key}`} className="flex items-end gap-2">
                 {type === "reschedule" ? (
                   <>
                     <div className="flex-1">
-                      <Field label={`Data ${i + 1}`} htmlFor={`date-${key}`}>
+                      <Field label={m.propose.dateN(i + 1)} htmlFor={`date-${key}`}>
                         <Input
                           id={`date-${key}`}
                           name="option_date"
@@ -107,7 +109,7 @@ export function ProposalForm({
                       </Field>
                     </div>
                     <div className="w-28">
-                      <Field label="Orario" htmlFor={`time-${key}`}>
+                      <Field label={m.propose.time} htmlFor={`time-${key}`}>
                         <Input
                           id={`time-${key}`}
                           name="option_time"
@@ -120,14 +122,14 @@ export function ProposalForm({
                   </>
                 ) : (
                   <div className="flex-1">
-                    <Field label={`Gioco ${i + 1}`} htmlFor={`game-${key}`}>
+                    <Field label={m.propose.gameN(i + 1)} htmlFor={`game-${key}`}>
                       <Input
                         id={`game-${key}`}
                         name="option_game"
                         required
                         maxLength={120}
                         list="game-suggestions"
-                        placeholder="es. Catan"
+                        placeholder={m.propose.gamePlaceholder}
                       />
                     </Field>
                   </div>
@@ -136,7 +138,7 @@ export function ProposalForm({
                   <button
                     type="button"
                     onClick={() => removeRow(key)}
-                    aria-label="Togli questa opzione"
+                    aria-label={m.propose.removeOption}
                     className={cx(buttonClass("ghost"), "w-11 shrink-0 px-0")}
                   >
                     ✕
@@ -150,11 +152,11 @@ export function ProposalForm({
                 onClick={addRow}
                 className={cx(buttonClass("secondary", true), "self-start")}
               >
-                + Aggiungi {type === "reschedule" ? "un'altra data" : "un altro gioco"}
+                {type === "reschedule" ? m.propose.addDate : m.propose.addGame}
               </button>
             )}
             <p className="text-xs text-foreground/55">
-              Gli altri potranno spuntare tutte le opzioni che vanno loro bene.
+              {m.propose.othersTick}
             </p>
           </div>
           <datalist id="game-suggestions">
@@ -165,19 +167,19 @@ export function ProposalForm({
         </Card>
       )}
 
-      <Field label="Messaggio" htmlFor="reason" hint="Facoltativo: spiega il motivo agli altri.">
+      <Field label={m.propose.message} htmlFor="reason" hint={m.propose.messageHint}>
         <Textarea
           id="reason"
           name="reason"
           maxLength={500}
           placeholder={
-            type === "skip" ? "es. Siamo in pochi, recuperiamo la prossima" : "es. Mercoledì lavoro fino a tardi"
+            type === "skip" ? m.propose.messagePlaceholderSkip : m.propose.messagePlaceholder
           }
         />
       </Field>
 
       <FormMessage state={state} />
-      <SubmitButton pendingLabel="Invio…">Invia la proposta</SubmitButton>
+      <SubmitButton pendingLabel={m.propose.sending}>{m.propose.send}</SubmitButton>
     </form>
   );
 }

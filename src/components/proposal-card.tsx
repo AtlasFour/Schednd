@@ -6,10 +6,9 @@ import {
   formatDeadline,
   isOpen,
   optionLabel,
-  PROPOSAL_STATUS_LABELS,
-  PROPOSAL_TYPE_LABELS,
   type ProposalRow,
 } from "@/lib/proposals";
+import { useI18n } from "@/i18n/client";
 import { Badge, buttonClass, cx } from "./ui";
 
 export function ProposalCard({
@@ -27,13 +26,14 @@ export function ProposalCard({
   names: Record<string, string>;
   timeZone: string;
 }) {
+  const { m, locale } = useI18n();
   const myBallot = proposal.ballots.find((b) => b.user_id === userId);
   const [selected, setSelected] = useState<string[]>(myBallot?.option_ids ?? []);
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
 
   const open = isOpen(proposal.status);
-  const type = PROPOSAL_TYPE_LABELS[proposal.type];
+  const type = m.labels.proposalType[proposal.type];
   const canCancel = open && (isOwner || proposal.created_by === userId);
   const ownerMustDecide =
     isOwner && open && (proposal.status === "needs_owner" || ownerDecidesRule);
@@ -71,8 +71,10 @@ export function ProposalCard({
             <span aria-hidden>{type.emoji}</span> {type.label}
           </p>
           <p className="text-xs text-foreground/60">
-            da {proposal.created_by ? (names[proposal.created_by] ?? "ex membro") : "ex membro"}
-            {open && ` · si vota fino a ${formatDeadline(proposal.closes_at, timeZone)}`}
+            {m.proposal.by(
+              proposal.created_by ? (names[proposal.created_by] ?? m.common.formerMember) : m.common.formerMember,
+            )}
+            {open && m.proposal.votingUntil(formatDeadline(proposal.closes_at, timeZone, locale))}
           </p>
         </div>
         <Badge
@@ -80,7 +82,7 @@ export function ProposalCard({
             proposal.status === "approved" ? "success" : open ? "brand" : "neutral"
           }
         >
-          {PROPOSAL_STATUS_LABELS[proposal.status]}
+          {m.labels.proposalStatus[proposal.status]}
         </Badge>
       </header>
 
@@ -92,7 +94,7 @@ export function ProposalCard({
         {proposal.proposal_options.map((option) => {
           const voters = proposal.ballots
             .filter((b) => b.option_ids.includes(option.id))
-            .map((b) => names[b.user_id] ?? "ex membro");
+            .map((b) => names[b.user_id] ?? m.common.formerMember);
           const winner = proposal.winning_option_id === option.id;
           return (
             <li
@@ -113,17 +115,17 @@ export function ProposalCard({
                       disabled={pending}
                     />
                     <span className="truncate font-medium">
-                      {optionLabel(proposal.type, option)}
+                      {optionLabel(proposal.type, option, m, locale)}
                     </span>
                   </label>
                 ) : (
                   <span className="truncate font-medium">
                     {winner && "✓ "}
-                    {optionLabel(proposal.type, option)}
+                    {optionLabel(proposal.type, option, m, locale)}
                   </span>
                 )}
                 <span className="shrink-0 text-sm text-foreground/60">
-                  {voters.length} {voters.length === 1 ? "voto" : "voti"}
+                  {m.proposal.votes(voters.length)}
                 </span>
               </div>
               {voters.length > 0 && (
@@ -135,12 +137,12 @@ export function ProposalCard({
                   disabled={pending}
                   className={cx(buttonClass("secondary", true), "self-start")}
                   onClick={() => {
-                    if (window.confirm(`Confermi la scelta: ${optionLabel(proposal.type, option)}?`)) {
+                    if (window.confirm(m.proposal.confirmChoice(optionLabel(proposal.type, option, m, locale)))) {
                       run(() => decideProposal(proposal.id, option.id));
                     }
                   }}
                 >
-                  {isSkip ? "Approva il salto" : "Scegli questa"}
+                  {isSkip ? m.proposal.approveSkip : m.proposal.chooseThis}
                 </button>
               )}
             </li>
@@ -159,7 +161,7 @@ export function ProposalCard({
               buttonClass(myBallot?.option_ids.length === 1 ? "primary" : "secondary", true),
             )}
           >
-            👍 Sì, saltiamo
+            {m.proposal.yesSkip}
           </button>
           <button
             type="button"
@@ -173,7 +175,7 @@ export function ProposalCard({
               ),
             )}
           >
-            👎 No, giochiamo
+            {m.proposal.noPlay}
           </button>
         </div>
       )}
@@ -187,15 +189,15 @@ export function ProposalCard({
             className={buttonClass("primary", true)}
           >
             {pending
-              ? "Invio…"
+              ? m.proposal.sending
               : selected.length === 0
-                ? "Nessuna mi va bene"
+                ? m.proposal.noneFine
                 : myBallot
-                  ? "Aggiorna il voto"
-                  : "Vota"}
+                  ? m.proposal.updateVote
+                  : m.proposal.vote}
           </button>
           <span className="text-xs text-foreground/55">
-            {myBallot ? "Hai già votato: puoi cambiare idea." : "Spunta tutte le opzioni che ti vanno bene."}
+            {myBallot ? m.proposal.alreadyVoted : m.proposal.tickAll}
           </span>
         </div>
       )}
@@ -208,12 +210,12 @@ export function ProposalCard({
               disabled={pending}
               className={buttonClass("ghost", true)}
               onClick={() => {
-                if (window.confirm("Respingere la proposta?")) {
+                if (window.confirm(m.proposal.confirmReject)) {
                   run(() => decideProposal(proposal.id, null));
                 }
               }}
             >
-              Respingi
+              {m.proposal.reject}
             </button>
           )}
           {canCancel && (
@@ -222,12 +224,12 @@ export function ProposalCard({
               disabled={pending}
               className={buttonClass("ghost", true)}
               onClick={() => {
-                if (window.confirm("Annullare la proposta?")) {
+                if (window.confirm(m.proposal.confirmCancel)) {
                   run(() => cancelProposal(proposal.id));
                 }
               }}
             >
-              Annulla proposta
+              {m.proposal.cancel}
             </button>
           )}
         </div>

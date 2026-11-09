@@ -2,7 +2,8 @@
 
 import { afterMutation } from "@/lib/revalidate";
 import { requireUser } from "@/lib/auth";
-import { dbErrorMessage, getString, isDate, isTime, type FormState, type NavResult } from "@/lib/form";
+import {getString, isDate, isTime, type FormState, type NavResult} from "@/lib/form";
+import { dbErrorMessage, getI18n } from "@/i18n/server";
 import type { ProposalType } from "@/lib/proposals";
 
 const TYPES: ProposalType[] = ["reschedule", "skip", "change_game"];
@@ -13,9 +14,10 @@ export async function createProposal(
   _prev: NavResult,
   formData: FormData,
 ): Promise<NavResult> {
+  const { m } = await getI18n();
   const type = getString(formData, "type") as ProposalType;
   if (!TYPES.includes(type) || !isDate(originalDate)) {
-    return { error: "Scegli che cosa proporre." };
+    return { error: m.propose.errorType };
   }
 
   let options: { date?: string; time?: string; game?: string }[] = [];
@@ -26,12 +28,12 @@ export async function createProposal(
     options = dates
       .map((date, i) => ({ date: date.trim(), time: (times[i] ?? "").trim() }))
       .filter((o) => o.date || o.time);
-    if (options.length === 0) return { error: "Aggiungi almeno una data." };
+    if (options.length === 0) return { error: m.propose.errorNoDate };
     if (options.some((o) => !isDate(o.date!) || !isTime(o.time!))) {
-      return { error: "Ogni data proposta deve avere giorno e orario." };
+      return { error: m.propose.errorDateTime };
     }
     const keys = new Set(options.map((o) => `${o.date} ${o.time}`));
-    if (keys.size !== options.length) return { error: "Hai inserito due volte la stessa data." };
+    if (keys.size !== options.length) return { error: m.propose.errorDuplicate };
   }
 
   if (type === "change_game") {
@@ -39,16 +41,16 @@ export async function createProposal(
       .getAll("option_game")
       .map((g) => ({ game: String(g).trim() }))
       .filter((o) => o.game);
-    if (options.length === 0) return { error: "Aggiungi almeno un gioco." };
+    if (options.length === 0) return { error: m.propose.errorNoGame };
     if (options.some((o) => o.game!.length > 120)) {
-      return { error: "Il nome di un gioco può avere al massimo 120 caratteri." };
+      return { error: m.propose.errorGameLong };
     }
   }
 
-  if (options.length > 6) return { error: "Puoi proporre al massimo 6 opzioni." };
+  if (options.length > 6) return { error: m.propose.errorMaxOptions };
 
   const reason = getString(formData, "reason");
-  if (reason.length > 500) return { error: "Il messaggio può avere al massimo 500 caratteri." };
+  if (reason.length > 500) return { error: m.propose.errorMessageLong };
 
   const { supabase } = await requireUser();
   const { error } = await supabase.rpc("create_proposal", {
@@ -61,7 +63,7 @@ export async function createProposal(
 
   if (error) {
     console.error("create_proposal", error);
-    return { error: dbErrorMessage(error) };
+    return { error: await dbErrorMessage(error) };
   }
 
   afterMutation();
@@ -77,7 +79,7 @@ export async function castVote(proposalId: string, optionIds: string[]): Promise
   });
   if (error) {
     console.error("cast_vote", error);
-    return { error: dbErrorMessage(error) };
+    return { error: await dbErrorMessage(error) };
   }
   afterMutation();
   return {};
@@ -94,7 +96,7 @@ export async function decideProposal(
   });
   if (error) {
     console.error("decide_proposal", error);
-    return { error: dbErrorMessage(error) };
+    return { error: await dbErrorMessage(error) };
   }
   afterMutation();
   return {};
@@ -105,7 +107,7 @@ export async function cancelProposal(proposalId: string): Promise<FormState> {
   const { error } = await supabase.rpc("cancel_proposal", { p_proposal_id: proposalId });
   if (error) {
     console.error("cancel_proposal", error);
-    return { error: dbErrorMessage(error) };
+    return { error: await dbErrorMessage(error) };
   }
   afterMutation();
   return {};

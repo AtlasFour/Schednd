@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useTransition } from "react";
 import { buttonClass } from "@/components/ui";
+import { useI18n } from "@/i18n/client";
 import type { FormState } from "@/lib/form";
 import {
   deletePushSubscription,
@@ -45,6 +46,7 @@ export function NotificationSettings({
   emailEnabled: boolean;
   emailAvailable: boolean;
 }) {
+  const { m } = useI18n();
   const [state, setState] = useState<PushState>("loading");
   const [message, setMessage] = useState<FormState>({});
   const [pending, startTransition] = useTransition();
@@ -93,7 +95,7 @@ export function NotificationSettings({
         if (!result.error) setState("on");
       } catch (err) {
         console.error(err);
-        setMessage({ error: "Non è stato possibile attivare le notifiche su questo dispositivo." });
+        setMessage({ error: m.notif.enableFailed });
       }
     });
   }
@@ -108,7 +110,7 @@ export function NotificationSettings({
         await subscription.unsubscribe();
       }
       setState("off");
-      setMessage({ success: "Notifiche disattivate su questo dispositivo." });
+      setMessage({ success: m.actions.pushDisabled });
     });
   }
 
@@ -129,35 +131,32 @@ export function NotificationSettings({
   return (
     <div className="flex flex-col gap-4">
       <div className="flex flex-col gap-2">
-        <p className="text-sm font-medium">Notifiche su questo dispositivo</p>
-        {state === "loading" && <p className="text-sm text-foreground/60">Controllo…</p>}
+        <p className="text-sm font-medium">{m.notif.thisDevice}</p>
+        {state === "loading" && <p className="text-sm text-foreground/60">{m.notif.checking}</p>}
         {state === "unsupported" && (
           <p className="text-sm text-foreground/70">
-            Questo browser non supporta le notifiche push. Prova con Chrome su Android, oppure
-            attiva gli avvisi via email qui sotto.
+            {m.notif.unsupported}
           </p>
         )}
         {state === "ios-install" && (
           <p className="text-sm text-foreground/70">
-            Su iPhone le notifiche funzionano solo con l&apos;app installata: tocca{" "}
-            <strong>Condividi</strong> ⬆️ e poi <strong>Aggiungi alla schermata Home</strong>,
-            apri Schednd dall&apos;icona e torna qui.
+            {m.notif.iosBefore} <strong>{m.notif.iosShare}</strong> {m.notif.iosThen}{" "}
+            <strong>{m.notif.iosAdd}</strong>
+            {m.notif.iosAfter}
           </p>
         )}
         {state === "not-configured" && (
           <p className="text-sm text-foreground/70">
-            Le notifiche push non sono ancora configurate sul server.{" "}
+            {m.notif.notConfigured}{" "}
             <a href="/profile/configurazione" className="text-brand underline">
-              Vedi la configurazione
+              {m.notif.seeConfig}
             </a>
             .
           </p>
         )}
         {state === "denied" && (
           <p className="text-sm text-foreground/70">
-            Hai bloccato le notifiche per questo sito. Riattivale dalle impostazioni del browser
-            (icona del lucchetto accanto all&apos;indirizzo → Notifiche → Consenti) e ricarica la
-            pagina.
+            {m.notif.denied}
           </p>
         )}
         {state === "off" && (
@@ -167,19 +166,19 @@ export function NotificationSettings({
             onClick={enable}
             className={`${buttonClass("primary", true)} self-start`}
           >
-            🔔 Attiva le notifiche
+            {m.notif.enable}
           </button>
         )}
         {state === "on" && (
           <div className="flex flex-wrap gap-2">
             <span className="self-center text-sm text-emerald-600 dark:text-emerald-400">
-              ✓ Attive
+              {m.notif.active}
             </span>
             <button type="button" disabled={pending} onClick={test} className={buttonClass("secondary", true)}>
-              Invia una prova
+              {m.notif.sendTest}
             </button>
             <button type="button" disabled={pending} onClick={disable} className={buttonClass("ghost", true)}>
-              Disattiva
+              {m.notif.disable}
             </button>
           </div>
         )}
@@ -194,11 +193,11 @@ export function NotificationSettings({
           className="mt-1 size-5 accent-[var(--brand)]"
         />
         <span className="text-sm">
-          <span className="font-medium">Ricevi gli avvisi anche via email</span>
+          <span className="font-medium">{m.notif.emailLabel}</span>
           <span className="block text-foreground/60">
             {emailAvailable
-              ? "Utile se non puoi ricevere le notifiche push."
-              : "Non disponibile: l'invio di email non è configurato sul server."}
+              ? m.notif.emailUseful
+              : m.notif.emailUnavailable}
           </span>
         </span>
       </label>
@@ -211,9 +210,7 @@ export function NotificationSettings({
       )}
 
       <p className="text-xs text-foreground/50">
-        Ricevi un avviso per: nuove proposte e il loro esito, incontri saltati o spostati, minimo
-        di presenti raggiunto, promemoria 2 giorni prima (se manca il minimo e non hai risposto) e il
-        giorno prima (se hai detto che ci sei).
+        {m.notif.whatYouGet}
       </p>
     </div>
   );

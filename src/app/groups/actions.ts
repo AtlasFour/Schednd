@@ -3,8 +3,9 @@
 import { afterMutation } from "@/lib/revalidate";
 import { redirect } from "next/navigation";
 import { requireUser } from "@/lib/auth";
+import { dbErrorMessage, getI18n } from "@/i18n/server";
+import type { Messages } from "@/i18n/messages";
 import {
-  dbErrorMessage,
   getOptionalInt,
   getOptionalString,
   getString,
@@ -30,32 +31,32 @@ type GroupFields = {
   approval_rule: ApprovalRule;
 };
 
-function parseGroupFields(formData: FormData): GroupFields | { error: string } {
+function parseGroupFields(formData: FormData, m: Messages): GroupFields | { error: string } {
   const name = getString(formData, "name");
-  if (!name) return { error: "Dai un nome al gruppo." };
-  if (name.length > 80) return { error: "Il nome può avere al massimo 80 caratteri." };
+  if (!name) return { error: m.groupActions.nameRequired };
+  if (name.length > 80) return { error: m.groupActions.nameTooLong };
 
   const mode = getString(formData, "mode") as GroupMode;
-  if (!MODES.includes(mode)) return { error: "Scegli dove si gioca." };
+  if (!MODES.includes(mode)) return { error: m.groupActions.modeRequired };
 
   const approval_rule = getString(formData, "approval_rule") as ApprovalRule;
-  if (!RULES.includes(approval_rule)) return { error: "Scegli come si approvano le proposte." };
+  if (!RULES.includes(approval_rule)) return { error: m.groupActions.ruleRequired };
 
   const duration_minutes = getOptionalInt(formData, "duration_minutes") ?? 180;
   if (!(duration_minutes >= 15 && duration_minutes <= 1440)) {
-    return { error: "Durata non valida." };
+    return { error: m.groupActions.invalidDuration };
   }
 
   const min_attendees = getOptionalInt(formData, "min_attendees");
   if (min_attendees !== null && !(min_attendees >= 1 && min_attendees <= 100)) {
-    return { error: "Il minimo di presenti deve essere un numero tra 1 e 100." };
+    return { error: m.groupActions.invalidMin };
   }
 
   const timezone = getString(formData, "timezone") || "Europe/Rome";
 
   const online_link = getOptionalString(formData, "online_link");
   if (online_link && !/^https?:\/\//i.test(online_link)) {
-    return { error: "Il link online deve iniziare con https://" };
+    return { error: m.groupActions.invalidLink };
   }
 
   return {
@@ -72,23 +73,24 @@ function parseGroupFields(formData: FormData): GroupFields | { error: string } {
   };
 }
 
-function parseSchedule(formData: FormData) {
+function parseSchedule(formData: FormData, m: Messages) {
   const anchorDate = getString(formData, "anchor_date");
   const startTime = getString(formData, "start_time");
   const intervalWeeks = getOptionalInt(formData, "interval_weeks") ?? 1;
 
-  if (!isDate(anchorDate)) return { error: "Scegli la data del primo incontro." };
-  if (!isTime(startTime)) return { error: "Scegli l'orario di inizio." };
+  if (!isDate(anchorDate)) return { error: m.groupActions.firstDateRequired };
+  if (!isTime(startTime)) return { error: m.groupActions.timeRequired };
   if (!(intervalWeeks >= 1 && intervalWeeks <= 12)) {
-    return { error: "Frequenza non valida." };
+    return { error: m.groupActions.invalidFrequency };
   }
   return { anchorDate, startTime, intervalWeeks };
 }
 
 export async function createGroup(_prev: NavResult, formData: FormData): Promise<NavResult> {
-  const fields = parseGroupFields(formData);
+  const { m } = await getI18n();
+  const fields = parseGroupFields(formData, m);
   if ("error" in fields) return { error: fields.error };
-  const schedule = parseSchedule(formData);
+  const schedule = parseSchedule(formData, m);
   if ("error" in schedule) return { error: schedule.error };
 
   const { supabase } = await requireUser();
@@ -110,7 +112,7 @@ export async function createGroup(_prev: NavResult, formData: FormData): Promise
 
   if (error || !data) {
     console.error("create_group", error);
-    return { error: dbErrorMessage(error) };
+    return { error: await dbErrorMessage(error) };
   }
 
   afterMutation();
@@ -122,7 +124,8 @@ export async function updateGroup(
   _prev: FormState,
   formData: FormData,
 ): Promise<FormState> {
-  const fields = parseGroupFields(formData);
+  const { m } = await getI18n();
+  const fields = parseGroupFields(formData, m);
   if ("error" in fields) return { error: fields.error };
 
   const { supabase } = await requireUser();
@@ -134,14 +137,14 @@ export async function updateGroup(
 
   if (error) {
     console.error("updateGroup", error);
-    return { error: dbErrorMessage(error) };
+    return { error: await dbErrorMessage(error) };
   }
   if (!data?.length) {
-    return { error: "Solo l'owner può modificare il gruppo." };
+    return { error: m.groupActions.onlyOwnerEdit };
   }
 
   afterMutation();
-  return { success: "Modifiche salvate." };
+  return { success: m.groupActions.saved };
 }
 
 export async function changeSchedule(
@@ -149,7 +152,8 @@ export async function changeSchedule(
   _prev: FormState,
   formData: FormData,
 ): Promise<FormState> {
-  const schedule = parseSchedule(formData);
+  const { m } = await getI18n();
+  const schedule = parseSchedule(formData, m);
   if ("error" in schedule) return { error: schedule.error };
 
   const { supabase } = await requireUser();
@@ -162,11 +166,11 @@ export async function changeSchedule(
 
   if (error) {
     console.error("change_schedule", error);
-    return { error: dbErrorMessage(error) };
+    return { error: await dbErrorMessage(error) };
   }
 
   afterMutation();
-  return { success: "Ricorrenza aggiornata." };
+  return { success: m.groupActions.scheduleUpdated };
 }
 
 export async function regenerateInviteCode(groupId: string): Promise<void> {
@@ -196,7 +200,7 @@ export async function transferOwnership(groupId: string, userId: string): Promis
   afterMutation();
   if (error) {
     console.error("transfer_ownership", error);
-    return { error: dbErrorMessage(error) };
+    return { error: await dbErrorMessage(error) };
   }
   // Non essendo più owner, le impostazioni non sono più accessibili.
   return { redirectTo: `/groups/${groupId}` };
@@ -208,7 +212,7 @@ export async function deleteGroup(groupId: string): Promise<NavResult> {
   afterMutation();
   if (error) {
     console.error("deleteGroup", error);
-    return { error: dbErrorMessage(error) };
+    return { error: await dbErrorMessage(error) };
   }
   return { redirectTo: "/" };
 }
@@ -223,17 +227,18 @@ export async function leaveGroup(groupId: string): Promise<NavResult> {
   afterMutation();
   if (error) {
     console.error("leaveGroup", error);
-    return { error: dbErrorMessage(error) };
+    return { error: await dbErrorMessage(error) };
   }
   return { redirectTo: "/" };
 }
 
 export async function joinGroup(code: string): Promise<NavResult> {
+  const { m } = await getI18n();
   const { supabase } = await requireUser();
   const { data, error } = await supabase.rpc("join_group", { p_code: code });
   if (error || !data) {
     console.error("join_group", error);
-    return { error: "Non è stato possibile entrare nel gruppo. Riprova." };
+    return { error: m.groupActions.joinFailed };
   }
   afterMutation();
   return { redirectTo: `/groups/${data}` };
