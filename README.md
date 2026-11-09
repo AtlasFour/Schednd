@@ -39,6 +39,7 @@ Le migrazioni sono in `supabase/migrations/`, numerate in ordine. Per ognuna non
 | File | Contenuto |
 |---|---|
 | `0001_groups.sql` | profili, gruppi, ricorrenze, membri, permessi (RLS) e funzioni |
+| `0002_occurrences.sql` | incontri, presenze, decisioni dell'owner sul singolo incontro, aggiornamenti in tempo reale |
 
 ## Sviluppo
 ```bash

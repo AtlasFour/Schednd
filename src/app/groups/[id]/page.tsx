@@ -2,6 +2,8 @@ import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { SubmitButton } from "@/components/form";
 import { InviteBox } from "@/components/invite-box";
+import { LiveRefresh } from "@/components/live-refresh";
+import { MeetingCard } from "@/components/meeting-card";
 import { Badge, ButtonLink, Card, Page, PageSkeleton } from "@/components/ui";
 import { requireUser } from "@/lib/auth";
 import {
@@ -11,14 +13,9 @@ import {
   getGroupDetail,
   inviteUrl,
   MODE_LABELS,
-  nextDates,
 } from "@/lib/groups";
-import {
-  describeRecurrence,
-  formatMediumDate,
-  formatTime,
-  relativeDay,
-} from "@/lib/schedule";
+import { fetchOccurrences, upcomingMeetings } from "@/lib/meetings";
+import { addDays, describeRecurrence, todayInTimeZone } from "@/lib/schedule";
 import { getSiteUrl } from "@/lib/site-url";
 import { leaveGroup } from "../actions";
 
@@ -41,7 +38,17 @@ async function GroupDetail({ params, searchParams }: PageProps<"/groups/[id]">) 
   const me = group.memberships.find((m) => m.user_id === user.id);
   const isOwner = me?.role === "owner";
   const schedule = activeSchedule(group);
-  const { today, dates } = nextDates(group, 4);
+  const occurrences = await fetchOccurrences(
+    supabase,
+    [group.id],
+    addDays(todayInTimeZone(group.timezone), -1),
+  );
+  const meetings = upcomingMeetings(
+    { ...group, memberCount: group.memberships.length },
+    occurrences,
+    user.id,
+    4,
+  );
   const url = inviteUrl(await getSiteUrl(), group.invite_code);
 
   return (
@@ -57,6 +64,7 @@ async function GroupDetail({ params, searchParams }: PageProps<"/groups/[id]">) 
         ) : undefined
       }
     >
+      <LiveRefresh />
       {nuovo && (
         <p className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-3 text-sm">
           🎉 Gruppo creato! Ora invita i tuoi amici con il link qui sotto.
@@ -67,25 +75,22 @@ async function GroupDetail({ params, searchParams }: PageProps<"/groups/[id]">) 
         <p className="whitespace-pre-line text-foreground/80">{group.description}</p>
       )}
 
-      <Card title="Prossimi incontri">
-        {dates.length === 0 ? (
-          <p className="text-sm text-foreground/60">Nessun incontro in programma.</p>
+      <section className="flex flex-col gap-3">
+        <h2 className="text-lg font-semibold">Prossimi incontri</h2>
+        {meetings.length === 0 ? (
+          <Card>
+            <p className="text-sm text-foreground/60">Nessun incontro in programma.</p>
+          </Card>
         ) : (
-          <ul className="flex flex-col divide-y divide-foreground/10">
-            {dates.map((d) => (
-              <li key={d.date} className="flex items-center justify-between gap-3 py-2">
-                <span className="first-letter:uppercase">{formatMediumDate(d.date)}</span>
-                <span className="shrink-0 text-right text-sm text-foreground/60">
-                  {formatTime(d.startTime)} · {relativeDay(d.date, today)}
-                </span>
+          <ul className="flex flex-col gap-3">
+            {meetings.map((m) => (
+              <li key={m.originalDate}>
+                <MeetingCard meeting={m} showGroup={false} />
               </li>
             ))}
           </ul>
         )}
-        <p className="mt-3 text-xs text-foreground/50">
-          Presenze e proposte per ogni incontro arrivano nella prossima versione.
-        </p>
-      </Card>
+      </section>
 
       <Card title="Info">
         <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-2 text-sm">

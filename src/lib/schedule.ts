@@ -127,6 +127,11 @@ export function formatTime(time: string): string {
   return time.slice(0, 5);
 }
 
+/** Prima lettera maiuscola: "mercoledì 18 novembre" → "Mercoledì 18 novembre". */
+export function capitalize(text: string): string {
+  return text.charAt(0).toUpperCase() + text.slice(1);
+}
+
 /** "mer 18 nov" */
 export function formatShortDate(date: string): string {
   const [y, m, d] = date.split("-").map(Number);
@@ -168,4 +173,22 @@ export function relativeDay(date: string, today: string): string {
   if (diff === 1) return "domani";
   if (diff < 0) return diff === -1 ? "ieri" : `${-diff} giorni fa`;
   return `tra ${diff} giorni`;
+}
+
+/** Vero se in `date` una delle ricorrenze prevede un incontro. */
+export function isScheduledDate(schedules: Schedule[], date: string): boolean {
+  const day = toDayNumber(date);
+  return schedules.some((s) => {
+    const anchor = toDayNumber(s.anchorDate);
+    if (day < anchor) return false;
+    if (s.validUntil !== null && day >= toDayNumber(s.validUntil)) return false;
+    return (day - anchor) % (s.intervalWeeks * 7) === 0;
+  });
+}
+
+/** Orario previsto in `date` (o undefined se non c'è incontro). */
+export function scheduledTimeFor(schedules: Schedule[], date: string): string | undefined {
+  return schedules
+    .filter((s) => isScheduledDate([s], date))
+    .sort((a, b) => b.anchorDate.localeCompare(a.anchorDate))[0]?.startTime;
 }

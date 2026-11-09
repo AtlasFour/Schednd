@@ -376,8 +376,8 @@ Le istruzioni passo passo sono nel [README](../README.md): variabili d'ambiente,
 | Fase | Contenuto | Stato |
 |---|---|---|
 | **0 – Fondamenta** | Next.js, Supabase, login via email, PWA base, deploy | ✅ fatto |
-| **1 – Gruppi** | Schema database + RLS, profilo, creazione gruppo con ricorrenza ogni N settimane, invito membri, impostazioni, cambio fisso del giorno, trasferimento owner | ✅ fatto (da provare) |
-| **2 – Incontri e presenze** | Calcolo incontri, home, RSVP in tempo reale, dettaglio incontro, contatore del minimo | |
+| **1 – Gruppi** | Schema database + RLS, profilo, creazione gruppo con ricorrenza ogni N settimane, invito membri, impostazioni, cambio fisso del giorno, trasferimento owner | ✅ fatto |
+| **2 – Incontri e presenze** | Calcolo incontri, home, RSVP in tempo reale, dettaglio incontro, contatore del minimo, decisioni dell'owner sul singolo incontro (salta, gioco/luogo diverso, nota) | ✅ fatto (da provare) |
 | **3 – Proposte** | Date/giochi multipli, voto per approvazione, 3 regole di approvazione, chiusura 24 ore prima, applicazione lato server | |
 | **4 – Ospiti** | Link ospite, login dell'ospite, pagina dell'incontro, presenza che conta nel minimo | |
 | **5 – Notifiche ed email** | Resend, Web Push, avvisi a 48h e 24h, conferma, promemoria, "decidi" per l'owner | |
