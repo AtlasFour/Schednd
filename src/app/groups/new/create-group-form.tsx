@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useRef } from "react";
 import { FormMessage, SubmitButton } from "@/components/form";
 import { useNavigateOnSuccess } from "@/components/navigation";
 import { Card } from "@/components/ui";
@@ -18,10 +18,11 @@ export function CreateGroupForm({
 }) {
   const { m } = useI18n();
   const [state, formAction] = useActionState(createGroup, initialFormState);
-  useNavigateOnSuccess(state);
+  const formRef = useRef<HTMLFormElement>(null);
+  useNavigateOnSuccess(state, formRef);
 
   return (
-    <form action={formAction} className="flex flex-col gap-5">
+    <form ref={formRef} action={formAction} className="flex flex-col gap-5">
       <Card title={m.groupForm.when}>
         <div className="flex flex-col gap-4">
           <ScheduleFields anchorDate={defaultAnchorDate} minDate={minDate} />
