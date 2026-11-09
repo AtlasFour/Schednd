@@ -25,6 +25,7 @@ Per le notifiche (fase 5) servono anche le seguenti variabili. Le chiavi VAPID e
 | `VAPID_PRIVATE_KEY` | chiave privata per le notifiche push. **Segreta.** |
 | `CRON_SECRET` | protegge il cron giornaliero (`/api/cron/notifications`, ogni mattina alle 8 UTC). **Segreta.** |
 | `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASSWORD`, `SMTP_FROM` | facoltative, per gli avvisi via email (es. Gmail: `smtp.gmail.com`, `465`, indirizzo, password per le app) |
+| `BGG_API_TOKEN` | facoltativa, per importare le collezioni da BoardGameGeek (token di un'applicazione registrata su boardgamegeek.com/applications). **Segreta.** |
 
 Dopo aver aggiunto o cambiato variabili su Vercel serve un **Redeploy**.
 
@@ -55,6 +56,7 @@ Le migrazioni sono in `supabase/migrations/`, numerate in ordine. Per ognuna non
 | `0003_proposals.sql` | proposte (cambio data, salto, cambio gioco) con più opzioni, voto e regole di approvazione |
 | `0004_guests.sql` | ospiti "una tantum": link per un singolo incontro, presenza e voto degli ospiti |
 | `0005_notifications.sql` | notifiche: iscrizioni push, coda degli avvisi, trigger sugli eventi, promemoria giornalieri |
+| `0006_libraries.sql` | librerie dei giochi: catalogo, libreria personale con preferiti, import BoardGameGeek, libreria del gruppo |
 
 ## Sviluppo
 ```bash

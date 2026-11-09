@@ -37,7 +37,7 @@ export function ProfileForm({
       <Field
         label="Nome utente BoardGameGeek"
         htmlFor="bgg_username"
-        hint="Facoltativo. Servirà per importare la tua collezione di giochi."
+        hint="Facoltativo. Serve per importare la tua collezione nella libreria."
       >
         <Input
           id="bgg_username"

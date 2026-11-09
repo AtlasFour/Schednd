@@ -151,3 +151,20 @@ describe("hoursUntil", async () => {
     expect(hoursUntil("2026-11-18", "21:00", "Europe/Rome", now)).toBe(24);
   });
 });
+
+describe("library helpers", async () => {
+  const { formatPlayers, formatPlayingTime, fitsPlayers } = await import("./library");
+  it("formatta giocatori e durata", () => {
+    expect(formatPlayers(3, 4)).toBe("3–4 giocatori");
+    expect(formatPlayers(2, 2)).toBe("2 giocatori");
+    expect(formatPlayers(null, null)).toBeNull();
+    expect(formatPlayingTime(45)).toBe("45 min");
+    expect(formatPlayingTime(120)).toBe("2 ore");
+    expect(formatPlayingTime(150)).toBe("2 h 30");
+  });
+  it("filtra per numero di giocatori", () => {
+    expect(fitsPlayers({ min_players: 3, max_players: 4 }, 5)).toBe(false);
+    expect(fitsPlayers({ min_players: 3, max_players: 4 }, 4)).toBe(true);
+    expect(fitsPlayers({ min_players: null, max_players: null }, 9)).toBe(true);
+  });
+});

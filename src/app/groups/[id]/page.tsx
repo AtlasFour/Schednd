@@ -94,6 +94,10 @@ async function GroupDetail({ params, searchParams }: PageProps<"/groups/[id]">) 
         )}
       </section>
 
+      <ButtonLink href={`/groups/${group.id}/libreria`} variant="secondary" className="self-start">
+        📚 Libreria del gruppo
+      </ButtonLink>
+
       <Card title="Info">
         <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-2 text-sm">
           <dt className="text-foreground/60">Gioco</dt>

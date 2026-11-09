@@ -129,9 +129,14 @@ async function Home() {
             {profile?.display_name ?? user.email}
           </h1>
         </div>
-        <ButtonLink href="/profile" variant="secondary" small aria-label="Profilo">
-          👤 Profilo
-        </ButtonLink>
+        <div className="flex shrink-0 gap-2">
+          <ButtonLink href="/libreria" variant="secondary" small aria-label="La mia libreria">
+            📚
+          </ButtonLink>
+          <ButtonLink href="/profile" variant="secondary" small aria-label="Profilo">
+            👤 Profilo
+          </ButtonLink>
+        </div>
       </header>
 
       {guestMeetings.length > 0 && (

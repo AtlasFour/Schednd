@@ -73,9 +73,13 @@ async function Propose({ params }: PageProps<"/groups/[id]/[date]/proponi">) {
     .filter((p) => isOpen(p.status))
     .map((p) => p.type);
 
-  const gameSuggestions = [group.default_game_title, meeting.game].filter(
-    (g, i, all): g is string => !!g && all.indexOf(g) === i,
-  );
+  // Suggerimenti: gioco attuale e libreria del gruppo (preferiti per primi).
+  const { data: library } = await supabase.rpc("group_library", { p_group_id: id });
+  const gameSuggestions = [
+    group.default_game_title,
+    meeting.game,
+    ...((library ?? []) as { title: string }[]).map((g) => g.title),
+  ].filter((g, i, all): g is string => !!g && all.indexOf(g) === i);
 
   return (
     <Page title={title} subtitle={subtitle} back={back}>
