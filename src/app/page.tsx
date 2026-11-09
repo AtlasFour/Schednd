@@ -1,8 +1,21 @@
+import Link from "next/link";
 import { Suspense } from "react";
-import { redirect } from "next/navigation";
+import { SubmitButton } from "@/components/form";
+import { ButtonLink, Card, inputClass, Skeleton } from "@/components/ui";
+import { requireUser } from "@/lib/auth";
+import { nextDates, type GroupRow, type MemberRole, type ScheduleRow } from "@/lib/groups";
+import { formatShortDate, formatTime, relativeDay } from "@/lib/schedule";
 import { getSupabaseEnv } from "@/lib/supabase/env";
-import { createClient } from "@/lib/supabase/server";
-import { signOut } from "./actions";
+import { goToInviteCode } from "./groups/actions";
+
+type MyGroup = {
+  role: MemberRole;
+  groups:
+    | (Pick<GroupRow, "id" | "name" | "timezone" | "default_game_title" | "status"> & {
+        group_schedules: ScheduleRow[];
+      })
+    | null;
+};
 
 export default function HomePage() {
   if (!getSupabaseEnv()) {
@@ -10,63 +23,126 @@ export default function HomePage() {
   }
 
   return (
-    <main className="mx-auto flex w-full max-w-md flex-1 flex-col gap-6 px-5 py-8">
-      <Suspense fallback={<UserHeaderSkeleton />}>
-        <UserHeader />
+    <main className="mx-auto flex w-full max-w-md flex-1 flex-col gap-6 px-5 py-6">
+      <Suspense fallback={<HomeSkeleton />}>
+        <Home />
       </Suspense>
-
-      <section className="rounded-2xl border border-foreground/10 p-5">
-        <h2 className="font-semibold">Prossimi incontri</h2>
-        <p className="mt-2 text-sm text-foreground/70">
-          Qui vedrai tutti gli incontri dei tuoi gruppi, con le presenze e il
-          gioco in programma.
-        </p>
-        <p className="mt-4 rounded-xl bg-brand/10 p-3 text-sm text-brand">
-          🚧 In costruzione: gruppi e incontri arrivano nelle prossime fasi.
-        </p>
-      </section>
     </main>
   );
 }
 
-async function UserHeader() {
-  const supabase = await createClient();
-  const { data } = await supabase.auth.getClaims();
-  const claims = data?.claims;
+async function Home() {
+  const { supabase, user } = await requireUser();
 
-  if (!claims) {
-    redirect("/login");
-  }
+  const [{ data: profile }, { data: memberships }] = await Promise.all([
+    supabase.from("profiles").select("display_name").eq("id", user.id).maybeSingle(),
+    supabase
+      .from("memberships")
+      .select(
+        "role, groups(id, name, timezone, default_game_title, status, group_schedules(id, anchor_date, interval_weeks, start_time, valid_until))",
+      )
+      .eq("user_id", user.id),
+  ]);
 
-  const email = typeof claims.email === "string" ? claims.email : "";
+  const groups = ((memberships ?? []) as unknown as MyGroup[])
+    .filter((m): m is MyGroup & { groups: NonNullable<MyGroup["groups"]> } => m.groups !== null)
+    .map((m) => {
+      const { today, dates } = nextDates(m.groups, 1);
+      return { ...m.groups, role: m.role, today, next: dates[0] };
+    })
+    .sort((a, b) => (a.next?.date ?? "9999").localeCompare(b.next?.date ?? "9999"));
 
   return (
-    <header className="flex items-center justify-between gap-4">
-      <div className="min-w-0">
-        <p className="text-sm text-foreground/60">Ciao 👋</p>
-        <h1 className="text-xl font-semibold break-all">{email}</h1>
-      </div>
-      <form action={signOut}>
-        <button
-          type="submit"
-          className="rounded-lg border border-foreground/15 px-3 py-2 text-sm hover:bg-foreground/5"
-        >
-          Esci
-        </button>
-      </form>
-    </header>
+    <>
+      <header className="flex items-center justify-between gap-4">
+        <div className="min-w-0">
+          <p className="text-sm text-foreground/60">Ciao 👋</p>
+          <h1 className="truncate text-2xl font-bold tracking-tight">
+            {profile?.display_name ?? user.email}
+          </h1>
+        </div>
+        <ButtonLink href="/profile" variant="secondary" small aria-label="Profilo">
+          👤 Profilo
+        </ButtonLink>
+      </header>
+
+      <section className="flex flex-col gap-3">
+        <div className="flex items-center justify-between">
+          <h2 className="text-lg font-semibold">I miei gruppi</h2>
+          <ButtonLink href="/groups/new" small>
+            + Nuovo
+          </ButtonLink>
+        </div>
+
+        {groups.length === 0 ? (
+          <Card>
+            <p className="text-sm text-foreground/70">
+              Non fai ancora parte di nessun gruppo. Creane uno, oppure apri il
+              link d&apos;invito che ti hanno mandato.
+            </p>
+          </Card>
+        ) : (
+          <ul className="flex flex-col gap-3">
+            {groups.map((g) => (
+              <li key={g.id}>
+                <Link
+                  href={`/groups/${g.id}`}
+                  className="block rounded-2xl border border-foreground/10 p-4 transition hover:border-brand/50 hover:bg-brand/5"
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className="truncate font-semibold">{g.name}</p>
+                      {g.default_game_title && (
+                        <p className="truncate text-sm text-foreground/60">
+                          🎲 {g.default_game_title}
+                        </p>
+                      )}
+                    </div>
+                    {g.role === "owner" && (
+                      <span className="shrink-0 text-xs text-foreground/50">owner</span>
+                    )}
+                  </div>
+                  {g.next && (
+                    <p className="mt-2 text-sm">
+                      <span className="font-medium capitalize">{formatShortDate(g.next.date)}</span>{" "}
+                      alle {formatTime(g.next.startTime)}{" "}
+                      <span className="text-foreground/50">· {relativeDay(g.next.date, g.today)}</span>
+                    </p>
+                  )}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
+
+      <Card title="Hai un codice d'invito?">
+        <form action={goToInviteCode} className="flex gap-2">
+          <input
+            name="code"
+            required
+            placeholder="Codice o link"
+            aria-label="Codice d'invito"
+            autoCapitalize="characters"
+            autoCorrect="off"
+            className={`${inputClass} h-9 text-sm`}
+          />
+          <SubmitButton variant="secondary" small>
+            Vai
+          </SubmitButton>
+        </form>
+      </Card>
+    </>
   );
 }
 
-function UserHeaderSkeleton() {
+function HomeSkeleton() {
   return (
-    <div className="flex items-center justify-between gap-4" aria-hidden>
-      <div className="flex flex-col gap-2">
-        <div className="h-4 w-12 animate-pulse rounded bg-foreground/10" />
-        <div className="h-6 w-48 animate-pulse rounded bg-foreground/10" />
-      </div>
-      <div className="h-9 w-14 animate-pulse rounded-lg bg-foreground/10" />
-    </div>
+    <>
+      <Skeleton className="h-12 w-2/3" />
+      <Skeleton className="h-24" />
+      <Skeleton className="h-24" />
+    </>
   );
 }
 
