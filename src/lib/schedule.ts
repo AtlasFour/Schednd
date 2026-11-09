@@ -192,3 +192,27 @@ export function scheduledTimeFor(schedules: Schedule[], date: string): string | 
     .filter((s) => isScheduledDate([s], date))
     .sort((a, b) => b.anchorDate.localeCompare(a.anchorDate))[0]?.startTime;
 }
+
+/** Millisecondi epoch di una data/ora "da parete" in un certo fuso orario. */
+export function zonedTimestamp(date: string, time: string, timeZone: string): number {
+  const [y, m, d] = date.split("-").map(Number);
+  const [hh, mm] = time.split(":").map(Number);
+  const asUtc = Date.UTC(y, m - 1, d, hh, mm);
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone,
+    hourCycle: "h23",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+  }).formatToParts(new Date(asUtc));
+  const get = (type: string) => Number(parts.find((p) => p.type === type)?.value);
+  const zonedAsUtc = Date.UTC(get("year"), get("month") - 1, get("day"), get("hour"), get("minute"));
+  return asUtc - (zonedAsUtc - asUtc);
+}
+
+/** Ore che mancano a una data/ora "da parete" nel fuso indicato. */
+export function hoursUntil(date: string, time: string, timeZone: string, now: Date = new Date()): number {
+  return (zonedTimestamp(date, time, timeZone) - now.getTime()) / (60 * 60 * 1000);
+}

@@ -4,10 +4,12 @@ import { Suspense } from "react";
 import { AttendanceButtons } from "@/components/attendance-buttons";
 import { LiveRefresh } from "@/components/live-refresh";
 import { AttendanceSummary } from "@/components/meeting-card";
-import { Card, Page, PageSkeleton } from "@/components/ui";
+import { ProposalCard } from "@/components/proposal-card";
+import { ButtonLink, Card, Page, PageSkeleton } from "@/components/ui";
 import { requireUser } from "@/lib/auth";
 import { isDate } from "@/lib/form";
-import { getGroupDetail, MODE_LABELS } from "@/lib/groups";
+import { APPROVAL_RULE_LABELS, getGroupDetail, MODE_LABELS } from "@/lib/groups";
+import { closeDueProposals, fetchProposals } from "@/lib/proposals";
 import {
   ATTENDANCE_LABELS,
   meetingForDate,
@@ -36,6 +38,7 @@ async function MeetingDetail({ params }: PageProps<"/groups/[id]/[date]">) {
   const group = await getGroupDetail(supabase, id);
   if (!group) notFound();
 
+  await closeDueProposals(supabase);
   const { data: occurrence } = await supabase
     .from("occurrences")
     .select(OCCURRENCE_SELECT)
@@ -53,10 +56,12 @@ async function MeetingDetail({ params }: PageProps<"/groups/[id]/[date]">) {
 
   const isOwner = group.memberships.some((m) => m.user_id === user.id && m.role === "owner");
   const isPast = meeting.date < meeting.today;
-
-  const names = new Map(
+  const proposals = occurrence ? await fetchProposals(supabase, (occurrence as OccurrenceRow).id) : [];
+  const nameRecord = Object.fromEntries(
     group.memberships.map((m) => [m.user_id, m.profiles?.display_name ?? "Utente"]),
   );
+
+  const names = new Map(Object.entries(nameRecord));
   const byStatus = (status: AttendanceStatus) =>
     meeting.attendances
       .filter((a) => a.status === status)
@@ -140,6 +145,39 @@ async function MeetingDetail({ params }: PageProps<"/groups/[id]/[date]">) {
           </div>
         </Card>
       )}
+
+      <section id="proposte" className="flex scroll-mt-4 flex-col gap-3">
+        <div className="flex items-center justify-between gap-2">
+          <h2 className="text-lg font-semibold">Proposte</h2>
+          {!isPast && !meeting.skipped && (
+            <ButtonLink href={`/groups/${group.id}/${meeting.originalDate}/proponi`} small>
+              + Proponi
+            </ButtonLink>
+          )}
+        </div>
+        {proposals.length === 0 ? (
+          <p className="text-sm text-foreground/60">
+            Nessuna proposta. Puoi proporre un cambio di data, di gioco o di
+            saltare l&apos;incontro.
+          </p>
+        ) : (
+          proposals.map((p) => (
+            <ProposalCard
+              key={p.id}
+              proposal={p}
+              userId={user.id}
+              isOwner={isOwner}
+              ownerDecidesRule={group.approval_rule === "owner_decides"}
+              names={nameRecord}
+              timeZone={group.timezone}
+            />
+          ))
+        )}
+        <p className="text-xs text-foreground/50">
+          Regola del gruppo: {APPROVAL_RULE_LABELS[group.approval_rule].label}.{" "}
+          {APPROVAL_RULE_LABELS[group.approval_rule].hint}
+        </p>
+      </section>
 
       <Card title="Chi c'è">
         <div className="flex flex-col gap-4">

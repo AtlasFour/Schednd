@@ -131,3 +131,23 @@ describe("capitalize", async () => {
     expect(capitalize(formatShortDate("2026-11-18"))).toBe("Mer 18 nov");
   });
 });
+
+describe("zonedTimestamp", async () => {
+  const { zonedTimestamp } = await import("./schedule");
+  it("ora solare e ora legale a Roma", () => {
+    expect(new Date(zonedTimestamp("2026-11-18", "21:00", "Europe/Rome")).toISOString()).toBe(
+      "2026-11-18T20:00:00.000Z",
+    );
+    expect(new Date(zonedTimestamp("2026-07-15", "21:00:00", "Europe/Rome")).toISOString()).toBe(
+      "2026-07-15T19:00:00.000Z",
+    );
+  });
+});
+
+describe("hoursUntil", async () => {
+  const { hoursUntil } = await import("./schedule");
+  it("calcola le ore mancanti nel fuso del gruppo", () => {
+    const now = new Date("2026-11-17T20:00:00Z"); // 21:00 a Roma
+    expect(hoursUntil("2026-11-18", "21:00", "Europe/Rome", now)).toBe(24);
+  });
+});
