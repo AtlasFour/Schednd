@@ -103,9 +103,3 @@ export async function fetchProposals(
   // Prima le aperte, poi le chiuse (più recenti in alto).
   return rows.sort((a, b) => Number(isOpen(b.status)) - Number(isOpen(a.status)));
 }
-
-/** Chiude le proposte scadute nei gruppi dell'utente. */
-export async function closeDueProposals(supabase: SupabaseClient) {
-  const { error } = await supabase.rpc("close_due_proposals");
-  if (error) console.error("close_due_proposals", error);
-}

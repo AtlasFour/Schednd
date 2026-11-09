@@ -15,7 +15,7 @@ import {
   MODE_LABELS,
 } from "@/lib/groups";
 import { fetchOccurrences, upcomingMeetings } from "@/lib/meetings";
-import { closeDueProposals } from "@/lib/proposals";
+import { closeDueProposals } from "@/lib/proposals-server";
 import { addDays, describeRecurrence, todayInTimeZone } from "@/lib/schedule";
 import { getSiteUrl } from "@/lib/site-url";
 import { leaveGroup } from "../actions";

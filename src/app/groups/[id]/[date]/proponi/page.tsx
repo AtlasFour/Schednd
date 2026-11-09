@@ -6,7 +6,8 @@ import { requireUser } from "@/lib/auth";
 import { isDate } from "@/lib/form";
 import { getGroupDetail } from "@/lib/groups";
 import { meetingForDate, OCCURRENCE_SELECT, type OccurrenceRow } from "@/lib/meetings";
-import { closeDueProposals, isOpen } from "@/lib/proposals";
+import { isOpen } from "@/lib/proposals";
+import { closeDueProposals } from "@/lib/proposals-server";
 import { capitalize, formatMediumDate, formatTime, hoursUntil } from "@/lib/schedule";
 import { ProposalForm } from "./proposal-form";
 

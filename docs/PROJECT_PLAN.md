@@ -332,7 +332,7 @@ La libreria del gruppo è una **vista**: l'unione degli `user_games` dei membri,
 - **Web Push**. Su iPhone funziona solo con la webapp installata sulla home (iOS 16.4 o successivo).
 - **Email** di riserva, tramite **Resend** (piano gratuito), che servirà comunque per i link di accesso perché il servizio email incluso in Supabase invia pochissimi messaggi l'ora.
 
-**Controlli programmati.** Un job orario (Supabase `pg_cron` + Edge Function, oppure un Cron Job di Vercel) trova gli incontri nelle finestre 48h/24h e invia gli avvisi una sola volta, registrandoli in `notifications_log`.
+**Come funziona.** Il database decide chi avvisare e con quale testo: dei trigger scrivono nella tabella `notification_queue` quando succede qualcosa (nuova proposta, esito, minimo raggiunto o perso, incontro saltato, nuovo calendario). Ogni chiave di deduplica impedisce gli invii doppi. Il server dell'app svuota la coda subito dopo ogni azione (`after`). Un cron di Vercel, ogni mattina alle 8 UTC (le 9 o le 10 in Italia), chiude le proposte scadute e accoda i promemoria per gli incontri di dopodomani (minimo non raggiunto) e di domani (promemoria ai presenti, avviso all'owner se manca il minimo).
 
 ---
 
@@ -381,8 +381,8 @@ Le istruzioni passo passo sono nel [README](../README.md): variabili d'ambiente,
 | **1 – Gruppi** | Schema database + RLS, profilo, creazione gruppo con ricorrenza ogni N settimane, invito membri, impostazioni, cambio fisso del giorno, trasferimento owner | ✅ fatto |
 | **2 – Incontri e presenze** | Calcolo incontri, home, RSVP in tempo reale, dettaglio incontro, contatore del minimo, decisioni dell'owner sul singolo incontro (salta, gioco/luogo diverso, nota) | ✅ fatto |
 | **3 – Proposte** | Date/giochi multipli, voto per approvazione, 3 regole di approvazione, chiusura 24 ore prima, applicazione lato server | ✅ fatto |
-| **4 – Ospiti** | Link ospite, login dell'ospite, pagina dell'incontro, presenza che conta nel minimo, voto degli ospiti, "aggiungi al gruppo" | ✅ fatto (da provare) |
-| **5 – Notifiche ed email** | Resend, Web Push, avvisi a 48h e 24h, conferma, promemoria, "decidi" per l'owner | |
+| **4 – Ospiti** | Link ospite, login dell'ospite, pagina dell'incontro, presenza che conta nel minimo, voto degli ospiti, "aggiungi al gruppo" | ✅ fatto |
+| **5 – Notifiche ed email** | Web Push, email facoltative via SMTP, avvisi a 48h e 24h (cron giornaliero), "si gioca!", sotto il minimo, proposte ed esiti, incontri saltati, nuovo calendario | ✅ fatto (da provare) |
 | **6 – Beta con gli amici** | Uso reale sulle sessioni A–D | **MVP** |
 | **7 – Extra** | Login Google, host a rotazione, librerie, preferiti e import da BGG, inglese, calendario | |
 | **8 – Grafica** | Tema pixel art | |

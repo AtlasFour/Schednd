@@ -21,7 +21,7 @@ import {
   formatTime,
   todayInTimeZone,
 } from "@/lib/schedule";
-import { closeDueProposals } from "@/lib/proposals";
+import { closeDueProposals } from "@/lib/proposals-server";
 import { getSupabaseEnv } from "@/lib/supabase/env";
 import { goToInviteCode } from "./groups/actions";
 

@@ -1,6 +1,6 @@
 "use server";
 
-import { revalidateApp } from "@/lib/revalidate";
+import { afterMutation } from "@/lib/revalidate";
 import { redirect } from "next/navigation";
 import { requireUser } from "@/lib/auth";
 import { dbErrorMessage, getString, isDate, isTime, type FormState } from "@/lib/form";
@@ -65,7 +65,7 @@ export async function createProposal(
     return { error: dbErrorMessage(error) };
   }
 
-  revalidateApp();
+  afterMutation();
   redirect(`/groups/${groupId}/${originalDate}#proposte`);
 }
 
@@ -79,7 +79,7 @@ export async function castVote(proposalId: string, optionIds: string[]): Promise
     console.error("cast_vote", error);
     return { error: dbErrorMessage(error) };
   }
-  revalidateApp();
+  afterMutation();
   return {};
 }
 
@@ -96,7 +96,7 @@ export async function decideProposal(
     console.error("decide_proposal", error);
     return { error: dbErrorMessage(error) };
   }
-  revalidateApp();
+  afterMutation();
   return {};
 }
 
@@ -107,6 +107,6 @@ export async function cancelProposal(proposalId: string): Promise<FormState> {
     console.error("cancel_proposal", error);
     return { error: dbErrorMessage(error) };
   }
-  revalidateApp();
+  afterMutation();
   return {};
 }

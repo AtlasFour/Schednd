@@ -16,6 +16,18 @@ Su Vercel (*Settings → Environment Variables*, per Production, Preview e Devel
 | `NEXT_PUBLIC_SUPABASE_URL` | Supabase → Project Settings → API → Project URL |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase → Project Settings → API → chiave `anon` / `publishable` |
 
+Per le notifiche (fase 5) servono anche le seguenti variabili. Le chiavi VAPID e il `CRON_SECRET` si generano dalla pagina **Profilo → Configurazione del server** dell'app (`/profile/configurazione`), che mostra anche quali variabili mancano.
+
+| Nome | Note |
+|---|---|
+| `SUPABASE_SERVICE_ROLE_KEY` | Supabase → Project Settings → API → chiave `service_role` / `secret`. **Segreta.** |
+| `NEXT_PUBLIC_VAPID_PUBLIC_KEY` | chiave pubblica per le notifiche push |
+| `VAPID_PRIVATE_KEY` | chiave privata per le notifiche push. **Segreta.** |
+| `CRON_SECRET` | protegge il cron giornaliero (`/api/cron/notifications`, ogni mattina alle 8 UTC). **Segreta.** |
+| `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASSWORD`, `SMTP_FROM` | facoltative, per gli avvisi via email (es. Gmail: `smtp.gmail.com`, `465`, indirizzo, password per le app) |
+
+Dopo aver aggiunto o cambiato variabili su Vercel serve un **Redeploy**.
+
 Per lo sviluppo locale: copia `.env.example` in `.env.local` e compila i valori.
 
 ### Supabase → Authentication → URL Configuration
@@ -42,6 +54,7 @@ Le migrazioni sono in `supabase/migrations/`, numerate in ordine. Per ognuna non
 | `0002_occurrences.sql` | incontri, presenze, decisioni dell'owner sul singolo incontro, aggiornamenti in tempo reale |
 | `0003_proposals.sql` | proposte (cambio data, salto, cambio gioco) con più opzioni, voto e regole di approvazione |
 | `0004_guests.sql` | ospiti "una tantum": link per un singolo incontro, presenza e voto degli ospiti |
+| `0005_notifications.sql` | notifiche: iscrizioni push, coda degli avvisi, trigger sugli eventi, promemoria giornalieri |
 
 ## Sviluppo
 ```bash
