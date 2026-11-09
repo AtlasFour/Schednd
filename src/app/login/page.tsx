@@ -7,6 +7,8 @@ export const metadata: Metadata = { title: "Accedi" };
 const ERROR_MESSAGES: Record<string, string> = {
   link_non_valido:
     "Il link di accesso non è valido o è scaduto. Richiedine uno nuovo.",
+  altro_browser:
+    "Non è stato possibile completare l'accesso. Apri il link nello stesso browser in cui l'hai richiesto (es. Chrome), oppure richiedine uno nuovo da qui.",
 };
 
 export default function LoginPage({ searchParams }: PageProps<"/login">) {

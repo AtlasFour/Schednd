@@ -34,6 +34,11 @@ export async function GET(request: NextRequest) {
       return NextResponse.redirect(new URL(next, origin));
     }
     console.error("exchangeCodeForSession", error);
+    // Di solito succede quando il link viene aperto in un browser diverso
+    // da quello in cui è stato richiesto (es. il browser interno di Gmail).
+    return NextResponse.redirect(
+      new URL("/login?errore=altro_browser", origin),
+    );
   }
 
   return NextResponse.redirect(new URL("/login?errore=link_non_valido", origin));

@@ -2,7 +2,7 @@
 
 > Webapp (PWA) per organizzare sessioni ricorrenti di giochi da tavolo, giochi di ruolo, giochi online e meetup fisici: chi c'è, quando si gioca e a cosa si gioca. Si usa da browser su qualsiasi telefono o PC e si può "installare" sulla schermata home.
 
-Stato: **v0.3**. Le scelte principali sono decise (§1). Restano poche [domande aperte](#14-domande-aperte), segnate con ❓.
+Stato: **v0.4**. Tutte le scelte principali sono decise (§1).
 
 ---
 
@@ -48,6 +48,10 @@ Stato: **v0.3**. Le scelte principali sono decise (§1). Restano poche [domande 
 | D17 | Pubblico | **Solo tra amici**, per ora. |
 | D18 | Grafica | Più avanti. Direzione: **tema pixel art**. |
 | D19 | Giochi | **Librerie personali** dei giochi, **preferiti** e **voto sul gioco** da fare all'incontro. |
+| D20 | Voto degli ospiti | Gli ospiti **votano** le proposte dell'incontro a cui partecipano. |
+| D21 | Pareggi | Con la regola "maggioranza", in caso di pareggio **decide l'owner**. |
+| D22 | Ritiri dopo la conferma | Se si scende sotto il minimo dopo la conferma, l'owner viene **avvisato subito**. |
+| D23 | BoardGameGeek | Usato già per la collezione: **importazione da BGG** prevista insieme alle librerie. |
 
 ---
 
@@ -101,7 +105,7 @@ Stato: **v0.3**. Le scelte principali sono decise (§1). Restano poche [domande 
 |---|---|
 | **Owner** | Impostazioni del gruppo (ricorrenza, gioco predefinito, regola di voto, minimo); gestione dei membri; decide sugli incontri sotto il minimo; approva o respinge le proposte se la regola è "decide l'owner"; può trasferire il ruolo di owner a un altro membro; elimina il gruppo. |
 | **Membro** | Vede il gruppo, segna la presenza, crea proposte, vota, **invita ospiti**, può fare da host. |
-| **Ospite** | Fa login e vede **solo** l'incontro a cui è invitato. Segna la propria presenza, che conta nel minimo. Non vota e non fa proposte ❓. |
+| **Ospite** | Fa login e vede **solo** l'incontro a cui è invitato. Segna la propria presenza, che conta nel minimo, e **vota** le proposte di quell'incontro. Non crea proposte. |
 
 ---
 
@@ -149,7 +153,7 @@ Stato: **v0.3**. Le scelte principali sono decise (§1). Restano poche [domande 
 - P1: **Libreria del gruppo** = unione delle librerie dei membri ("Gloomhaven – di Luca").
 - P1: **Preferiti**: ognuno segna i giochi che vorrebbe giocare.
 - P1: Le proposte di cambio gioco pescano dalla libreria del gruppo, filtrata per numero di presenti.
-- P2: Importazione della collezione da **BoardGameGeek** ❓.
+- P1: Importazione della collezione da **BoardGameGeek** (nome utente BGG nel profilo → importa i giochi posseduti).
 - P2: Storico delle partite.
 
 ### 6.7 Grafica
@@ -185,14 +189,14 @@ programmato ──(minimo raggiunto)──▶ confermato
 
 - Gli ospiti presenti **contano** nel minimo.
 - Se il minimo non è raggiunto, l'incontro **non si annulla da solo**: decide l'owner (gioca comunque, salta, oppure cambia gioco con chi c'è).
-- Se dopo la conferma qualcuno si ritira e si scende sotto il minimo, l'incontro torna "programmato" e l'owner riceve un avviso ❓.
+- Se dopo la conferma qualcuno si ritira e si scende sotto il minimo, l'incontro torna "programmato" e l'owner riceve **subito** un avviso.
 
 ### 7.4 Proposte con più opzioni (D3, D9, D10)
 - Tipi: `reschedule` (opzioni = date/ore), `skip` (nessuna opzione: Sì/No), `change_game` (opzioni = giochi).
 - **Voto per approvazione**: ognuno spunta tutte le opzioni che gli vanno bene, oppure "nessuna".
 - **Chiusura**: alla scadenza (**24 ore prima** dell'incontro originale), oppure prima, appena una delle opzioni soddisfa la regola.
 - **Quale opzione vince**, secondo la regola del gruppo:
-  - **Maggioranza**: vince l'opzione con più voti, purché abbia i voti di **più della metà dei membri**. In caso di pareggio vince la data più vicina o il gioco proposto per primo ❓.
+  - **Maggioranza**: vince l'opzione con più voti, purché abbia i voti di **più della metà degli aventi diritto** (membri + ospiti dell'incontro). In caso di **pareggio decide l'owner**.
   - **Unanimità dei presenti**: vince un'opzione votata da **tutti** quelli segnati presenti all'incontro. Se sono più d'una, vince la più votata.
   - **Decide l'owner**: i voti degli altri sono un parere; l'owner sceglie l'opzione o respinge la proposta.
 - Se nessuna opzione soddisfa la regola, la proposta è **respinta** e l'incontro resta com'è.
@@ -318,6 +322,8 @@ La libreria del gruppo è una **vista**: l'unione degli `user_games` dei membri,
 | Nuova proposta | membri tranne l'autore | P0 |
 | Proposta chiusa (esito) | membri + ospiti coinvolti | P0 |
 | Cambio fisso del giorno | membri | P0 |
+| Sceso sotto il minimo dopo la conferma | owner | P0 |
+| Pareggio in una proposta ("decidi tu") | owner | P0 |
 | Nuovo ospite/membro | owner | P1 |
 
 **Canali.**
@@ -376,9 +382,9 @@ Le istruzioni passo passo sono nel [README](../README.md): variabili d'ambiente,
 | **4 – Ospiti** | Link ospite, login dell'ospite, pagina dell'incontro, presenza che conta nel minimo | |
 | **5 – Notifiche ed email** | Resend, Web Push, avvisi a 48h e 24h, conferma, promemoria, "decidi" per l'owner | |
 | **6 – Beta con gli amici** | Uso reale sulle sessioni A–D | **MVP** |
-| **7 – Extra** | Login Google, host a rotazione, librerie e preferiti, inglese, calendario | |
+| **7 – Extra** | Login Google, host a rotazione, librerie, preferiti e import da BGG, inglese, calendario | |
 | **8 – Grafica** | Tema pixel art | |
-| **9 – Futuro** | BoardGameGeek, storico partite, iCal | |
+| **9 – Futuro** | Storico partite, iCal | |
 
 ---
 
@@ -389,14 +395,11 @@ Le istruzioni passo passo sono nel [README](../README.md): variabili d'ambiente,
 - **Notifiche su iPhone**: arrivano solo con la webapp installata sulla home. Serve una guida nell'app, con l'email come riserva.
 - **Limiti email di Supabase**: pochi messaggi l'ora. Prima della beta va configurato Resend.
 - **Link ospite**: token lunghi e casuali, con scadenza e possibilità di revoca.
-- **BoardGameGeek**: dal 2025 l'API richiede una registrazione dell'applicazione e può essere lenta. Va verificata prima di prometterla.
+- **BoardGameGeek**: dal 2025 l'API XML richiede la registrazione dell'applicazione (gratuita per uso non commerciale) e risponde in modo asincrono per le collezioni. Va registrata prima della fase 7.
 - **Privacy**: un'informativa minima e la possibilità di cancellare l'account.
 
 ---
 
 ## 14. Domande aperte
 
-1. Gli **ospiti** possono votare le proposte dell'incontro a cui partecipano (es. il cambio gioco)? Per ora: **no**.
-2. In caso di **pareggio** con la regola "maggioranza", vince la data più vicina o il gioco proposto per primo, oppure decide l'owner? Per ora: **decide l'owner**.
-3. Se dopo la conferma qualcuno si ritira e si scende **sotto il minimo**, l'owner va avvisato subito? Per ora: **sì**.
-4. **BoardGameGeek**: usi già BGG per registrare la tua collezione? Se no, si può lasciare per ultimo.
+Nessuna al momento. Nuove domande verranno aggiunte qui man mano che si sviluppano le fasi.
