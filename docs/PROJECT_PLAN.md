@@ -211,7 +211,7 @@ programmato ──(minimo raggiunto)──▶ confermato
 - Un incontro eredita il gioco predefinito, salvo una proposta approvata (o una decisione dell'owner sotto il minimo).
 
 ### 7.6 Ospiti (D4, D7)
-- Qualsiasi membro genera un **link ospite** per un incontro.
+- Qualsiasi membro genera un **link ospite** per un incontro: c'è un solo link attivo per incontro, valido per più persone fino al giorno dell'incontro. Rigenerarlo revoca il precedente.
 - Chi lo apre fa login (lo stesso link via email o Google) e diventa ospite **di quell'incontro**.
 - L'ospite vede solo quell'incontro e segna la presenza.
 - Il link scade dopo l'incontro e chi l'ha creato, o l'owner, può revocarlo.
@@ -380,8 +380,8 @@ Le istruzioni passo passo sono nel [README](../README.md): variabili d'ambiente,
 | **0 – Fondamenta** | Next.js, Supabase, login via email, PWA base, deploy | ✅ fatto |
 | **1 – Gruppi** | Schema database + RLS, profilo, creazione gruppo con ricorrenza ogni N settimane, invito membri, impostazioni, cambio fisso del giorno, trasferimento owner | ✅ fatto |
 | **2 – Incontri e presenze** | Calcolo incontri, home, RSVP in tempo reale, dettaglio incontro, contatore del minimo, decisioni dell'owner sul singolo incontro (salta, gioco/luogo diverso, nota) | ✅ fatto |
-| **3 – Proposte** | Date/giochi multipli, voto per approvazione, 3 regole di approvazione, chiusura 24 ore prima, applicazione lato server | ✅ fatto (da provare) |
-| **4 – Ospiti** | Link ospite, login dell'ospite, pagina dell'incontro, presenza che conta nel minimo | |
+| **3 – Proposte** | Date/giochi multipli, voto per approvazione, 3 regole di approvazione, chiusura 24 ore prima, applicazione lato server | ✅ fatto |
+| **4 – Ospiti** | Link ospite, login dell'ospite, pagina dell'incontro, presenza che conta nel minimo, voto degli ospiti, "aggiungi al gruppo" | ✅ fatto (da provare) |
 | **5 – Notifiche ed email** | Resend, Web Push, avvisi a 48h e 24h, conferma, promemoria, "decidi" per l'owner | |
 | **6 – Beta con gli amici** | Uso reale sulle sessioni A–D | **MVP** |
 | **7 – Extra** | Login Google, host a rotazione, librerie, preferiti e import da BGG, inglese, calendario | |
