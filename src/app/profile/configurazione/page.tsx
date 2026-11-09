@@ -26,6 +26,7 @@ async function Config() {
     { label: "Chiave privata notifiche", env: "VAPID_PRIVATE_KEY", ok: status.vapidPrivate },
     { label: "Segreto del cron giornaliero", env: "CRON_SECRET", ok: status.cronSecret },
     { label: "Invio email (facoltativo)", env: "SMTP_HOST, SMTP_USER, SMTP_PASSWORD", ok: status.smtp, optional: true },
+    { label: "Import da BoardGameGeek (facoltativo)", env: "BGG_API_TOKEN", ok: status.bgg, optional: true },
   ];
 
   return (
@@ -75,6 +76,23 @@ async function Config() {
           <li>
             <strong>Deployments → ⋯ → Redeploy</strong> sull&apos;ultima versione, perché le
             variabili valgono solo dopo una nuova pubblicazione.
+          </li>
+        </ol>
+      </Card>
+
+      <Card title="BoardGameGeek (facoltativo)">
+        <ol className="flex list-decimal flex-col gap-2 pl-5 text-sm text-foreground/80">
+          <li>
+            Su BoardGameGeek, da loggato, apri{" "}
+            <a href="https://boardgamegeek.com/applications" target="_blank" rel="noreferrer" className="text-brand underline">
+              boardgamegeek.com/applications
+            </a>{" "}
+            e registra un&apos;applicazione (uso non commerciale, nome &quot;Schednd&quot;).
+          </li>
+          <li>Crea un token per l&apos;applicazione e copialo.</li>
+          <li>
+            Su Vercel aggiungi la variabile <span className="font-mono text-xs">BGG_API_TOKEN</span>{" "}
+            con il token, poi fai <strong>Redeploy</strong>.
           </li>
         </ol>
       </Card>

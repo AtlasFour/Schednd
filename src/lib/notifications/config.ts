@@ -41,5 +41,6 @@ export function notificationSetupStatus() {
     vapidPrivate: Boolean(process.env.VAPID_PRIVATE_KEY),
     cronSecret: Boolean(process.env.CRON_SECRET),
     smtp: getSmtpConfig() !== null,
+    bgg: Boolean(process.env.BGG_API_TOKEN),
   };
 }
