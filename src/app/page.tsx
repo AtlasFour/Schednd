@@ -13,6 +13,7 @@ import {
   type MeetingGroup,
 } from "@/lib/meetings";
 import { addDays, formatShortDate, formatTime, todayInTimeZone } from "@/lib/schedule";
+import { closeDueProposals } from "@/lib/proposals";
 import { getSupabaseEnv } from "@/lib/supabase/env";
 import { goToInviteCode } from "./groups/actions";
 
@@ -76,6 +77,7 @@ async function Home() {
     }));
 
   const yesterday = addDays(todayInTimeZone("Europe/Rome"), -1);
+  await closeDueProposals(supabase);
   const occurrences = await fetchOccurrences(
     supabase,
     groups.map((g) => g.id),

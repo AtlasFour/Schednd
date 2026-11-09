@@ -17,6 +17,13 @@ export type AttendanceRow = {
   note: string | null;
 };
 
+export type OccurrenceProposalSummary = {
+  id: string;
+  type: "reschedule" | "skip" | "change_game";
+  status: "open" | "needs_owner" | "approved" | "rejected" | "cancelled";
+  ballots: { user_id: string }[];
+};
+
 export type OccurrenceRow = {
   id: string;
   group_id: string;
@@ -28,10 +35,11 @@ export type OccurrenceRow = {
   location_override: string | null;
   notes: string | null;
   attendances: AttendanceRow[];
+  proposals?: OccurrenceProposalSummary[];
 };
 
 export const OCCURRENCE_SELECT =
-  "id, group_id, original_date, start_date, start_time, status, game_title_override, location_override, notes, attendances(user_id, status, note)";
+  "id, group_id, original_date, start_date, start_time, status, game_title_override, location_override, notes, attendances(user_id, status, note), proposals(id, type, status, ballots(user_id))";
 
 export type MeetingGroup = Pick<
   GroupRow,
@@ -59,6 +67,11 @@ export type Meeting = {
   myStatus: AttendanceStatus | null;
   myNote: string | null;
   today: string;
+  /** Proposte aperte a cui non ho ancora votato. */
+  proposalsToVote: number;
+  /** Proposte in pareggio (le decide l'owner). */
+  proposalsTied: number;
+  openProposals: number;
 };
 
 export function countAttendances(attendances: AttendanceRow[], memberCount: number) {
@@ -78,6 +91,9 @@ export function buildMeeting(
 ): Meeting {
   const attendances = occurrence?.attendances ?? [];
   const mine = attendances.find((a) => a.user_id === userId);
+  const open = (occurrence?.proposals ?? []).filter(
+    (p) => p.status === "open" || p.status === "needs_owner",
+  );
   return {
     groupId: group.id,
     groupName: group.name,
@@ -95,6 +111,11 @@ export function buildMeeting(
     myStatus: mine?.status ?? null,
     myNote: mine?.note ?? null,
     today,
+    proposalsToVote: open.filter(
+      (p) => p.status === "open" && !p.ballots.some((b) => b.user_id === userId),
+    ).length,
+    proposalsTied: open.filter((p) => p.status === "needs_owner").length,
+    openProposals: open.length,
   };
 }
 

@@ -15,6 +15,7 @@ import {
   MODE_LABELS,
 } from "@/lib/groups";
 import { fetchOccurrences, upcomingMeetings } from "@/lib/meetings";
+import { closeDueProposals } from "@/lib/proposals";
 import { addDays, describeRecurrence, todayInTimeZone } from "@/lib/schedule";
 import { getSiteUrl } from "@/lib/site-url";
 import { leaveGroup } from "../actions";
@@ -38,6 +39,7 @@ async function GroupDetail({ params, searchParams }: PageProps<"/groups/[id]">) 
   const me = group.memberships.find((m) => m.user_id === user.id);
   const isOwner = me?.role === "owner";
   const schedule = activeSchedule(group);
+  await closeDueProposals(supabase);
   const occurrences = await fetchOccurrences(
     supabase,
     [group.id],

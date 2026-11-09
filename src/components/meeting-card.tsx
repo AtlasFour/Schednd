@@ -55,6 +55,11 @@ export function MeetingCard({
               · {relativeDay(meeting.date, meeting.today)}
             </span>
           </p>
+          {meeting.date !== meeting.originalDate && (
+            <p className="text-xs text-brand">
+              📅 Spostato (era {formatShortDate(meeting.originalDate)})
+            </p>
+          )}
           {showGroup && <p className="truncate text-sm">{meeting.groupName}</p>}
           {meeting.game && (
             <p className="truncate text-sm text-foreground/60">🎲 {meeting.game}</p>
@@ -64,6 +69,21 @@ export function MeetingCard({
           ›
         </span>
       </Link>
+
+      {(meeting.proposalsToVote > 0 || meeting.proposalsTied > 0) && (
+        <Link
+          href={`${href}#proposte`}
+          className="flex items-center gap-2 rounded-xl bg-brand/10 px-3 py-2 text-sm font-medium text-brand"
+        >
+          🗳️{" "}
+          {meeting.proposalsToVote > 0
+            ? meeting.proposalsToVote === 1
+              ? "1 proposta da votare"
+              : `${meeting.proposalsToVote} proposte da votare`
+            : "Proposta in pareggio: decide l'owner"}
+          <span aria-hidden className="ml-auto">›</span>
+        </Link>
+      )}
 
       {meeting.skipped ? (
         <p className="text-sm font-medium text-foreground/70">⏭️ Incontro saltato</p>
