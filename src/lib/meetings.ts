@@ -33,10 +33,11 @@ export type OccurrenceRow = {
   attendances: AttendanceRow[];
   proposals?: OccurrenceProposalSummary[];
   occurrence_guests?: { user_id: string }[];
+  is_extra?: boolean;
 };
 
 export const OCCURRENCE_SELECT =
-  "id, group_id, original_date, start_date, start_time, status, game_title_override, location_override, notes, attendances(user_id, status, note), proposals(id, type, status, ballots(user_id)), occurrence_guests(user_id)";
+  "id, group_id, original_date, start_date, start_time, status, game_title_override, location_override, notes, attendances(user_id, status, note), proposals(id, type, status, ballots(user_id)), occurrence_guests(user_id), is_extra";
 
 export type MeetingGroup = Pick<
   GroupRow,
@@ -44,6 +45,7 @@ export type MeetingGroup = Pick<
 > & {
   group_schedules: ScheduleRow[];
   memberCount: number;
+  kind?: "recurring" | "single";
 };
 
 export type Meeting = {
@@ -54,6 +56,10 @@ export type Meeting = {
   date: string;
   startTime: string;
   skipped: boolean;
+  /** Incontro fuori ricorrenza (straordinario o evento singolo). */
+  isExtra: boolean;
+  /** Il gruppo è un evento singolo. */
+  isSingle: boolean;
   game: string | null;
   location: string | null;
   notes: string | null;
@@ -102,6 +108,8 @@ export function buildMeeting(
     date: occurrence?.start_date ?? originalDate,
     startTime: occurrence?.start_time ?? startTime,
     skipped: occurrence?.status === "skipped",
+    isExtra: occurrence?.is_extra ?? false,
+    isSingle: group.kind === "single",
     game: occurrence?.game_title_override ?? group.default_game_title,
     location: occurrence?.location_override ?? group.default_location,
     notes: occurrence?.notes ?? null,
@@ -132,9 +140,17 @@ export function upcomingMeetings(
   const byDate = new Map(
     occurrences.filter((o) => o.group_id === group.id).map((o) => [o.original_date, o]),
   );
-  return upcomingDates(group.group_schedules.map(toSchedule), today, count).map((d) =>
+  const scheduled = upcomingDates(group.group_schedules.map(toSchedule), today, count).map((d) =>
     buildMeeting(group, d.date, d.startTime, byDate.get(d.date), userId, today),
   );
+  // Incontri fuori ricorrenza (straordinari, evento singolo).
+  const seen = new Set(scheduled.map((m) => m.originalDate));
+  const extras = occurrences
+    .filter((o) => o.group_id === group.id && o.is_extra && !seen.has(o.original_date) && o.start_date >= today)
+    .map((o) => buildMeeting(group, o.original_date, o.start_time, o, userId, today));
+  return [...scheduled, ...extras]
+    .sort((a, b) => (a.date === b.date ? a.startTime.localeCompare(b.startTime) : a.date.localeCompare(b.date)))
+    .slice(0, count);
 }
 
 /**

@@ -1,7 +1,7 @@
 "use client";
 
 import { useActionState } from "react";
-import { saveAttendanceNote, updateOccurrence } from "@/app/meetings/actions";
+import { moveOccurrence, saveAttendanceNote, updateOccurrence } from "@/app/meetings/actions";
 import { FormMessage, SubmitButton } from "@/components/form";
 import { Field, Input, Select, Textarea } from "@/components/ui";
 import { useI18n } from "@/i18n/client";
@@ -113,6 +113,43 @@ export function OccurrenceOwnerForm({
       </Field>
       <FormMessage state={state} />
       <SubmitButton pendingLabel={m.common.saving}>{m.common.save}</SubmitButton>
+    </form>
+  );
+}
+
+export function MoveOccurrenceForm({
+  groupId,
+  originalDate,
+  date,
+  time,
+  minDate,
+}: {
+  groupId: string;
+  originalDate: string;
+  date: string;
+  time: string;
+  minDate: string;
+}) {
+  const { m } = useI18n();
+  const [state, formAction] = useActionState(
+    moveOccurrence.bind(null, groupId, originalDate),
+    initialFormState,
+  );
+  return (
+    <form action={formAction} className="flex flex-col gap-3">
+      <p className="text-xs text-foreground/60">{m.events.moveHint}</p>
+      <div className="grid grid-cols-2 gap-3">
+        <Field label={m.events.extraDate} htmlFor="move-date">
+          <Input id="move-date" name="date" type="date" required min={minDate} defaultValue={date} />
+        </Field>
+        <Field label={m.events.extraTime} htmlFor="move-time">
+          <Input id="move-time" name="time" type="time" required defaultValue={time.slice(0, 5)} />
+        </Field>
+      </div>
+      <FormMessage state={state} />
+      <SubmitButton variant="secondary" small pendingLabel={m.events.moving} className="self-start">
+        {m.events.move}
+      </SubmitButton>
     </form>
   );
 }

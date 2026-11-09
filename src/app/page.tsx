@@ -82,7 +82,7 @@ async function Home() {
     supabase
       .from("memberships")
       .select(
-        "role, groups(id, name, timezone, default_game_title, default_location, min_attendees, status, group_schedules(id, anchor_date, interval_weeks, start_time, valid_until), memberships(count))",
+        "role, groups(id, name, timezone, default_game_title, default_location, min_attendees, status, kind, group_schedules(id, anchor_date, interval_weeks, start_time, valid_until), memberships(count))",
       )
       .eq("user_id", user.id),
     supabase.rpc("my_guest_meetings"),
@@ -228,7 +228,10 @@ async function Home() {
                       className="flex items-center justify-between gap-3 px-4 py-3 hover:bg-foreground/5"
                     >
                       <div className="min-w-0">
-                        <p className="truncate font-medium">{g.name}</p>
+                        <p className="truncate font-medium">
+                          {g.kind === "single" && <span aria-hidden>📌 </span>}
+                          {g.name}
+                        </p>
                         <p className="truncate text-xs text-foreground/60">
                           {m.common.members(g.memberCount)}
                           {next && (

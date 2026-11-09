@@ -58,6 +58,9 @@ export function MeetingCard({
               · {relativeDay(meeting.date, meeting.today, locale)}
             </span>
           </p>
+          {meeting.isExtra && !meeting.isSingle && (
+            <Badge tone="brand">{m.events.extraBadge}</Badge>
+          )}
           {meeting.date !== meeting.originalDate && (
             <p className="text-xs text-brand">
               {m.meeting.moved(formatShortDate(meeting.originalDate, locale))}

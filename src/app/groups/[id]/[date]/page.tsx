@@ -9,7 +9,7 @@ import { GuestLinkBox } from "@/components/guest-link-box";
 import { LiveRefresh } from "@/components/live-refresh";
 import { AttendanceSummary } from "@/components/meeting-card";
 import { ProposalCard } from "@/components/proposal-card";
-import { Badge, ButtonLink, Card, Page, PageSkeleton } from "@/components/ui";
+import { Badge, buttonClass, ButtonLink, Card, Page, PageSkeleton } from "@/components/ui";
 import { getI18n } from "@/i18n/server";
 import type { Messages } from "@/i18n/messages";
 import { requireUser } from "@/lib/auth";
@@ -30,7 +30,11 @@ import {
   formatTime,
   relativeDay,
 } from "@/lib/schedule";
-import { AttendanceNoteForm, OccurrenceOwnerForm } from "./meeting-forms";
+import { deleteExtraMeeting } from "@/app/meetings/actions";
+import { meetingToEvent } from "@/lib/calendar-events";
+import { googleCalendarUrl } from "@/lib/ics";
+import { getSiteUrl } from "@/lib/site-url";
+import { AttendanceNoteForm, MoveOccurrenceForm, OccurrenceOwnerForm } from "./meeting-forms";
 
 export async function generateMetadata(): Promise<Metadata> {
   const { m } = await getI18n();
@@ -73,6 +77,9 @@ async function MeetingDetail({ params }: PageProps<"/groups/[id]/[date]">) {
   if (!meeting) notFound();
 
   const isOwner = viewer === "owner";
+  const calendarEvent = meetingToEvent(group, meeting, await getSiteUrl(), msg, {
+    guest: viewer === "guest",
+  });
   const isGuest = viewer === "guest";
   const isPast = meeting.date < meeting.today;
   const proposals = occ ? await fetchProposals(supabase, occ.id) : [];
@@ -182,6 +189,27 @@ async function MeetingDetail({ params }: PageProps<"/groups/[id]/[date]">) {
         </Card>
       )}
 
+      {!meeting.skipped && !isPast && (
+        <Card title={msg.events.addToCalendar}>
+          <div className="flex flex-wrap gap-2">
+            <a
+              href={googleCalendarUrl(calendarEvent)}
+              target="_blank"
+              rel="noreferrer"
+              className={buttonClass("secondary", true)}
+            >
+              {msg.events.googleCalendar}
+            </a>
+            <a
+              href={`/groups/${group.id}/${meeting.originalDate}/ics`}
+              className={buttonClass("secondary", true)}
+            >
+              {msg.events.icsFile}
+            </a>
+          </div>
+        </Card>
+      )}
+
       <section id="proposte" className="flex scroll-mt-4 flex-col gap-3">
         <div className="flex items-center justify-between gap-2">
           <h2 className="text-lg font-semibold">{msg.meetingPage.proposals}</h2>
@@ -271,6 +299,16 @@ async function MeetingDetail({ params }: PageProps<"/groups/[id]/[date]">) {
           <p className="mb-4 text-sm text-foreground/70">
             {msg.meetingPage.ownerDecisionsText}
           </p>
+          <div className="mb-5 flex flex-col gap-2 border-b border-foreground/10 pb-5">
+            <h3 className="text-sm font-medium">{msg.events.moveTitle}</h3>
+            <MoveOccurrenceForm
+              groupId={group.id}
+              originalDate={meeting.originalDate}
+              date={meeting.date}
+              time={meeting.startTime}
+              minDate={meeting.today}
+            />
+          </div>
           <OccurrenceOwnerForm
             groupId={group.id}
             originalDate={meeting.originalDate}
@@ -281,6 +319,16 @@ async function MeetingDetail({ params }: PageProps<"/groups/[id]/[date]">) {
             defaultGame={group.default_game_title}
             defaultLocation={group.default_location}
           />
+          {meeting.isExtra && !meeting.isSingle && (
+            <NavForm
+              action={deleteExtraMeeting.bind(null, group.id, meeting.originalDate)}
+              className="mt-5 border-t border-foreground/10 pt-5"
+            >
+              <SubmitButton variant="danger" small confirm={msg.events.confirmDeleteExtra}>
+                {msg.events.deleteExtra}
+              </SubmitButton>
+            </NavForm>
+          )}
         </Card>
       )}
     </Page>

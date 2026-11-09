@@ -126,14 +126,16 @@ Stato: **v0.4**. Tutte le scelte principali sono decise (§1).
 - P0: Link d'invito per i membri; rimozione dei membri; trasferimento del ruolo di owner.
 - P0: Modifica delle impostazioni, compreso il **cambio fisso del giorno** (D5, D12).
 - P1: Pausa/archiviazione del gruppo.
+- ✅ **Eventi singoli**: un gruppo può essere "evento singolo" (una data sola, niente ricorrenza), con presenze, ospiti e proposte come gli altri.
 
 ### 6.3 Incontri
 - P0: **Home "Prossimi incontri"** di tutti i miei gruppi.
 - P0: Dettaglio: data, ora, gioco, luogo/link, host, presenze, ospiti, proposte.
 - P0: **Link ospite** per un incontro (D7).
 - P1: **Host e luogo per il singolo incontro** (D14): "questa volta da Marco".
-- ✅ Vista calendario mensile (`/calendario`), con un colore per gruppo. P1: incontri straordinari.
-- P2: Esportazione iCal.
+- ✅ Vista calendario mensile (`/calendario`), con un colore per gruppo.
+- ✅ **Incontri straordinari** fuori dalla ricorrenza (solo owner); l'owner può spostare data e ora di un singolo incontro.
+- ✅ **Calendario del telefono**: link "Google Calendar" e file `.ics` per il singolo incontro; calendario personale in abbonamento (Google/Apple/Outlook) dal profilo, con link segreto rigenerabile.
 
 ### 6.4 Presenze
 - P0: ✅/❌/❔ con un tap, con nota opzionale.
@@ -384,9 +386,9 @@ Le istruzioni passo passo sono nel [README](../README.md): variabili d'ambiente,
 | **4 – Ospiti** | Link ospite, login dell'ospite, pagina dell'incontro, presenza che conta nel minimo, voto degli ospiti, "aggiungi al gruppo" | ✅ fatto |
 | **5 – Notifiche ed email** | Web Push, email facoltative via SMTP, avvisi a 48h e 24h (cron giornaliero), "si gioca!", sotto il minimo, proposte ed esiti, incontri saltati, nuovo calendario | ✅ fatto |
 | **6 – Beta con gli amici** | Uso reale sulle sessioni A–D | **MVP** ✅ pronto |
-| **7 – Extra** | ✅ librerie, preferiti, libreria del gruppo e import da BGG · ✅ calendario mensile · ✅ versione inglese (da provare) · da fare: login Google | in corso |
+| **7 – Extra** | ✅ librerie, preferiti, libreria del gruppo e import da BGG · ✅ calendario mensile · ✅ versione inglese · ✅ eventi singoli, incontri straordinari, calendario del telefono (da provare) · da fare: login Google | in corso |
 | **8 – Grafica** | Tema pixel art selezionabile dal profilo (accanto al tema classico) | ✅ fatto (da provare) |
-| **9 – Futuro** | Storico partite, iCal | |
+| **9 – Futuro** | Storico partite, sondaggi sulle date, posti limitati/lista d'attesa, co-admin | |
 
 ---
 

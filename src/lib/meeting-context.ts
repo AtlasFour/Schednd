@@ -21,6 +21,8 @@ export type MeetingContextGroup = Pick<
   | "default_game_title"
   | "min_attendees"
   | "approval_rule"
+  | "duration_minutes"
+  | "kind"
 > & { group_schedules: ScheduleRow[] };
 
 export type MeetingContext = {
