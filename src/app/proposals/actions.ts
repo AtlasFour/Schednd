@@ -1,9 +1,8 @@
 "use server";
 
 import { afterMutation } from "@/lib/revalidate";
-import { redirect } from "next/navigation";
 import { requireUser } from "@/lib/auth";
-import { dbErrorMessage, getString, isDate, isTime, type FormState } from "@/lib/form";
+import { dbErrorMessage, getString, isDate, isTime, type FormState, type NavResult } from "@/lib/form";
 import type { ProposalType } from "@/lib/proposals";
 
 const TYPES: ProposalType[] = ["reschedule", "skip", "change_game"];
@@ -11,9 +10,9 @@ const TYPES: ProposalType[] = ["reschedule", "skip", "change_game"];
 export async function createProposal(
   groupId: string,
   originalDate: string,
-  _prev: FormState,
+  _prev: NavResult,
   formData: FormData,
-): Promise<FormState> {
+): Promise<NavResult> {
   const type = getString(formData, "type") as ProposalType;
   if (!TYPES.includes(type) || !isDate(originalDate)) {
     return { error: "Scegli che cosa proporre." };
@@ -66,7 +65,8 @@ export async function createProposal(
   }
 
   afterMutation();
-  redirect(`/groups/${groupId}/${originalDate}#proposte`);
+  // Si torna all'incontro (indietro nella cronologia, se si arriva da lì).
+  return { redirectTo: `/groups/${groupId}/${originalDate}` };
 }
 
 export async function castVote(proposalId: string, optionIds: string[]): Promise<FormState> {

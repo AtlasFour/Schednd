@@ -130,6 +130,8 @@ async function Calendar({ searchParams }: PageProps<"/calendario">) {
 
       <div className="flex items-center justify-between gap-2">
         <Link
+          replace
+          scroll={false}
           href={href(shiftMonth(month, -1))}
           aria-label="Mese precedente"
           className="ui-btn flex size-10 items-center justify-center rounded-xl border border-foreground/15 text-lg hover:bg-foreground/5"
@@ -143,7 +145,7 @@ async function Calendar({ searchParams }: PageProps<"/calendario">) {
             {monthParam !== formatMonthParam(monthOf(today)) && (
               <>
                 {" · "}
-                <Link href="/calendario" className="text-brand underline">
+                <Link href="/calendario" replace className="text-brand underline">
                   oggi
                 </Link>
               </>
@@ -151,6 +153,8 @@ async function Calendar({ searchParams }: PageProps<"/calendario">) {
           </p>
         </div>
         <Link
+          replace
+          scroll={false}
           href={href(shiftMonth(month, 1))}
           aria-label="Mese successivo"
           className="ui-btn flex size-10 items-center justify-center rounded-xl border border-foreground/15 text-lg hover:bg-foreground/5"
@@ -193,7 +197,7 @@ async function Calendar({ searchParams }: PageProps<"/calendario">) {
               </>
             );
             return inMonth ? (
-              <Link key={day} href={href(month, day)} scroll={false} aria-label={label} aria-current={isSelected ? "date" : undefined} className={cellClass}>
+              <Link key={day} href={href(month, day)} replace scroll={false} aria-label={label} aria-current={isSelected ? "date" : undefined} className={cellClass}>
                 {content}
               </Link>
             ) : (

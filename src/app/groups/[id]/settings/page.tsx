@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { notFound, redirect } from "next/navigation";
 import { Suspense } from "react";
 import { SubmitButton } from "@/components/form";
+import { NavForm } from "@/components/navigation";
 import { InviteBox } from "@/components/invite-box";
 import { Badge, Card, Page, PageSkeleton } from "@/components/ui";
 import { requireUser } from "@/lib/auth";
@@ -85,7 +86,7 @@ async function Settings({ params }: PageProps<"/groups/[id]/settings">) {
                 </div>
                 {!isMe && (
                   <div className="flex gap-2">
-                    <form action={transferOwnership.bind(null, group.id, m.user_id)}>
+                    <NavForm action={transferOwnership.bind(null, group.id, m.user_id)}>
                       <SubmitButton
                         variant="secondary"
                         small
@@ -93,7 +94,7 @@ async function Settings({ params }: PageProps<"/groups/[id]/settings">) {
                       >
                         Rendi owner
                       </SubmitButton>
-                    </form>
+                    </NavForm>
                     <form action={removeMember.bind(null, group.id, m.user_id)}>
                       <SubmitButton
                         variant="danger"
@@ -129,7 +130,7 @@ async function Settings({ params }: PageProps<"/groups/[id]/settings">) {
           Eliminando il gruppo si perdono tutti i suoi dati, per tutti i membri.
           Se vuoi solo uscire, prima rendi owner un altro membro.
         </p>
-        <form action={deleteGroup.bind(null, group.id)}>
+        <NavForm action={deleteGroup.bind(null, group.id)}>
           <SubmitButton
             variant="danger"
             small
@@ -137,7 +138,7 @@ async function Settings({ params }: PageProps<"/groups/[id]/settings">) {
           >
             Elimina il gruppo
           </SubmitButton>
-        </form>
+        </NavForm>
       </Card>
     </Page>
   );

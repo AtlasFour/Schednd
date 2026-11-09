@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Suspense } from "react";
 import { acceptGuestInvite } from "@/app/guests/actions";
 import { SubmitButton } from "@/components/form";
+import { NavForm } from "@/components/navigation";
 import { ButtonLink, Card, Page, PageSkeleton } from "@/components/ui";
 import { requireUser } from "@/lib/auth";
 import type { GroupMode } from "@/lib/groups";
@@ -94,12 +95,12 @@ async function GuestInvite({ params, searchParams }: PageProps<"/ospite/[token]"
           {invite.is_member ? "Fai già parte del gruppo: apri l'incontro" : "Apri l'incontro"}
         </ButtonLink>
       ) : (
-        <form action={acceptGuestInvite.bind(null, token)} className="flex flex-col gap-2">
+        <NavForm action={acceptGuestInvite.bind(null, token)} className="flex flex-col gap-2">
           <SubmitButton pendingLabel="Attendi…">Partecipa come ospite</SubmitButton>
           <p className="text-center text-xs text-foreground/55">
             Vedrai solo questo incontro: potrai segnare se ci sei e votare le proposte.
           </p>
-        </form>
+        </NavForm>
       )}
     </Page>
   );

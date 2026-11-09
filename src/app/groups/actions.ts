@@ -10,7 +10,7 @@ import {
   getString,
   isDate,
   isTime,
-  type FormState,
+  type FormState, type NavResult,
 } from "@/lib/form";
 import type { ApprovalRule, GroupMode } from "@/lib/groups";
 
@@ -85,7 +85,7 @@ function parseSchedule(formData: FormData) {
   return { anchorDate, startTime, intervalWeeks };
 }
 
-export async function createGroup(_prev: FormState, formData: FormData): Promise<FormState> {
+export async function createGroup(_prev: NavResult, formData: FormData): Promise<NavResult> {
   const fields = parseGroupFields(formData);
   if ("error" in fields) return { error: fields.error };
   const schedule = parseSchedule(formData);
@@ -114,7 +114,7 @@ export async function createGroup(_prev: FormState, formData: FormData): Promise
   }
 
   afterMutation();
-  redirect(`/groups/${data}?nuovo=1`);
+  return { redirectTo: `/groups/${data}?nuovo=1` };
 }
 
 export async function updateGroup(
@@ -187,59 +187,56 @@ export async function removeMember(groupId: string, userId: string): Promise<voi
   afterMutation();
 }
 
-export async function transferOwnership(groupId: string, userId: string): Promise<void> {
+export async function transferOwnership(groupId: string, userId: string): Promise<NavResult> {
   const { supabase } = await requireUser();
   const { error } = await supabase.rpc("transfer_ownership", {
     p_group_id: groupId,
     p_new_owner: userId,
   });
+  afterMutation();
   if (error) {
     console.error("transfer_ownership", error);
-    afterMutation();
-    return;
+    return { error: dbErrorMessage(error) };
   }
   // Non essendo più owner, le impostazioni non sono più accessibili.
-  afterMutation();
-  redirect(`/groups/${groupId}`);
+  return { redirectTo: `/groups/${groupId}` };
 }
 
-export async function deleteGroup(groupId: string): Promise<void> {
+export async function deleteGroup(groupId: string): Promise<NavResult> {
   const { supabase } = await requireUser();
   const { error } = await supabase.from("groups").delete().eq("id", groupId);
+  afterMutation();
   if (error) {
     console.error("deleteGroup", error);
-    afterMutation();
-    return;
+    return { error: dbErrorMessage(error) };
   }
-  afterMutation();
-  redirect("/");
+  return { redirectTo: "/" };
 }
 
-export async function leaveGroup(groupId: string): Promise<void> {
+export async function leaveGroup(groupId: string): Promise<NavResult> {
   const { supabase, user } = await requireUser();
   const { error } = await supabase
     .from("memberships")
     .delete()
     .eq("group_id", groupId)
     .eq("user_id", user.id);
+  afterMutation();
   if (error) {
     console.error("leaveGroup", error);
-    afterMutation();
-    return;
+    return { error: dbErrorMessage(error) };
   }
-  afterMutation();
-  redirect("/");
+  return { redirectTo: "/" };
 }
 
-export async function joinGroup(code: string): Promise<void> {
+export async function joinGroup(code: string): Promise<NavResult> {
   const { supabase } = await requireUser();
   const { data, error } = await supabase.rpc("join_group", { p_code: code });
   if (error || !data) {
     console.error("join_group", error);
-    redirect(`/join/${encodeURIComponent(code)}?errore=1`);
+    return { error: "Non è stato possibile entrare nel gruppo. Riprova." };
   }
   afterMutation();
-  redirect(`/groups/${data}`);
+  return { redirectTo: `/groups/${data}` };
 }
 
 export async function goToInviteCode(formData: FormData): Promise<void> {

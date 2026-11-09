@@ -4,6 +4,7 @@ import { Suspense } from "react";
 import { promoteGuest, removeGuest } from "@/app/guests/actions";
 import { AttendanceButtons } from "@/components/attendance-buttons";
 import { SubmitButton } from "@/components/form";
+import { NavForm } from "@/components/navigation";
 import { GuestLinkBox } from "@/components/guest-link-box";
 import { LiveRefresh } from "@/components/live-refresh";
 import { AttendanceSummary } from "@/components/meeting-card";
@@ -245,7 +246,7 @@ async function MeetingDetail({ params }: PageProps<"/groups/[id]/[date]">) {
       )}
 
       {isGuest && !isPast && (
-        <form
+        <NavForm
           action={removeGuest.bind(null, group.id, meeting.originalDate, user.id, true)}
           className="self-start"
         >
@@ -256,7 +257,7 @@ async function MeetingDetail({ params }: PageProps<"/groups/[id]/[date]">) {
           >
             Lascia l&apos;incontro
           </SubmitButton>
-        </form>
+        </NavForm>
       )}
 
       {isOwner && !isPast && (
@@ -308,7 +309,7 @@ function GuestList({
                   Aggiungi al gruppo
                 </SubmitButton>
               </form>
-              <form action={removeGuest.bind(null, groupId, originalDate, g.user_id, false)}>
+              <NavForm action={removeGuest.bind(null, groupId, originalDate, g.user_id, false)}>
                 <SubmitButton
                   variant="danger"
                   small
@@ -316,7 +317,7 @@ function GuestList({
                 >
                   Rimuovi
                 </SubmitButton>
-              </form>
+              </NavForm>
             </div>
           )}
         </li>

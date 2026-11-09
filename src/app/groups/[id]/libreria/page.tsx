@@ -97,6 +97,8 @@ function FilterChip({ href, active, children }: { href: string; active: boolean;
   return (
     <Link
       href={href}
+      replace
+      scroll={false}
       aria-current={active ? "page" : undefined}
       className={cx(
         "ui-chip rounded-full border px-3 py-1 text-sm",

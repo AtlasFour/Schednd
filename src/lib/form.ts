@@ -2,6 +2,9 @@ export type FormState = { error?: string; success?: string };
 
 export const initialFormState: FormState = {};
 
+/** Esito di un'azione che, se riuscita, porta a un'altra pagina. */
+export type NavResult = FormState & { redirectTo?: string };
+
 export function getString(formData: FormData, key: string): string {
   const value = formData.get(key);
   return typeof value === "string" ? value.trim() : "";

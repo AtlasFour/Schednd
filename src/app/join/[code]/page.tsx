@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
 import { SubmitButton } from "@/components/form";
+import { NavForm } from "@/components/navigation";
 import { ButtonLink, Card, Page, PageSkeleton } from "@/components/ui";
 import { requireUser } from "@/lib/auth";
 import { joinGroup } from "../../groups/actions";
@@ -67,9 +68,9 @@ async function Join({ params, searchParams }: PageProps<"/join/[code]">) {
           Fai già parte del gruppo: aprilo
         </ButtonLink>
       ) : (
-        <form action={joinGroup.bind(null, code)} className="flex flex-col">
+        <NavForm action={joinGroup.bind(null, code)} className="flex flex-col">
           <SubmitButton pendingLabel="Ingresso…">Entra nel gruppo</SubmitButton>
-        </form>
+        </NavForm>
       )}
     </Page>
   );

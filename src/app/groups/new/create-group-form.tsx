@@ -2,6 +2,7 @@
 
 import { useActionState } from "react";
 import { FormMessage, SubmitButton } from "@/components/form";
+import { useNavigateOnSuccess } from "@/components/navigation";
 import { Card } from "@/components/ui";
 import { initialFormState } from "@/lib/form";
 import { createGroup } from "../actions";
@@ -15,6 +16,7 @@ export function CreateGroupForm({
   minDate: string;
 }) {
   const [state, formAction] = useActionState(createGroup, initialFormState);
+  useNavigateOnSuccess(state);
 
   return (
     <form action={formAction} className="flex flex-col gap-5">

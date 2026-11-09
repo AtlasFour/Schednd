@@ -3,6 +3,7 @@
 import { useActionState, useState } from "react";
 import { createProposal } from "@/app/proposals/actions";
 import { FormMessage, SubmitButton } from "@/components/form";
+import { useNavigateOnSuccess } from "@/components/navigation";
 import { buttonClass, Card, cx, Field, Input, Textarea } from "@/components/ui";
 import { initialFormState } from "@/lib/form";
 import { PROPOSAL_TYPE_LABELS, type ProposalType } from "@/lib/proposals";
@@ -29,6 +30,7 @@ export function ProposalForm({
     createProposal.bind(null, groupId, originalDate),
     initialFormState,
   );
+  useNavigateOnSuccess(state);
   const firstAvailable = TYPES.find((t) => !disabledTypes.includes(t)) ?? "reschedule";
   const [type, setType] = useState<ProposalType>(firstAvailable);
   const [rows, setRows] = useState<number[]>([0]);

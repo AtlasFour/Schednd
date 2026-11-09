@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { SubmitButton } from "@/components/form";
 import { InviteBox } from "@/components/invite-box";
+import { NavForm } from "@/components/navigation";
 import { LiveRefresh } from "@/components/live-refresh";
 import { MeetingCard } from "@/components/meeting-card";
 import { Badge, ButtonLink, Card, Page, PageSkeleton } from "@/components/ui";
@@ -145,7 +146,7 @@ async function GroupDetail({ params, searchParams }: PageProps<"/groups/[id]">) 
       </Card>
 
       {!isOwner && (
-        <form action={leaveGroup.bind(null, group.id)} className="self-start">
+        <NavForm action={leaveGroup.bind(null, group.id)} className="self-start">
           <SubmitButton
             variant="danger"
             small
@@ -153,7 +154,7 @@ async function GroupDetail({ params, searchParams }: PageProps<"/groups/[id]">) 
           >
             Esci dal gruppo
           </SubmitButton>
-        </form>
+        </NavForm>
       )}
     </Page>
   );
