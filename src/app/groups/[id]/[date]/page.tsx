@@ -155,7 +155,11 @@ async function MeetingDetail({ params }: PageProps<"/groups/[id]/[date]">) {
             </ButtonLink>
           )}
         </div>
-        {proposals.length === 0 ? (
+        {proposals === null ? (
+          <p role="alert" className="text-sm text-red-500">
+            Non è stato possibile caricare le proposte. Ricarica la pagina tra poco.
+          </p>
+        ) : proposals.length === 0 ? (
           <p className="text-sm text-foreground/60">
             Nessuna proposta. Puoi proporre un cambio di data, di gioco o di
             saltare l&apos;incontro.
