@@ -8,6 +8,7 @@ import { signOut } from "../actions";
 import { getSmtpConfig } from "@/lib/notifications/config";
 import { NotificationSettings } from "./notification-settings";
 import { ProfileForm } from "./profile-form";
+import { CalendarSubscribe } from "./calendar-subscribe";
 import { LanguagePicker } from "./language-picker";
 import { ThemePicker } from "./theme-picker";
 
@@ -49,6 +50,9 @@ async function Profile() {
       <Card title={m.profile.theme}>
         <ThemePicker />
         <p className="mt-2 text-xs text-foreground/50">{m.profile.thisDevice}</p>
+      </Card>
+      <Card title={m.events.calendarTitle}>
+        <CalendarSubscribe />
       </Card>
       <Card title={m.profile.notifications}>
         <NotificationSettings

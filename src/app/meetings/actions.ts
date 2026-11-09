@@ -2,7 +2,7 @@
 
 import { afterMutation } from "@/lib/revalidate";
 import { requireUser } from "@/lib/auth";
-import {getString, isDate, type FormState} from "@/lib/form";
+import { getString, isDate, type FormState, type NavResult } from "@/lib/form";
 import { dbErrorMessage, getI18n } from "@/i18n/server";
 import type { AttendanceStatus } from "@/lib/meetings";
 
@@ -71,4 +71,46 @@ export async function updateOccurrence(
   }
   afterMutation();
   return { success: m.meetingForms.updated };
+}
+
+/** L'owner sposta data/ora di un singolo incontro. */
+export async function moveOccurrence(
+  groupId: string,
+  originalDate: string,
+  _prev: FormState,
+  formData: FormData,
+): Promise<FormState> {
+  const { m } = await getI18n();
+  const date = getString(formData, "date");
+  const time = getString(formData, "time");
+  if (!isDate(date)) return { error: m.events.errorDate };
+  if (!/^\d{2}:\d{2}(:\d{2})?$/.test(time)) return { error: m.events.errorTime };
+  const { supabase } = await requireUser();
+  const { error } = await supabase.rpc("move_occurrence", {
+    p_group_id: groupId,
+    p_original_date: originalDate,
+    p_new_date: date,
+    p_new_time: time,
+  });
+  if (error) {
+    console.error("move_occurrence", error);
+    return { error: await dbErrorMessage(error) };
+  }
+  afterMutation();
+  return { success: m.events.moved };
+}
+
+/** L'owner elimina un incontro straordinario. */
+export async function deleteExtraMeeting(groupId: string, originalDate: string): Promise<NavResult> {
+  const { supabase } = await requireUser();
+  const { error } = await supabase.rpc("delete_extra_meeting", {
+    p_group_id: groupId,
+    p_original_date: originalDate,
+  });
+  afterMutation();
+  if (error) {
+    console.error("delete_extra_meeting", error);
+    return { error: await dbErrorMessage(error) };
+  }
+  return { redirectTo: `/groups/${groupId}` };
 }

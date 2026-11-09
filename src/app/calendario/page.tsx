@@ -88,7 +88,7 @@ async function Calendar({ searchParams }: PageProps<"/calendario">) {
     supabase
       .from("memberships")
       .select(
-        "role, groups(id, name, timezone, default_game_title, default_location, min_attendees, group_schedules(id, anchor_date, interval_weeks, start_time, valid_until), memberships(count))",
+        "role, groups(id, name, timezone, default_game_title, default_location, min_attendees, kind, group_schedules(id, anchor_date, interval_weeks, start_time, valid_until), memberships(count))",
       )
       .eq("user_id", user.id),
     supabase.rpc("my_guest_meetings"),

@@ -4,6 +4,7 @@ import { cookies } from "next/headers";
 import { isLocale, LOCALE_COOKIE } from "@/i18n/config";
 import { afterMutation } from "@/lib/revalidate";
 import { requireUser } from "@/lib/auth";
+import { getSiteUrl } from "@/lib/site-url";
 import {getOptionalString, getString, type FormState} from "@/lib/form";
 import { dbErrorMessage, getI18n } from "@/i18n/server";
 
@@ -44,4 +45,15 @@ export async function setLanguage(locale: string): Promise<void> {
     sameSite: "lax",
   });
   afterMutation();
+}
+
+/** Link (https) al calendario personale; con regenerate il vecchio smette di funzionare. */
+export async function getCalendarLink(regenerate = false): Promise<{ url?: string; error?: string }> {
+  const { supabase } = await requireUser();
+  const { data, error } = await supabase.rpc("get_calendar_token", { p_regenerate: regenerate });
+  if (error || !data) {
+    console.error("get_calendar_token", error);
+    return { error: await dbErrorMessage(error) };
+  }
+  return { url: `${await getSiteUrl()}/api/calendar/${data}.ics` };
 }

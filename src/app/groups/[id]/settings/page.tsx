@@ -58,7 +58,8 @@ async function Settings({ params }: PageProps<"/groups/[id]/settings">) {
         <GroupInfoForm group={group} />
       </Card>
 
-      <Card title={msg.settings.schedule}>
+      {group.kind !== "single" && (
+        <Card title={msg.settings.schedule}>
         {schedule && (
           <p className="mb-4 text-sm text-foreground/70">
             {msg.settings.scheduleNow} <strong>{describeRecurrence(schedule, locale)}</strong>.{" "}
@@ -73,6 +74,7 @@ async function Settings({ params }: PageProps<"/groups/[id]/settings">) {
           minDate={today}
         />
       </Card>
+      )}
 
       <Card title={msg.group.members(group.memberships.length)}>
         <ul className="flex flex-col divide-y divide-foreground/10">

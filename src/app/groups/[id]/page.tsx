@@ -15,7 +15,14 @@ import {
 } from "@/lib/groups";
 import { fetchOccurrences, upcomingMeetings } from "@/lib/meetings";
 import { closeDueProposals } from "@/lib/proposals-server";
-import { addDays, describeRecurrence, todayInTimeZone } from "@/lib/schedule";
+import {
+  addDays,
+  capitalize,
+  describeRecurrence,
+  formatShortDate,
+  formatTime,
+  todayInTimeZone,
+} from "@/lib/schedule";
 import { getSiteUrl } from "@/lib/site-url";
 import { leaveGroup } from "../actions";
 
@@ -56,7 +63,17 @@ async function GroupDetail({ params, searchParams }: PageProps<"/groups/[id]">) 
   return (
     <Page
       title={group.name}
-      subtitle={schedule ? describeRecurrence(schedule, locale) : undefined}
+      subtitle={
+        group.kind === "single"
+          ? meetings[0]
+            ? msg.events.singleSubtitle(
+                msg.events.at(capitalize(formatShortDate(meetings[0].date, locale)), formatTime(meetings[0].startTime)),
+              )
+            : msg.events.kindSingle
+          : schedule
+            ? describeRecurrence(schedule, locale)
+            : undefined
+      }
       back={{ href: "/", label: msg.common.home }}
       actions={
         isOwner ? (
@@ -93,6 +110,12 @@ async function GroupDetail({ params, searchParams }: PageProps<"/groups/[id]">) 
           </ul>
         )}
       </section>
+
+      {isOwner && group.kind !== "single" && (
+        <ButtonLink href={`/groups/${group.id}/nuovo-incontro`} variant="secondary" small className="self-start">
+          {msg.events.addExtra}
+        </ButtonLink>
+      )}
 
       <ButtonLink href={`/groups/${group.id}/libreria`} variant="secondary" className="self-start">
         {msg.group.library}

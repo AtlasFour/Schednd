@@ -90,6 +90,35 @@ export async function createGroup(_prev: NavResult, formData: FormData): Promise
   const { m } = await getI18n();
   const fields = parseGroupFields(formData, m);
   if ("error" in fields) return { error: fields.error };
+
+  if (getString(formData, "kind") === "single") {
+    const date = getString(formData, "event_date");
+    const time = getString(formData, "event_time");
+    if (!isDate(date)) return { error: m.events.errorDate };
+    if (!isTime(time)) return { error: m.events.errorTime };
+    const { supabase } = await requireUser();
+    const { data, error } = await supabase.rpc("create_single_event", {
+      p_name: fields.name,
+      p_date: date,
+      p_time: time,
+      p_description: fields.description,
+      p_mode: fields.mode,
+      p_default_location: fields.default_location,
+      p_online_link: fields.online_link,
+      p_timezone: fields.timezone,
+      p_duration_minutes: fields.duration_minutes,
+      p_default_game_title: fields.default_game_title,
+      p_min_attendees: fields.min_attendees,
+      p_approval_rule: fields.approval_rule,
+    });
+    if (error || !data) {
+      console.error("create_single_event", error);
+      return { error: await dbErrorMessage(error) };
+    }
+    afterMutation();
+    return { redirectTo: `/groups/${data}?nuovo=1` };
+  }
+
   const schedule = parseSchedule(formData, m);
   if ("error" in schedule) return { error: schedule.error };
 
@@ -250,4 +279,31 @@ export async function goToInviteCode(formData: FormData): Promise<void> {
   const code = raw.split("/").filter(Boolean).pop()?.toUpperCase() ?? "";
   if (!code) redirect("/");
   redirect(`/join/${encodeURIComponent(code)}`);
+}
+
+export async function createExtraMeeting(
+  groupId: string,
+  _prev: NavResult,
+  formData: FormData,
+): Promise<NavResult> {
+  const { m } = await getI18n();
+  const date = getString(formData, "date");
+  const time = getString(formData, "time");
+  if (!isDate(date)) return { error: m.events.errorDate };
+  if (!isTime(time)) return { error: m.events.errorTime };
+  const { supabase } = await requireUser();
+  const { data, error } = await supabase.rpc("create_extra_meeting", {
+    p_group_id: groupId,
+    p_date: date,
+    p_time: time,
+    p_game: getString(formData, "game") || null,
+    p_location: getString(formData, "location") || null,
+    p_notes: getString(formData, "notes") || null,
+  });
+  if (error || !data) {
+    console.error("create_extra_meeting", error);
+    return { error: await dbErrorMessage(error) };
+  }
+  afterMutation();
+  return { redirectTo: `/groups/${groupId}/${data}` };
 }
