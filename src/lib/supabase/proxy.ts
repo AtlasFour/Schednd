@@ -2,6 +2,7 @@ import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import { NEXT_PATH_COOKIE } from "../next-path";
 import { getSupabaseEnv } from "./env";
+import { USER_HEADER } from "./user-header";
 
 /** Pagine visibili anche senza aver fatto login. */
 const PUBLIC_PATHS = ["/login", "/auth"];
@@ -30,6 +31,8 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
+  // Nessuno può mandare questo header da fuori: lo scrive solo il proxy.
+  request.headers.delete(USER_HEADER);
   let response = NextResponse.next({ request });
 
   const env = getSupabaseEnv();
@@ -60,7 +63,8 @@ export async function updateSession(request: NextRequest) {
 
   // Importante: niente codice tra createServerClient e getClaims.
   const { data } = await supabase.auth.getClaims();
-  const isLoggedIn = Boolean(data?.claims);
+  const claims = data?.claims;
+  const isLoggedIn = Boolean(claims?.sub);
 
   const { pathname } = request.nextUrl;
 
@@ -87,6 +91,21 @@ export async function updateSession(request: NextRequest) {
     url.pathname = "/";
     url.search = "";
     return NextResponse.redirect(url);
+  }
+
+  if (claims?.sub) {
+    // Le pagine leggono l'utente già verificato qui, senza chiederlo di nuovo
+    // a Supabase (una richiesta in meno per ogni pagina).
+    request.headers.set(
+      USER_HEADER,
+      encodeURIComponent(JSON.stringify({ sub: claims.sub, email: claims.email ?? "" })),
+    );
+    const next = NextResponse.next({ request });
+    response.cookies.getAll().forEach((cookie) => next.cookies.set(cookie));
+    response.headers.forEach((value, key) => {
+      if (!key.startsWith("x-middleware-") && key !== "set-cookie") next.headers.set(key, value);
+    });
+    return next;
   }
 
   return response;

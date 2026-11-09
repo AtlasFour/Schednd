@@ -55,17 +55,24 @@ async function MeetingDetail({ params }: PageProps<"/groups/[id]/[date]">) {
 
   const { supabase, user } = await requireUser();
   const { locale, m: msg } = await getI18n();
-  const ctx = await getMeetingContext(supabase, id, date, user.id);
+  // La chiusura delle proposte scadute parte subito, insieme alle altre letture;
+  // incontro e proposte si leggono dopo, così sono già aggiornati.
+  const [ctx] = await Promise.all([
+    getMeetingContext(supabase, id, date, user.id),
+    closeDueProposals(supabase),
+  ]);
   if (!ctx) notFound();
   const { group, viewer, participants } = ctx;
 
-  await closeDueProposals(supabase);
-  const { data: occurrence } = await supabase
-    .from("occurrences")
-    .select(OCCURRENCE_SELECT)
-    .eq("group_id", id)
-    .eq("original_date", date)
-    .maybeSingle();
+  const [{ data: occurrence }, knownProposals] = await Promise.all([
+    supabase
+      .from("occurrences")
+      .select(OCCURRENCE_SELECT)
+      .eq("group_id", id)
+      .eq("original_date", date)
+      .maybeSingle(),
+    ctx.occurrenceId ? fetchProposals(supabase, ctx.occurrenceId) : null,
+  ]);
   const occ = (occurrence ?? undefined) as OccurrenceRow | undefined;
 
   const meeting = meetingForDate(
@@ -82,7 +89,8 @@ async function MeetingDetail({ params }: PageProps<"/groups/[id]/[date]">) {
   });
   const isGuest = viewer === "guest";
   const isPast = meeting.date < meeting.today;
-  const proposals = occ ? await fetchProposals(supabase, occ.id) : [];
+  const proposals =
+    occ && ctx.occurrenceId === occ.id ? knownProposals : occ ? await fetchProposals(supabase, occ.id) : [];
 
   const byId = new Map(participants.map((p) => [p.user_id, p]));
   const nameRecord = Object.fromEntries(participants.map((p) => [p.user_id, p.name]));
