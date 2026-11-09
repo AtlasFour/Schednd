@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Geist, Geist_Mono, Pixelify_Sans, Press_Start_2P } from "next/font/google";
 import { ServiceWorkerRegistration } from "@/components/service-worker";
 import "./globals.css";
 
@@ -12,6 +12,26 @@ const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
   subsets: ["latin"],
 });
+
+// Font del tema pixel art: scaricati solo se il tema è attivo.
+const pixelSans = Pixelify_Sans({
+  variable: "--font-pixel",
+  subsets: ["latin"],
+  preload: false,
+});
+
+const pixelDisplay = Press_Start_2P({
+  variable: "--font-pixel-display",
+  weight: "400",
+  subsets: ["latin"],
+  preload: false,
+});
+
+/**
+ * Applica il tema scelto (salvato nel browser) prima che la pagina venga
+ * disegnata, così non si vede il "lampo" del tema classico.
+ */
+const themeScript = `try{var t=localStorage.getItem("schednd-theme");if(t==="pixel")document.documentElement.dataset.theme="pixel"}catch(e){}`;
 
 export const metadata: Metadata = {
   title: {
@@ -43,8 +63,12 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
       lang="it"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      suppressHydrationWarning
+      className={`${geistSans.variable} ${geistMono.variable} ${pixelSans.variable} ${pixelDisplay.variable} h-full antialiased`}
     >
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: themeScript }} />
+      </head>
       <body className="min-h-full flex flex-col">
         {children}
         <ServiceWorkerRegistration />

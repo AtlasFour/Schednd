@@ -132,7 +132,7 @@ Stato: **v0.4**. Tutte le scelte principali sono decise (§1).
 - P0: Dettaglio: data, ora, gioco, luogo/link, host, presenze, ospiti, proposte.
 - P0: **Link ospite** per un incontro (D7).
 - P1: **Host e luogo per il singolo incontro** (D14): "questa volta da Marco".
-- P1: Vista calendario mensile; incontri straordinari; note dell'incontro.
+- ✅ Vista calendario mensile (`/calendario`), con un colore per gruppo. P1: incontri straordinari.
 - P2: Esportazione iCal.
 
 ### 6.4 Presenze
@@ -157,7 +157,7 @@ Stato: **v0.4**. Tutte le scelte principali sono decise (§1).
 - P2: Storico delle partite.
 
 ### 6.7 Grafica
-- P2: **Tema pixel art**: font pixel, icone 8/16-bit, bordi "a blocchi". I colori sono già raccolti in variabili CSS, così il tema si potrà cambiare senza riscrivere le pagine.
+- ✅ **Tema pixel art**, selezionabile da Profilo → Tema grafico (salvato sul dispositivo): palette retrò, font Pixelify Sans / Press Start 2P, angoli squadrati, bordi spessi e ombre piene. I componenti hanno classi semantiche (`ui-card`, `ui-btn`, `ui-input`…), così altri temi si possono aggiungere solo con il CSS.
 
 ---
 
@@ -384,8 +384,8 @@ Le istruzioni passo passo sono nel [README](../README.md): variabili d'ambiente,
 | **4 – Ospiti** | Link ospite, login dell'ospite, pagina dell'incontro, presenza che conta nel minimo, voto degli ospiti, "aggiungi al gruppo" | ✅ fatto |
 | **5 – Notifiche ed email** | Web Push, email facoltative via SMTP, avvisi a 48h e 24h (cron giornaliero), "si gioca!", sotto il minimo, proposte ed esiti, incontri saltati, nuovo calendario | ✅ fatto |
 | **6 – Beta con gli amici** | Uso reale sulle sessioni A–D | **MVP** ✅ pronto |
-| **7 – Extra** | ✅ librerie, preferiti, libreria del gruppo e import da BGG (da provare) · da fare: login Google, inglese, calendario mensile | in corso |
-| **8 – Grafica** | Tema pixel art | |
+| **7 – Extra** | ✅ librerie, preferiti, libreria del gruppo e import da BGG · ✅ calendario mensile (da provare) · da fare: login Google, inglese | in corso |
+| **8 – Grafica** | Tema pixel art selezionabile dal profilo (accanto al tema classico) | ✅ fatto (da provare) |
 | **9 – Futuro** | Storico partite, iCal | |
 
 ---

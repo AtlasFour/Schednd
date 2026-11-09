@@ -29,3 +29,117 @@ body {
   padding-top: env(safe-area-inset-top);
   padding-bottom: env(safe-area-inset-bottom);
 }
+
+/* ==========================================================================
+   Tema "Pixel art" (si attiva con data-theme="pixel" su <html>).
+   Palette ispirata alle console 8/16 bit: angoli squadrati, bordi spessi,
+   ombre piene senza sfumature e font pixel.
+   ========================================================================== */
+[data-theme="pixel"] {
+  --background: #1a1c2c;
+  --foreground: #f4f4f4;
+  --brand: #b13e53;
+  --pixel-surface: #262b44;
+  --pixel-line: #566c86;
+  --pixel-shadow: #0b0c14;
+  --pixel-accent: #ffcd75;
+  color-scheme: dark;
+}
+
+[data-theme="pixel"] body {
+  font-family: var(--font-pixel), ui-monospace, monospace;
+  font-size: 17px;
+  letter-spacing: 0.01em;
+  background-color: var(--background);
+  background-image: radial-gradient(rgb(255 255 255 / 0.05) 1px, transparent 1px);
+  background-size: 8px 8px;
+}
+
+[data-theme="pixel"] *,
+[data-theme="pixel"] *::before,
+[data-theme="pixel"] *::after {
+  border-radius: 0 !important;
+}
+
+[data-theme="pixel"] h1,
+[data-theme="pixel"] h2 {
+  font-family: var(--font-pixel-display), var(--font-pixel), monospace;
+  font-weight: 400;
+  line-height: 1.5;
+  letter-spacing: 0;
+  text-shadow: 2px 2px 0 var(--pixel-shadow);
+}
+
+[data-theme="pixel"] h1 {
+  font-size: 1.05rem;
+  color: var(--pixel-accent);
+}
+
+[data-theme="pixel"] h2 {
+  font-size: 0.78rem;
+}
+
+[data-theme="pixel"] .ui-card {
+  background-color: var(--pixel-surface);
+  border: 3px solid var(--pixel-line);
+  box-shadow: 4px 4px 0 var(--pixel-shadow);
+}
+
+[data-theme="pixel"] .ui-btn {
+  border: 2px solid var(--pixel-shadow);
+  box-shadow: 3px 3px 0 var(--pixel-shadow);
+  transition: transform 60ms steps(1), box-shadow 60ms steps(1);
+}
+
+[data-theme="pixel"] .ui-btn:active:not(:disabled) {
+  transform: translate(3px, 3px);
+  box-shadow: none;
+}
+
+[data-theme="pixel"] .ui-btn-secondary,
+[data-theme="pixel"] .ui-btn-ghost {
+  background-color: #333c57;
+}
+
+[data-theme="pixel"] .ui-btn-danger {
+  background-color: #3b1d2a;
+}
+
+[data-theme="pixel"] .ui-input {
+  background-color: #0d0f1a;
+  border: 2px solid #94b0c2;
+  box-shadow: inset 2px 2px 0 var(--pixel-shadow);
+}
+
+[data-theme="pixel"] .ui-badge,
+[data-theme="pixel"] .ui-chip {
+  border: 2px solid currentColor;
+}
+
+[data-theme="pixel"] .ui-day {
+  border: 2px solid transparent;
+}
+
+[data-theme="pixel"] .ui-day:hover {
+  border-color: var(--pixel-line);
+}
+
+[data-theme="pixel"] img {
+  image-rendering: pixelated;
+}
+
+[data-theme="pixel"] :focus-visible {
+  outline: 2px dashed var(--pixel-accent);
+  outline-offset: 2px;
+}
+
+/* Testo nel colore del brand: più chiaro, per il contrasto sullo sfondo scuro. */
+[data-theme="pixel"] .text-brand {
+  color: #ef7d57;
+}
+
+/* Scelta attiva (tema, opzioni) ben visibile anche con i bordi pixel. */
+[data-theme="pixel"] .ui-btn[aria-checked="true"] {
+  border-color: var(--pixel-accent);
+  box-shadow: 3px 3px 0 var(--pixel-accent);
+}

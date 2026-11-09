@@ -61,7 +61,7 @@ export function ProposalCard({
   return (
     <article
       className={cx(
-        "flex flex-col gap-3 rounded-2xl border p-4",
+        "ui-card flex flex-col gap-3 rounded-2xl border p-4",
         open ? "border-brand/40 bg-brand/5" : "border-foreground/10",
       )}
     >

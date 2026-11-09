@@ -1,7 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { GroupRow, ScheduleRow } from "./groups";
 import { toSchedule } from "./groups";
-import { scheduledTimeFor, todayInTimeZone, upcomingDates } from "./schedule";
+import { addDays, scheduledTimeFor, todayInTimeZone, upcomingDates } from "./schedule";
 
 export type AttendanceStatus = "yes" | "no" | "maybe";
 
@@ -139,6 +139,39 @@ export function upcomingMeetings(
   return upcomingDates(group.group_schedules.map(toSchedule), today, count).map((d) =>
     buildMeeting(group, d.date, d.startTime, byDate.get(d.date), userId, today),
   );
+}
+
+/**
+ * Incontri di un gruppo con data effettiva tra `from` e `to` (comprese),
+ * anche passati. Considera gli incontri spostati da/verso il periodo.
+ */
+export function meetingsBetween(
+  group: MeetingGroup,
+  occurrences: OccurrenceRow[],
+  userId: string,
+  from: string,
+  to: string,
+): Meeting[] {
+  const today = todayInTimeZone(group.timezone);
+  const mine = occurrences.filter((o) => o.group_id === group.id);
+  const byDate = new Map(mine.map((o) => [o.original_date, o]));
+  // Si parte un mese prima per includere gli incontri spostati in avanti.
+  const start = addDays(from, -31);
+  const span = Math.round((Date.parse(to) - Date.parse(start)) / 86_400_000) + 1;
+  const scheduled = upcomingDates(group.group_schedules.map(toSchedule), start, span).filter(
+    (d) => d.date <= to,
+  );
+  const seen = new Set(scheduled.map((d) => d.date));
+  const meetings = scheduled.map((d) =>
+    buildMeeting(group, d.date, d.startTime, byDate.get(d.date), userId, today),
+  );
+  // Incontri spostati la cui data originale è fuori dal periodo calcolato.
+  for (const o of mine) {
+    if (!seen.has(o.original_date) && o.start_date >= from && o.start_date <= to) {
+      meetings.push(buildMeeting(group, o.original_date, o.start_time, o, userId, today));
+    }
+  }
+  return meetings.filter((m) => m.date >= from && m.date <= to);
 }
 
 /** Singolo incontro per data; undefined se in quella data non è previsto. */
