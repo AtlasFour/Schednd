@@ -1,5 +1,6 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
+import { NEXT_PATH_COOKIE } from "../next-path";
 import { getSupabaseEnv } from "./env";
 
 /** Pagine visibili anche senza aver fatto login. */
@@ -67,7 +68,18 @@ export async function updateSession(request: NextRequest) {
     const url = request.nextUrl.clone();
     url.pathname = "/login";
     url.search = "";
-    return NextResponse.redirect(url);
+    const redirect = NextResponse.redirect(url);
+    if (pathname !== "/") {
+      // Dopo il login si torna qui (es. a un link d'invito).
+      redirect.cookies.set(NEXT_PATH_COOKIE, pathname + request.nextUrl.search, {
+        path: "/",
+        maxAge: 60 * 60,
+        httpOnly: true,
+        sameSite: "lax",
+        secure: request.nextUrl.protocol === "https:",
+      });
+    }
+    return redirect;
   }
 
   if (isLoggedIn && pathname === "/login") {

@@ -32,10 +32,19 @@ Sostituisci il link del template con:
 ```
 Così il link funziona anche se l'email viene aperta in un browser diverso (es. dall'app Gmail).
 
+### Database (Supabase → SQL Editor)
+Le migrazioni sono in `supabase/migrations/`, numerate in ordine. Per ognuna non ancora applicata:
+*SQL Editor → New query →* incolla il contenuto del file *→ Run*.
+
+| File | Contenuto |
+|---|---|
+| `0001_groups.sql` | profili, gruppi, ricorrenze, membri, permessi (RLS) e funzioni |
+
 ## Sviluppo
 ```bash
 npm install
 npm run dev     # http://localhost:3000
 npm run lint
+npm test        # test della logica (ricorrenze, date)
 npm run build
 ```

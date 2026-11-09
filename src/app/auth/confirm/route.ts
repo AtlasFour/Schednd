@@ -1,5 +1,6 @@
 import type { EmailOtpType } from "@supabase/supabase-js";
 import { NextResponse, type NextRequest } from "next/server";
+import { NEXT_PATH_COOKIE, safeNextPath } from "@/lib/next-path";
 import { createClient } from "@/lib/supabase/server";
 
 /**
@@ -15,7 +16,10 @@ export async function GET(request: NextRequest) {
   const tokenHash = searchParams.get("token_hash");
   const type = searchParams.get("type") as EmailOtpType | null;
   const code = searchParams.get("code");
-  const next = safeNextPath(searchParams.get("next"));
+  const next =
+    safeNextPath(searchParams.get("next")) ??
+    safeNextPath(request.cookies.get(NEXT_PATH_COOKIE)?.value) ??
+    "/";
 
   const supabase = await createClient();
 
@@ -25,13 +29,13 @@ export async function GET(request: NextRequest) {
       token_hash: tokenHash,
     });
     if (!error) {
-      return NextResponse.redirect(new URL(next, origin));
+      return redirectAfterLogin(next, origin);
     }
     console.error("verifyOtp", error);
   } else if (code) {
     const { error } = await supabase.auth.exchangeCodeForSession(code);
     if (!error) {
-      return NextResponse.redirect(new URL(next, origin));
+      return redirectAfterLogin(next, origin);
     }
     console.error("exchangeCodeForSession", error);
     // Di solito succede quando il link viene aperto in un browser diverso
@@ -44,10 +48,8 @@ export async function GET(request: NextRequest) {
   return NextResponse.redirect(new URL("/login?errore=link_non_valido", origin));
 }
 
-/** Accetta solo percorsi interni, per evitare redirect verso altri siti. */
-function safeNextPath(next: string | null) {
-  if (next && next.startsWith("/") && !next.startsWith("//")) {
-    return next;
-  }
-  return "/";
+function redirectAfterLogin(next: string, origin: string) {
+  const response = NextResponse.redirect(new URL(next, origin));
+  response.cookies.delete(NEXT_PATH_COOKIE);
+  return response;
 }

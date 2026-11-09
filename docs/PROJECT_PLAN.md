@@ -165,7 +165,7 @@ Stato: **v0.4**. Tutte le scelte principali sono decise (§1).
 
 ### 7.1 Ricorrenza (D13)
 - Regola: giorno della settimana + **ogni N settimane** (N ≥ 1) + data di partenza + orario + fuso orario.
-- Formato salvato: RRULE, es. `FREQ=WEEKLY;INTERVAL=4;BYDAY=SA`.
+- Formato salvato: data del primo incontro (`anchor_date`) + `interval_weeks` + `start_time`. Il giorno della settimana si ricava dalla data. Per l'esportazione iCal si potrà generare l'equivalente RRULE (`FREQ=WEEKLY;INTERVAL=4;BYDAY=SA`).
 - Gli incontri si **calcolano al volo** e diventano righe nel database al primo utilizzo (presenza, proposta, ospite, host).
 - Il **cambio fisso** chiude la regola vecchia e ne apre una nuova da una certa data (tabella `group_schedules`). Gli incontri futuri che avevano già dati vengono azzerati e i membri ricevono un avviso (D12).
 - Le modifiche a un singolo incontro sono **eccezioni**: data spostata, saltato, gioco diverso, host/luogo diverso.
@@ -375,8 +375,8 @@ Le istruzioni passo passo sono nel [README](../README.md): variabili d'ambiente,
 
 | Fase | Contenuto | Stato |
 |---|---|---|
-| **0 – Fondamenta** | Next.js, Supabase, login via email, PWA base, deploy | ✅ fatto (da provare) |
-| **1 – Gruppi** | Schema database + RLS, profilo, creazione gruppo con ricorrenza ogni N settimane, invito membri, impostazioni, cambio fisso del giorno, trasferimento owner | prossima |
+| **0 – Fondamenta** | Next.js, Supabase, login via email, PWA base, deploy | ✅ fatto |
+| **1 – Gruppi** | Schema database + RLS, profilo, creazione gruppo con ricorrenza ogni N settimane, invito membri, impostazioni, cambio fisso del giorno, trasferimento owner | ✅ fatto (da provare) |
 | **2 – Incontri e presenze** | Calcolo incontri, home, RSVP in tempo reale, dettaglio incontro, contatore del minimo | |
 | **3 – Proposte** | Date/giochi multipli, voto per approvazione, 3 regole di approvazione, chiusura 24 ore prima, applicazione lato server | |
 | **4 – Ospiti** | Link ospite, login dell'ospite, pagina dell'incontro, presenza che conta nel minimo | |
