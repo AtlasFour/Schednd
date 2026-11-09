@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useActionState, useRef, useState } from "react";
 import { createProposal } from "@/app/proposals/actions";
 import { FormMessage, SubmitButton } from "@/components/form";
 import { useNavigateOnSuccess } from "@/components/navigation";
@@ -32,7 +32,8 @@ export function ProposalForm({
     createProposal.bind(null, groupId, originalDate),
     initialFormState,
   );
-  useNavigateOnSuccess(state);
+  const formRef = useRef<HTMLFormElement>(null);
+  useNavigateOnSuccess(state, formRef);
   const firstAvailable = TYPES.find((t) => !disabledTypes.includes(t)) ?? "reschedule";
   const [type, setType] = useState<ProposalType>(firstAvailable);
   const [rows, setRows] = useState<number[]>([0]);
@@ -49,7 +50,7 @@ export function ProposalForm({
   }
 
   return (
-    <form action={formAction} className="flex flex-col gap-5">
+    <form ref={formRef} action={formAction} className="flex flex-col gap-5">
       <fieldset className="flex flex-col gap-2">
         <legend className="mb-2 text-sm font-medium">{m.propose.whatToPropose}</legend>
         {TYPES.map((t) => {

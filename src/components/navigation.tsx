@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode, type RefObject } from "react";
 import { recordNavigation, smartNavigate } from "@/lib/navigation";
 import type { NavResult } from "@/lib/form";
 
@@ -74,10 +74,24 @@ export function NavForm({
   );
 }
 
-/** Dopo un'azione riuscita con `redirectTo`, naviga in modo "intelligente". */
-export function useNavigateOnSuccess(state: NavResult) {
+/**
+ * Dopo un'azione riuscita con `redirectTo`, naviga in modo "intelligente".
+ *
+ * Next.js tiene in memoria le pagine già visitate (React Activity) e, quando
+ * ci si torna, riesegue i loro effetti con lo stato di prima: ogni esito va
+ * quindi usato una sola volta, altrimenti riaprendo il form si verrebbe
+ * riportati al risultato dell'invio precedente. Dopo il successo il form
+ * viene anche svuotato.
+ */
+export function useNavigateOnSuccess(state: NavResult, formRef?: RefObject<HTMLFormElement | null>) {
   const router = useRouter();
+  const handled = useRef<NavResult | null>(null);
   useEffect(() => {
-    if (state.redirectTo && !state.error) smartNavigate(router, state.redirectTo);
-  }, [state, router]);
+    if (handled.current === state) return;
+    handled.current = state;
+    if (state.redirectTo && !state.error) {
+      formRef?.current?.reset();
+      smartNavigate(router, state.redirectTo);
+    }
+  }, [state, router, formRef]);
 }
