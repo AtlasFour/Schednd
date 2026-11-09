@@ -1,3 +1,5 @@
+import { intlLocale, type Locale } from "../i18n/config";
+
 /**
  * Calcolo delle date degli incontri a partire dalle ricorrenze di un gruppo.
  *
@@ -91,35 +93,30 @@ export function currentSchedule<T extends { validUntil: string | null }>(
   return schedules.find((s) => s.validUntil === null);
 }
 
-const WEEKDAYS = [
-  "lunedì",
-  "martedì",
-  "mercoledì",
-  "giovedì",
-  "venerdì",
-  "sabato",
-  "domenica",
-];
+const WEEKDAYS: Record<Locale, string[]> = {
+  it: ["lunedì", "martedì", "mercoledì", "giovedì", "venerdì", "sabato", "domenica"],
+  en: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"],
+};
 
-/** Giorno della settimana in italiano (es. "mercoledì"). */
-export function weekdayName(date: string): string {
+/** Giorno della settimana (es. "mercoledì" / "Wednesday"). */
+export function weekdayName(date: string, locale: Locale = "it"): string {
   const day = toDayNumber(date);
   // Il giorno 0 (1/1/1970) era un giovedì.
-  return WEEKDAYS[(((day + 3) % 7) + 7) % 7];
+  return WEEKDAYS[locale][(((day + 3) % 7) + 7) % 7];
 }
 
-/** "ogni mercoledì", "ogni 2 settimane, il venerdì" */
-export function describeRecurrence(schedule: {
-  anchorDate: string;
-  intervalWeeks: number;
-  startTime: string;
-}): string {
-  const weekday = weekdayName(schedule.anchorDate);
+/** "ogni mercoledì alle 21:00" / "every Wednesday at 21:00" */
+export function describeRecurrence(
+  schedule: { anchorDate: string; intervalWeeks: number; startTime: string },
+  locale: Locale = "it",
+): string {
+  const weekday = weekdayName(schedule.anchorDate, locale);
   const time = formatTime(schedule.startTime);
-  if (schedule.intervalWeeks === 1) {
-    return `ogni ${weekday} alle ${time}`;
+  const n = schedule.intervalWeeks;
+  if (locale === "en") {
+    return n === 1 ? `every ${weekday} at ${time}` : `every ${n} weeks, on ${weekday}, at ${time}`;
   }
-  return `ogni ${schedule.intervalWeeks} settimane, di ${weekday}, alle ${time}`;
+  return n === 1 ? `ogni ${weekday} alle ${time}` : `ogni ${n} settimane, di ${weekday}, alle ${time}`;
 }
 
 /** "21:00" da "21:00:00" */
@@ -133,9 +130,9 @@ export function capitalize(text: string): string {
 }
 
 /** "mer 18 nov" */
-export function formatShortDate(date: string): string {
+export function formatShortDate(date: string, locale: Locale = "it"): string {
   const [y, m, d] = date.split("-").map(Number);
-  return new Intl.DateTimeFormat("it-IT", {
+  return new Intl.DateTimeFormat(intlLocale(locale), {
     weekday: "short",
     day: "numeric",
     month: "short",
@@ -144,9 +141,9 @@ export function formatShortDate(date: string): string {
 }
 
 /** "mercoledì 18 novembre" */
-export function formatMediumDate(date: string): string {
+export function formatMediumDate(date: string, locale: Locale = "it"): string {
   const [y, m, d] = date.split("-").map(Number);
-  return new Intl.DateTimeFormat("it-IT", {
+  return new Intl.DateTimeFormat(intlLocale(locale), {
     weekday: "long",
     day: "numeric",
     month: "long",
@@ -155,9 +152,9 @@ export function formatMediumDate(date: string): string {
 }
 
 /** "mercoledì 18 novembre 2026" */
-export function formatLongDate(date: string): string {
+export function formatLongDate(date: string, locale: Locale = "it"): string {
   const [y, m, d] = date.split("-").map(Number);
-  return new Intl.DateTimeFormat("it-IT", {
+  return new Intl.DateTimeFormat(intlLocale(locale), {
     weekday: "long",
     day: "numeric",
     month: "long",
@@ -166,9 +163,15 @@ export function formatLongDate(date: string): string {
   }).format(new Date(Date.UTC(y, m - 1, d)));
 }
 
-/** "oggi", "domani", "tra 5 giorni" */
-export function relativeDay(date: string, today: string): string {
+/** "oggi", "domani", "tra 5 giorni" / "today", "tomorrow", "in 5 days" */
+export function relativeDay(date: string, today: string, locale: Locale = "it"): string {
   const diff = toDayNumber(date) - toDayNumber(today);
+  if (locale === "en") {
+    if (diff === 0) return "today";
+    if (diff === 1) return "tomorrow";
+    if (diff < 0) return diff === -1 ? "yesterday" : `${-diff} days ago`;
+    return `in ${diff} days`;
+  }
   if (diff === 0) return "oggi";
   if (diff === 1) return "domani";
   if (diff < 0) return diff === -1 ? "ieri" : `${-diff} giorni fa`;

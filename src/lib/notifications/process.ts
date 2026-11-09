@@ -21,7 +21,7 @@ type SubscriptionRow = {
   auth: string;
 };
 
-type ProfileRow = { id: string; notify_push: boolean; notify_email: boolean };
+type ProfileRow = { id: string; notify_push: boolean; notify_email: boolean; locale: string | null };
 
 export type ProcessResult = { claimed: number; push: number; email: number; failed: number };
 
@@ -52,7 +52,7 @@ export async function processNotificationQueue(limit = 200): Promise<ProcessResu
       .from("push_subscriptions")
       .select("id, user_id, endpoint, p256dh, auth")
       .in("user_id", userIds),
-    admin.from("profiles").select("id, notify_push, notify_email").in("id", userIds),
+    admin.from("profiles").select("id, notify_push, notify_email, locale").in("id", userIds),
   ]);
 
   const subsByUser = new Map<string, SubscriptionRow[]>();
@@ -120,13 +120,14 @@ export async function processNotificationQueue(limit = 200): Promise<ProcessResu
     const email = emails.get(row.user_id);
     if (mailer && smtp && email) {
       const link = new URL(row.url, getPublicSiteUrl()).toString();
+      const openLabel = pref?.locale === "en" ? "Open Schednd" : "Apri Schednd";
       try {
         await mailer.sendMail({
           from: smtp.from,
           to: email,
           subject: row.title,
-          text: `${row.body}\n\nApri Schednd: ${link}`,
-          html: `<p>${escapeHtml(row.body)}</p><p><a href="${escapeHtml(link)}">Apri Schednd</a></p>`,
+          text: `${row.body}\n\n${openLabel}: ${link}`,
+          html: `<p>${escapeHtml(row.body)}</p><p><a href="${escapeHtml(link)}">${openLabel}</a></p>`,
         });
         delivered = true;
         result.email += 1;

@@ -16,9 +16,20 @@ export type BggGame = {
   image_url: string | null;
 };
 
+export type BggErrorReason =
+  | "not_configured"
+  | "queued"
+  | "not_found"
+  | "unauthorized"
+  | "rate_limited"
+  | "unreachable"
+  | "http_error"
+  | "bgg_error";
+
+/** In caso di errore: il motivo (tradotto dall'app) e un dettaglio facoltativo. */
 export type BggResult =
   | { ok: true; games: BggGame[] }
-  | { ok: false; reason: "not_configured" | "queued" | "not_found" | "unauthorized" | "error"; message: string };
+  | { ok: false; reason: BggErrorReason; detail?: string };
 
 const API = "https://boardgamegeek.com/xmlapi2/collection";
 
@@ -81,11 +92,7 @@ const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 export async function fetchBggCollection(username: string): Promise<BggResult> {
   const token = process.env.BGG_API_TOKEN;
   if (!token) {
-    return {
-      ok: false,
-      reason: "not_configured",
-      message: "L'import da BoardGameGeek non è ancora configurato sul server (BGG_API_TOKEN).",
-    };
+    return { ok: false, reason: "not_configured" };
   }
 
   const url = `${API}?${new URLSearchParams({
@@ -104,7 +111,7 @@ export async function fetchBggCollection(username: string): Promise<BggResult> {
       });
     } catch (err) {
       console.error("bgg fetch", err);
-      return { ok: false, reason: "error", message: "BoardGameGeek non risponde. Riprova più tardi." };
+      return { ok: false, reason: "unreachable" };
     }
 
     if (res.status === 202) {
@@ -112,36 +119,24 @@ export async function fetchBggCollection(username: string): Promise<BggResult> {
       continue;
     }
     if (res.status === 401 || res.status === 403) {
-      return {
-        ok: false,
-        reason: "unauthorized",
-        message: "BoardGameGeek ha rifiutato il token del server: va rinnovato (BGG_API_TOKEN).",
-      };
+      return { ok: false, reason: "unauthorized" };
     }
     if (res.status === 429) {
-      return { ok: false, reason: "error", message: "Troppe richieste a BoardGameGeek: riprova tra qualche minuto." };
+      return { ok: false, reason: "rate_limited" };
     }
     if (!res.ok) {
-      return { ok: false, reason: "error", message: `BoardGameGeek ha risposto con un errore (${res.status}).` };
+      return { ok: false, reason: "http_error", detail: String(res.status) };
     }
 
     const parsed = parseBggCollection(await res.text());
     if ("error" in parsed) {
       const notFound = /invalid username|not found/i.test(parsed.error);
-      return {
-        ok: false,
-        reason: notFound ? "not_found" : "error",
-        message: notFound
-          ? `Utente "${username}" non trovato su BoardGameGeek.`
-          : `BoardGameGeek: ${parsed.error}`,
-      };
+      return notFound
+        ? { ok: false, reason: "not_found", detail: username }
+        : { ok: false, reason: "bgg_error", detail: parsed.error };
     }
     return { ok: true, games: parsed };
   }
 
-  return {
-    ok: false,
-    reason: "queued",
-    message: "BoardGameGeek sta preparando la tua collezione: riprova tra un minuto.",
-  };
+  return { ok: false, reason: "queued" };
 }

@@ -1,11 +1,13 @@
 "use client";
 
 import { useActionState } from "react";
+import { useI18n } from "@/i18n/client";
 import { sendMagicLink, type LoginState } from "./actions";
 
 const initialState: LoginState = { status: "idle" };
 
 export function LoginForm() {
+  const { m } = useI18n();
   const [state, formAction, pending] = useActionState(
     sendMagicLink,
     initialState,
@@ -17,15 +19,9 @@ export function LoginForm() {
         <p className="text-2xl" aria-hidden>
           📬
         </p>
-        <p className="mt-2 font-medium">Controlla la tua email</p>
-        <p className="mt-1 text-sm text-foreground/70">
-          Abbiamo inviato un link di accesso a{" "}
-          <span className="font-medium text-foreground">{state.email}</span>.
-          Aprilo da questo dispositivo per entrare.
-        </p>
-        <p className="mt-3 text-xs text-foreground/50">
-          Non lo trovi? Guarda nello spam o ricarica la pagina per riprovare.
-        </p>
+        <p className="mt-2 font-medium">{m.login.checkEmail}</p>
+        <p className="mt-1 text-sm text-foreground/70">{m.login.sentTo(state.email)}</p>
+        <p className="mt-3 text-xs text-foreground/50">{m.login.notFound}</p>
       </div>
     );
   }
@@ -33,7 +29,7 @@ export function LoginForm() {
   return (
     <form action={formAction} className="flex flex-col gap-3">
       <label htmlFor="email" className="text-sm font-medium">
-        La tua email
+        {m.login.emailLabel}
       </label>
       <input
         id="email"
@@ -42,7 +38,7 @@ export function LoginForm() {
         required
         autoComplete="email"
         inputMode="email"
-        placeholder="nome@esempio.it"
+        placeholder={m.login.emailPlaceholder}
         className="h-12 rounded-xl border border-foreground/15 bg-background px-4 text-base outline-none focus:border-brand focus:ring-2 focus:ring-brand/30"
       />
       {state.status === "error" && (
@@ -55,10 +51,10 @@ export function LoginForm() {
         disabled={pending}
         className="h-12 rounded-xl bg-brand font-medium text-white transition hover:bg-brand/90 disabled:opacity-60"
       >
-        {pending ? "Invio in corso…" : "Inviami il link di accesso"}
+        {pending ? m.login.sending : m.login.send}
       </button>
       <p className="text-center text-xs text-foreground/50">
-        Niente password: ti mandiamo un link via email per entrare.
+        {m.login.noPassword}
       </p>
     </form>
   );

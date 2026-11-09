@@ -5,11 +5,7 @@ import { addDays, scheduledTimeFor, todayInTimeZone, upcomingDates } from "./sch
 
 export type AttendanceStatus = "yes" | "no" | "maybe";
 
-export const ATTENDANCE_LABELS: Record<AttendanceStatus, { label: string; emoji: string }> = {
-  yes: { label: "Ci sono", emoji: "✅" },
-  maybe: { label: "Forse", emoji: "❔" },
-  no: { label: "Non ci sono", emoji: "❌" },
-};
+export const ATTENDANCE_STATUSES: AttendanceStatus[] = ["yes", "maybe", "no"];
 
 export type AttendanceRow = {
   user_id: string;

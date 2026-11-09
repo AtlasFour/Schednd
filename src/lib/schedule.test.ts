@@ -100,7 +100,8 @@ describe("utilità per le date", () => {
 });
 
 describe("formatDuration", async () => {
-  const { formatDuration } = await import("./groups");
+  const { it: itMsg } = await import("../i18n/messages/it");
+  const formatDuration = itMsg.labels.duration;
   it("formatta le durate", () => {
     expect(formatDuration(60)).toBe("1 ora");
     expect(formatDuration(90)).toBe("1 ora e mezza");
@@ -153,7 +154,10 @@ describe("hoursUntil", async () => {
 });
 
 describe("library helpers", async () => {
-  const { formatPlayers, formatPlayingTime, fitsPlayers } = await import("./library");
+  const { fitsPlayers } = await import("./library");
+  const { it: itMsg } = await import("../i18n/messages/it");
+  const formatPlayers = itMsg.labels.players;
+  const formatPlayingTime = itMsg.labels.playingTime;
   it("formatta giocatori e durata", () => {
     expect(formatPlayers(3, 4)).toBe("3–4 giocatori");
     expect(formatPlayers(2, 2)).toBe("2 giocatori");

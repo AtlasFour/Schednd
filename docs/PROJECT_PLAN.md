@@ -384,7 +384,7 @@ Le istruzioni passo passo sono nel [README](../README.md): variabili d'ambiente,
 | **4 – Ospiti** | Link ospite, login dell'ospite, pagina dell'incontro, presenza che conta nel minimo, voto degli ospiti, "aggiungi al gruppo" | ✅ fatto |
 | **5 – Notifiche ed email** | Web Push, email facoltative via SMTP, avvisi a 48h e 24h (cron giornaliero), "si gioca!", sotto il minimo, proposte ed esiti, incontri saltati, nuovo calendario | ✅ fatto |
 | **6 – Beta con gli amici** | Uso reale sulle sessioni A–D | **MVP** ✅ pronto |
-| **7 – Extra** | ✅ librerie, preferiti, libreria del gruppo e import da BGG · ✅ calendario mensile (da provare) · da fare: login Google, inglese | in corso |
+| **7 – Extra** | ✅ librerie, preferiti, libreria del gruppo e import da BGG · ✅ calendario mensile · ✅ versione inglese (da provare) · da fare: login Google | in corso |
 | **8 – Grafica** | Tema pixel art selezionabile dal profilo (accanto al tema classico) | ✅ fatto (da provare) |
 | **9 – Futuro** | Storico partite, iCal | |
 

@@ -1,34 +1,12 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { intlLocale, type Locale } from "../i18n/config";
+import type { Messages } from "../i18n/messages";
 import { capitalize, formatShortDate, formatTime } from "./schedule";
 
 export type ProposalType = "reschedule" | "skip" | "change_game";
 export type ProposalStatus = "open" | "needs_owner" | "approved" | "rejected" | "cancelled";
 
-export const PROPOSAL_TYPE_LABELS: Record<ProposalType, { label: string; emoji: string; hint: string }> = {
-  reschedule: {
-    label: "Cambio data",
-    emoji: "📅",
-    hint: "Proponi una o più date alternative per questo incontro.",
-  },
-  skip: {
-    label: "Saltare l'incontro",
-    emoji: "⏭️",
-    hint: "Proponi di non giocare questa volta.",
-  },
-  change_game: {
-    label: "Cambio gioco",
-    emoji: "🎲",
-    hint: "Proponi uno o più giochi diversi per questo incontro.",
-  },
-};
-
-export const PROPOSAL_STATUS_LABELS: Record<ProposalStatus, string> = {
-  open: "Votazione aperta",
-  needs_owner: "Pareggio: decide l'owner",
-  approved: "Approvata",
-  rejected: "Respinta",
-  cancelled: "Annullata",
-};
+export const PROPOSAL_TYPES: ProposalType[] = ["reschedule", "change_game", "skip"];
 
 export type ProposalOptionRow = {
   id: string;
@@ -63,18 +41,23 @@ export function isOpen(status: ProposalStatus) {
   return status === "open" || status === "needs_owner";
 }
 
-export function optionLabel(type: ProposalType, option: ProposalOptionRow): string {
-  if (type === "skip") return "Sì, saltiamo";
+export function optionLabel(
+  type: ProposalType,
+  option: ProposalOptionRow,
+  m: Messages,
+  locale: Locale,
+): string {
+  if (type === "skip") return m.labels.skipYes;
   if (type === "change_game") return option.game_title ?? "—";
   if (option.new_start_date && option.new_start_time) {
-    return `${capitalize(formatShortDate(option.new_start_date))} · ${formatTime(option.new_start_time)}`;
+    return `${capitalize(formatShortDate(option.new_start_date, locale))} · ${formatTime(option.new_start_time)}`;
   }
   return "—";
 }
 
 /** "lun 10 nov, 21:00" nel fuso del gruppo. */
-export function formatDeadline(iso: string, timeZone: string): string {
-  return new Intl.DateTimeFormat("it-IT", {
+export function formatDeadline(iso: string, timeZone: string, locale: Locale): string {
+  return new Intl.DateTimeFormat(intlLocale(locale), {
     timeZone,
     weekday: "short",
     day: "numeric",

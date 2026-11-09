@@ -10,44 +10,14 @@ export type GroupMode = "in_person" | "online" | "hybrid";
 export type ApprovalRule = "majority" | "unanimous_attendees" | "owner_decides";
 export type MemberRole = "owner" | "member";
 
-export const MODE_LABELS: Record<GroupMode, string> = {
-  in_person: "Di persona",
-  online: "Online",
-  hybrid: "Ibrido",
-};
+/** Frequenze proposte nei form (settimane). */
+export const INTERVAL_WEEKS = [1, 2, 3, 4, 6, 8, 12];
 
-export const APPROVAL_RULE_LABELS: Record<ApprovalRule, { label: string; hint: string }> = {
-  majority: {
-    label: "Maggioranza",
-    hint: "Vince l'opzione scelta da più della metà del gruppo. In caso di pareggio decide l'owner.",
-  },
-  unanimous_attendees: {
-    label: "Unanimità dei presenti",
-    hint: "Vince un'opzione che va bene a tutti quelli che hanno detto di esserci.",
-  },
-  owner_decides: {
-    label: "Decide l'owner",
-    hint: "Tutti votano per dare un parere, ma la scelta finale è dell'owner.",
-  },
-};
+/** Durate proposte nei form (minuti). */
+export const DURATION_MINUTES = [60, 90, 120, 150, 180, 210, 240, 300, 360, 480];
 
-export const INTERVAL_OPTIONS = [1, 2, 3, 4, 6, 8, 12].map((weeks) => ({
-  value: weeks,
-  label: weeks === 1 ? "Ogni settimana" : `Ogni ${weeks} settimane`,
-}));
-
-export function formatDuration(minutes: number): string {
-  const hours = Math.floor(minutes / 60);
-  const rest = minutes % 60;
-  const h = hours === 1 ? "1 ora" : `${hours} ore`;
-  if (rest === 0) return h;
-  if (rest === 30) return `${h} e mezza`;
-  return hours === 0 ? `${rest} minuti` : `${h} e ${rest} min`;
-}
-
-export const DURATION_OPTIONS = [60, 90, 120, 150, 180, 210, 240, 300, 360, 480].map(
-  (minutes) => ({ value: minutes, label: formatDuration(minutes) }),
-);
+export const GROUP_MODES: GroupMode[] = ["in_person", "online", "hybrid"];
+export const APPROVAL_RULES: ApprovalRule[] = ["majority", "unanimous_attendees", "owner_decides"];
 
 export type ScheduleRow = {
   id: string;

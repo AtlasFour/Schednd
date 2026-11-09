@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { BackLink } from "./navigation";
 import type { ComponentProps, ReactNode } from "react";
 
 export function cx(...classes: (string | false | null | undefined)[]) {
@@ -21,12 +22,12 @@ export function Page({
   return (
     <main className="mx-auto flex w-full max-w-md flex-1 flex-col gap-5 px-5 py-6">
       {back && (
-        <Link
+        <BackLink
           href={back.href}
           className="-mb-2 self-start text-sm text-foreground/60 hover:text-foreground"
         >
           ← {back.label}
-        </Link>
+        </BackLink>
       )}
       {(title || actions) && (
         <header className="flex items-start justify-between gap-3">

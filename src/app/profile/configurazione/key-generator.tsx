@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { buttonClass } from "@/components/ui";
+import { useI18n } from "@/i18n/client";
 
 function toBase64Url(bytes: Uint8Array) {
   let binary = "";
@@ -17,6 +18,7 @@ type Keys = { publicKey: string; privateKey: string; cronSecret: string };
  * nelle variabili d'ambiente di Vercel.
  */
 export function KeyGenerator() {
+  const { m } = useI18n();
   const [keys, setKeys] = useState<Keys | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -36,7 +38,7 @@ export function KeyGenerator() {
         cronSecret: Array.from(secret, (b) => b.toString(16).padStart(2, "0")).join(""),
       });
     } catch {
-      setError("Questo browser non riesce a generare le chiavi. Prova con Chrome.");
+      setError(m.config.generateError);
     }
   }
 
@@ -44,7 +46,7 @@ export function KeyGenerator() {
     return (
       <div className="flex flex-col gap-2">
         <button type="button" onClick={generate} className={`${buttonClass("primary", true)} self-start`}>
-          🔑 Genera le chiavi
+          {m.config.generate}
         </button>
         {error && <p role="alert" className="text-sm text-red-500">{error}</p>}
       </div>
@@ -57,21 +59,20 @@ export function KeyGenerator() {
       <KeyRow name="VAPID_PRIVATE_KEY" value={keys.privateKey} secret />
       <KeyRow name="CRON_SECRET" value={keys.cronSecret} secret />
       <p className="text-xs text-foreground/60">
-        ⚠️ Queste chiavi esistono solo in questa pagina: copiale subito su Vercel. Se ricarichi
-        la pagina ne verranno generate di nuove (andrebbero ricopiate tutte e tre, e chi aveva
-        già attivato le notifiche dovrebbe riattivarle).
+        {m.config.keysWarning}
       </p>
     </div>
   );
 }
 
 function KeyRow({ name, value, secret }: { name: string; value: string; secret?: boolean }) {
+  const { m } = useI18n();
   const [copied, setCopied] = useState(false);
   return (
     <div className="flex flex-col gap-1">
       <p className="font-mono text-xs font-semibold">
         {name}
-        {secret && <span className="ml-2 font-sans font-normal text-red-500">segreta</span>}
+        {secret && <span className="ml-2 font-sans font-normal text-red-500">{m.config.secret}</span>}
       </p>
       <div className="flex gap-2">
         <input
@@ -89,7 +90,7 @@ function KeyRow({ name, value, secret }: { name: string; value: string; secret?:
             setTimeout(() => setCopied(false), 1500);
           }}
         >
-          {copied ? "✓" : "Copia"}
+          {copied ? "✓" : m.common.copy}
         </button>
       </div>
     </div>

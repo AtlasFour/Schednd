@@ -4,6 +4,7 @@ import { useActionState } from "react";
 import { saveAttendanceNote, updateOccurrence } from "@/app/meetings/actions";
 import { FormMessage, SubmitButton } from "@/components/form";
 import { Field, Input, Select, Textarea } from "@/components/ui";
+import { useI18n } from "@/i18n/client";
 import { initialFormState } from "@/lib/form";
 import type { AttendanceStatus } from "@/lib/meetings";
 
@@ -18,6 +19,7 @@ export function AttendanceNoteForm({
   status: AttendanceStatus;
   note: string | null;
 }) {
+  const { m } = useI18n();
   const [state, formAction] = useActionState(
     saveAttendanceNote.bind(null, groupId, originalDate, status),
     initialFormState,
@@ -27,14 +29,14 @@ export function AttendanceNoteForm({
       <div className="flex gap-2">
         <Input
           name="note"
-          aria-label="Nota per gli altri"
+          aria-label={m.meetingForms.noteLabel}
           maxLength={200}
           defaultValue={note ?? ""}
-          placeholder="Nota, es. arrivo alle 22"
+          placeholder={m.meetingForms.notePlaceholder}
           className="h-9 text-sm"
         />
         <SubmitButton variant="secondary" small>
-          Salva
+          {m.common.save}
         </SubmitButton>
       </div>
       <FormMessage state={state} />
@@ -61,55 +63,56 @@ export function OccurrenceOwnerForm({
   defaultGame: string | null;
   defaultLocation: string | null;
 }) {
+  const { m } = useI18n();
   const [state, formAction] = useActionState(
     updateOccurrence.bind(null, groupId, originalDate),
     initialFormState,
   );
   return (
     <form action={formAction} className="flex flex-col gap-4">
-      <Field label="Stato" htmlFor="status">
+      <Field label={m.meetingForms.status} htmlFor="status">
         <Select id="status" name="status" defaultValue={skipped ? "skipped" : "scheduled"}>
-          <option value="scheduled">Si gioca</option>
-          <option value="skipped">Saltato</option>
+          <option value="scheduled">{m.meetingForms.playing}</option>
+          <option value="skipped">{m.meetingForms.skipped}</option>
         </Select>
       </Field>
       <Field
-        label="Gioco per questo incontro"
+        label={m.meetingForms.gameForMeeting}
         htmlFor="game_title_override"
-        hint={defaultGame ? `Se vuoto: ${defaultGame}` : undefined}
+        hint={defaultGame ? m.meetingForms.ifEmpty(defaultGame) : undefined}
       >
         <Input
           id="game_title_override"
           name="game_title_override"
           maxLength={120}
           defaultValue={gameOverride ?? ""}
-          placeholder={defaultGame ?? "es. Catan"}
+          placeholder={defaultGame ?? m.meetingForms.gamePlaceholder}
         />
       </Field>
       <Field
-        label="Luogo per questo incontro"
+        label={m.meetingForms.locationForMeeting}
         htmlFor="location_override"
-        hint={defaultLocation ? `Se vuoto: ${defaultLocation}` : "Utile se l'host cambia."}
+        hint={defaultLocation ? m.meetingForms.ifEmpty(defaultLocation) : m.meetingForms.locationHint}
       >
         <Input
           id="location_override"
           name="location_override"
           maxLength={200}
           defaultValue={locationOverride ?? ""}
-          placeholder={defaultLocation ?? "es. Da Giulia"}
+          placeholder={defaultLocation ?? m.meetingForms.locationPlaceholder}
         />
       </Field>
-      <Field label="Nota per tutti" htmlFor="notes">
+      <Field label={m.meetingForms.noteForAll} htmlFor="notes">
         <Textarea
           id="notes"
           name="notes"
           maxLength={1000}
           defaultValue={notes ?? ""}
-          placeholder="es. Portate i dadi, finiamo il dungeon"
+          placeholder={m.meetingForms.noteForAllPlaceholder}
         />
       </Field>
       <FormMessage state={state} />
-      <SubmitButton pendingLabel="Salvataggio…">Salva</SubmitButton>
+      <SubmitButton pendingLabel={m.common.saving}>{m.common.save}</SubmitButton>
     </form>
   );
 }

@@ -4,17 +4,18 @@ import { Suspense } from "react";
 import { promoteGuest, removeGuest } from "@/app/guests/actions";
 import { AttendanceButtons } from "@/components/attendance-buttons";
 import { SubmitButton } from "@/components/form";
+import { NavForm } from "@/components/navigation";
 import { GuestLinkBox } from "@/components/guest-link-box";
 import { LiveRefresh } from "@/components/live-refresh";
 import { AttendanceSummary } from "@/components/meeting-card";
 import { ProposalCard } from "@/components/proposal-card";
 import { Badge, ButtonLink, Card, Page, PageSkeleton } from "@/components/ui";
+import { getI18n } from "@/i18n/server";
+import type { Messages } from "@/i18n/messages";
 import { requireUser } from "@/lib/auth";
 import { isDate } from "@/lib/form";
-import { APPROVAL_RULE_LABELS, MODE_LABELS } from "@/lib/groups";
 import { getMeetingContext, type Participant } from "@/lib/meeting-context";
 import {
-  ATTENDANCE_LABELS,
   meetingForDate,
   OCCURRENCE_SELECT,
   type AttendanceStatus,
@@ -31,7 +32,10 @@ import {
 } from "@/lib/schedule";
 import { AttendanceNoteForm, OccurrenceOwnerForm } from "./meeting-forms";
 
-export const metadata: Metadata = { title: "Incontro" };
+export async function generateMetadata(): Promise<Metadata> {
+  const { m } = await getI18n();
+  return { title: m.meetingPage.metaTitle };
+}
 
 export default function MeetingPage(props: PageProps<"/groups/[id]/[date]">) {
   return (
@@ -46,6 +50,7 @@ async function MeetingDetail({ params }: PageProps<"/groups/[id]/[date]">) {
   if (!isDate(date)) notFound();
 
   const { supabase, user } = await requireUser();
+  const { locale, m: msg } = await getI18n();
   const ctx = await getMeetingContext(supabase, id, date, user.id);
   if (!ctx) notFound();
   const { group, viewer, participants } = ctx;
@@ -79,11 +84,11 @@ async function MeetingDetail({ params }: PageProps<"/groups/[id]/[date]">) {
       .filter((a) => a.status === status)
       .map((a) => ({
         id: a.user_id,
-        name: byId.get(a.user_id)?.name ?? "Ex partecipante",
+        name: byId.get(a.user_id)?.name ?? msg.common.formerParticipant,
         note: a.note,
         guest: byId.get(a.user_id)?.role === "guest",
       }))
-      .sort((a, b) => a.name.localeCompare(b.name, "it"));
+      .sort((a, b) => a.name.localeCompare(b.name, locale));
   const answered = new Set(meeting.attendances.map((a) => a.user_id));
   const noAnswer = participants
     .filter((p) => !answered.has(p.user_id))
@@ -92,43 +97,44 @@ async function MeetingDetail({ params }: PageProps<"/groups/[id]/[date]">) {
 
   return (
     <Page
-      title={capitalize(formatMediumDate(meeting.date))}
-      subtitle={`${formatTime(meeting.startTime)} · ${relativeDay(meeting.date, meeting.today)} · ${group.name}`}
-      back={isGuest ? { href: "/", label: "Home" } : { href: `/groups/${group.id}`, label: group.name }}
+      title={capitalize(formatMediumDate(meeting.date, locale))}
+      subtitle={`${formatTime(meeting.startTime)} · ${relativeDay(meeting.date, meeting.today, locale)} · ${group.name}`}
+      back={isGuest ? { href: "/", label: msg.common.home } : { href: `/groups/${group.id}`, label: group.name }}
     >
       <LiveRefresh />
 
       {isGuest && (
         <p className="rounded-xl border border-brand/30 bg-brand/10 p-3 text-sm">
-          👋 Sei <strong>ospite</strong> di questo incontro di <strong>{group.name}</strong>.
+          {msg.meetingPage.guestBannerBefore} <strong>{msg.meetingPage.guestWord}</strong>{" "}
+          {msg.meetingPage.guestBannerAfter} <strong>{group.name}</strong>.
         </p>
       )}
 
       {meeting.skipped && (
         <p className="rounded-xl border border-foreground/15 bg-foreground/5 p-3 text-sm">
-          ⏭️ <strong>Questo incontro è stato saltato.</strong>
-          {isOwner && " Puoi ripristinarlo qui sotto."}
+          ⏭️ <strong>{msg.meetingPage.skipped}</strong>
+          {isOwner && msg.meetingPage.canRestore}
         </p>
       )}
 
       {meeting.date !== meeting.originalDate && (
         <p className="rounded-xl border border-brand/30 bg-brand/10 p-3 text-sm">
-          📅 Incontro spostato: era previsto per {formatShortDate(meeting.originalDate)}.
+          {msg.meetingPage.moved(formatShortDate(meeting.originalDate, locale))}
         </p>
       )}
 
       <Card>
         <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-2 text-sm">
-          <dt className="text-foreground/60">Gioco</dt>
+          <dt className="text-foreground/60">{msg.meetingPage.game}</dt>
           <dd>{meeting.game ?? "—"}</dd>
-          <dt className="text-foreground/60">Dove</dt>
+          <dt className="text-foreground/60">{msg.meetingPage.where}</dt>
           <dd>
-            {MODE_LABELS[group.mode]}
+            {msg.labels.mode[group.mode]}
             {meeting.location && ` · ${meeting.location}`}
           </dd>
           {group.online_link && (
             <>
-              <dt className="text-foreground/60">Link</dt>
+              <dt className="text-foreground/60">{msg.meetingPage.link}</dt>
               <dd className="truncate">
                 <a
                   href={group.online_link}
@@ -150,7 +156,7 @@ async function MeetingDetail({ params }: PageProps<"/groups/[id]/[date]">) {
       </Card>
 
       {!meeting.skipped && (
-        <Card title={isPast ? "La tua presenza" : "Ci sei?"}>
+        <Card title={isPast ? msg.meetingPage.yourAttendance : msg.meetingPage.areYouIn}>
           <div className="flex flex-col gap-3">
             <AttendanceButtons
               groupId={group.id}
@@ -160,7 +166,7 @@ async function MeetingDetail({ params }: PageProps<"/groups/[id]/[date]">) {
             />
             {isPast && (
               <p className="text-xs text-foreground/50">
-                L&apos;incontro è passato: le presenze non si possono più cambiare.
+                {msg.meetingPage.pastLocked}
               </p>
             )}
             {!isPast && meeting.myStatus && (
@@ -178,22 +184,22 @@ async function MeetingDetail({ params }: PageProps<"/groups/[id]/[date]">) {
 
       <section id="proposte" className="flex scroll-mt-4 flex-col gap-3">
         <div className="flex items-center justify-between gap-2">
-          <h2 className="text-lg font-semibold">Proposte</h2>
+          <h2 className="text-lg font-semibold">{msg.meetingPage.proposals}</h2>
           {!isGuest && !isPast && !meeting.skipped && (
             <ButtonLink href={`/groups/${group.id}/${meeting.originalDate}/proponi`} small>
-              + Proponi
+              {msg.meetingPage.propose}
             </ButtonLink>
           )}
         </div>
         {proposals === null ? (
           <p role="alert" className="text-sm text-red-500">
-            Non è stato possibile caricare le proposte. Ricarica la pagina tra poco.
+            {msg.meetingPage.loadError}
           </p>
         ) : proposals.length === 0 ? (
           <p className="text-sm text-foreground/60">
             {isGuest
-              ? "Nessuna proposta per questo incontro."
-              : "Nessuna proposta. Puoi proporre un cambio di data, di gioco o di saltare l'incontro."}
+              ? msg.meetingPage.noProposalsGuest
+              : msg.meetingPage.noProposals}
           </p>
         ) : (
           proposals.map((p) => (
@@ -209,23 +215,23 @@ async function MeetingDetail({ params }: PageProps<"/groups/[id]/[date]">) {
           ))
         )}
         <p className="text-xs text-foreground/50">
-          Regola del gruppo: {APPROVAL_RULE_LABELS[group.approval_rule].label}.{" "}
-          {APPROVAL_RULE_LABELS[group.approval_rule].hint}
+          {msg.meetingPage.groupRule} {msg.labels.approvalRule[group.approval_rule].label}.{" "}
+          {msg.labels.approvalRule[group.approval_rule].hint}
         </p>
       </section>
 
-      <Card title="Chi c'è">
+      <Card title={msg.meetingPage.whoIsIn}>
         <div className="flex flex-col gap-4">
           <AttendanceSummary meeting={meeting} />
-          <PeopleList title={`${ATTENDANCE_LABELS.yes.emoji} Ci sono`} people={byStatus("yes")} />
-          <PeopleList title={`${ATTENDANCE_LABELS.maybe.emoji} Forse`} people={byStatus("maybe")} />
-          <PeopleList title={`${ATTENDANCE_LABELS.no.emoji} Non ci sono`} people={byStatus("no")} />
-          <PeopleList title="— Senza risposta" people={noAnswer} muted />
+          <PeopleList guestLabel={msg.common.guest} title={`${msg.labels.attendance.yes.emoji} ${msg.meetingPage.listYes}`} people={byStatus("yes")} />
+          <PeopleList guestLabel={msg.common.guest} title={`${msg.labels.attendance.maybe.emoji} ${msg.meetingPage.listMaybe}`} people={byStatus("maybe")} />
+          <PeopleList guestLabel={msg.common.guest} title={`${msg.labels.attendance.no.emoji} ${msg.meetingPage.listNo}`} people={byStatus("no")} />
+          <PeopleList guestLabel={msg.common.guest} title={msg.meetingPage.listNoAnswer} people={noAnswer} muted />
         </div>
       </Card>
 
       {!isGuest && !isPast && !meeting.skipped && (
-        <Card title={`Ospiti${guests.length ? ` (${guests.length})` : ""}`}>
+        <Card title={msg.meetingPage.guests(guests.length)}>
           <div className="flex flex-col gap-4">
             {guests.length > 0 && (
               <GuestList
@@ -233,37 +239,37 @@ async function MeetingDetail({ params }: PageProps<"/groups/[id]/[date]">) {
                 groupId={group.id}
                 originalDate={meeting.originalDate}
                 canManage={isOwner}
+                msg={msg}
               />
             )}
             <GuestLinkBox
               groupId={group.id}
               originalDate={meeting.originalDate}
-              label={`${group.name} · ${formatShortDate(meeting.date)} ${formatTime(meeting.startTime)}`}
+              label={`${group.name} · ${formatShortDate(meeting.date, locale)} ${formatTime(meeting.startTime)}`}
             />
           </div>
         </Card>
       )}
 
       {isGuest && !isPast && (
-        <form
+        <NavForm
           action={removeGuest.bind(null, group.id, meeting.originalDate, user.id, true)}
           className="self-start"
         >
           <SubmitButton
             variant="danger"
             small
-            confirm="Vuoi davvero lasciare questo incontro? Non lo vedrai più."
+            confirm={msg.meetingPage.confirmLeave}
           >
-            Lascia l&apos;incontro
+            {msg.meetingPage.leave}
           </SubmitButton>
-        </form>
+        </NavForm>
       )}
 
       {isOwner && !isPast && (
-        <Card title="Decisioni dell'owner">
+        <Card title={msg.meetingPage.ownerDecisions}>
           <p className="mb-4 text-sm text-foreground/70">
-            Valgono solo per questo incontro. Ad esempio, se manca il minimo,
-            puoi saltarlo o cambiare gioco per chi c&apos;è.
+            {msg.meetingPage.ownerDecisionsText}
           </p>
           <OccurrenceOwnerForm
             groupId={group.id}
@@ -286,11 +292,13 @@ function GuestList({
   groupId,
   originalDate,
   canManage,
+  msg,
 }: {
   guests: Participant[];
   groupId: string;
   originalDate: string;
   canManage: boolean;
+  msg: Messages;
 }) {
   return (
     <ul className="flex flex-col divide-y divide-foreground/10">
@@ -303,20 +311,20 @@ function GuestList({
                 <SubmitButton
                   variant="secondary"
                   small
-                  confirm={`Aggiungere ${g.name} come membro del gruppo?`}
+                  confirm={msg.meetingPage.confirmPromote(g.name)}
                 >
-                  Aggiungi al gruppo
+                  {msg.meetingPage.promote}
                 </SubmitButton>
               </form>
-              <form action={removeGuest.bind(null, groupId, originalDate, g.user_id, false)}>
+              <NavForm action={removeGuest.bind(null, groupId, originalDate, g.user_id, false)}>
                 <SubmitButton
                   variant="danger"
                   small
-                  confirm={`Rimuovere ${g.name} da questo incontro?`}
+                  confirm={msg.meetingPage.confirmRemoveGuest(g.name)}
                 >
-                  Rimuovi
+                  {msg.meetingPage.remove}
                 </SubmitButton>
-              </form>
+              </NavForm>
             </div>
           )}
         </li>
@@ -329,8 +337,10 @@ function PeopleList({
   title,
   people,
   muted,
+  guestLabel,
 }: {
   title: string;
+  guestLabel: string;
   people: { id: string; name: string; note: string | null; guest: boolean }[];
   muted?: boolean;
 }) {
@@ -347,7 +357,7 @@ function PeopleList({
             {p.guest && (
               <>
                 {" "}
-                <Badge>ospite</Badge>
+                <Badge>{guestLabel}</Badge>
               </>
             )}
             {p.note && <span className="text-foreground/60"> — {p.note}</span>}

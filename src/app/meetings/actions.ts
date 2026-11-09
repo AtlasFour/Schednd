@@ -2,7 +2,8 @@
 
 import { afterMutation } from "@/lib/revalidate";
 import { requireUser } from "@/lib/auth";
-import { dbErrorMessage, getString, isDate, type FormState } from "@/lib/form";
+import {getString, isDate, type FormState} from "@/lib/form";
+import { dbErrorMessage, getI18n } from "@/i18n/server";
 import type { AttendanceStatus } from "@/lib/meetings";
 
 const STATUSES: AttendanceStatus[] = ["yes", "no", "maybe"];
@@ -14,8 +15,9 @@ export async function setAttendance(
   status: AttendanceStatus | null,
   note?: string | null,
 ): Promise<FormState> {
+  const { m } = await getI18n();
   if (!isDate(originalDate) || (status !== null && !STATUSES.includes(status))) {
-    return { error: "Richiesta non valida." };
+    return { error: m.errors.invalidRequest };
   }
   const { supabase } = await requireUser();
   const { error } = await supabase.rpc("set_attendance", {
@@ -26,7 +28,7 @@ export async function setAttendance(
   });
   if (error) {
     console.error("set_attendance", error);
-    return { error: dbErrorMessage(error) };
+    return { error: await dbErrorMessage(error) };
   }
   afterMutation();
   return {};
@@ -39,10 +41,11 @@ export async function saveAttendanceNote(
   _prev: FormState,
   formData: FormData,
 ): Promise<FormState> {
+  const { m } = await getI18n();
   const note = getString(formData, "note");
-  if (note.length > 200) return { error: "La nota può avere al massimo 200 caratteri." };
+  if (note.length > 200) return { error: m.meetingForms.noteTooLong };
   const result = await setAttendance(groupId, originalDate, status, note);
-  return result.error ? result : { success: "Nota salvata." };
+  return result.error ? result : { success: m.meetingForms.noteSaved };
 }
 
 export async function updateOccurrence(
@@ -51,6 +54,7 @@ export async function updateOccurrence(
   _prev: FormState,
   formData: FormData,
 ): Promise<FormState> {
+  const { m } = await getI18n();
   const status = getString(formData, "status") === "skipped" ? "skipped" : "scheduled";
   const { supabase } = await requireUser();
   const { error } = await supabase.rpc("update_occurrence", {
@@ -63,8 +67,8 @@ export async function updateOccurrence(
   });
   if (error) {
     console.error("update_occurrence", error);
-    return { error: dbErrorMessage(error) };
+    return { error: await dbErrorMessage(error) };
   }
   afterMutation();
-  return { success: "Incontro aggiornato." };
+  return { success: m.meetingForms.updated };
 }

@@ -1,5 +1,8 @@
 import type { Metadata, Viewport } from "next";
+import { Suspense } from "react";
 import { Geist, Geist_Mono, Pixelify_Sans, Press_Start_2P } from "next/font/google";
+import { NavigationTracker } from "@/components/navigation";
+import { LocaleBoundary } from "@/i18n/boundary";
 import { ServiceWorkerRegistration } from "@/components/service-worker";
 import "./globals.css";
 
@@ -70,8 +73,13 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
       </head>
       <body className="min-h-full flex flex-col">
-        {children}
+        <Suspense>
+          <LocaleBoundary>{children}</LocaleBoundary>
+        </Suspense>
         <ServiceWorkerRegistration />
+        <Suspense>
+          <NavigationTracker />
+        </Suspense>
       </body>
     </html>
   );

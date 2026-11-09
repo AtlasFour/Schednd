@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { getGuestInviteLink, regenerateGuestInviteLink } from "@/app/guests/actions";
+import { useI18n } from "@/i18n/client";
 import { buttonClass } from "./ui";
 
 export function GuestLinkBox({
@@ -15,6 +16,7 @@ export function GuestLinkBox({
   label: string;
 }) {
   const [url, setUrl] = useState<string | null>(null);
+  const { m } = useI18n();
   const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const [pending, startTransition] = useTransition();
@@ -37,7 +39,7 @@ export function GuestLinkBox({
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch {
-      window.prompt("Copia il link:", url);
+      window.prompt(m.common.copyPrompt, url);
     }
   }
 
@@ -45,8 +47,8 @@ export function GuestLinkBox({
     if (!url) return;
     try {
       await navigator.share({
-        title: `Sei invitato: ${label}`,
-        text: `Ti invito a giocare con noi (${label}). Segna se ci sei:`,
+        title: m.invite.guestShareTitle(label),
+        text: m.invite.guestShareText(label),
         url,
       });
     } catch {
@@ -60,8 +62,7 @@ export function GuestLinkBox({
     return (
       <div className="flex flex-col gap-2">
         <p className="text-sm text-foreground/70">
-          Invita qualcuno solo a questo incontro: vedrà data, luogo e chi c&apos;è,
-          potrà segnare la presenza e votare le proposte, ma non entrerà nel gruppo.
+          {m.invite.guestExplain}
         </p>
         <button
           type="button"
@@ -69,7 +70,7 @@ export function GuestLinkBox({
           onClick={() => load(false)}
           className={`${buttonClass("secondary", true)} self-start`}
         >
-          {pending ? "Attendi…" : "🔗 Crea link per un ospite"}
+          {pending ? m.common.wait : m.invite.createGuestLink}
         </button>
         {error && <p role="alert" className="text-sm text-red-500">{error}</p>}
       </div>
@@ -81,26 +82,26 @@ export function GuestLinkBox({
       <p className="truncate rounded-lg bg-foreground/5 px-3 py-2 font-mono text-xs">{url}</p>
       <div className="flex flex-wrap gap-2">
         <button type="button" onClick={copy} className={buttonClass("secondary", true)}>
-          {copied ? "Copiato ✓" : "Copia link"}
+          {copied ? m.common.copied : m.common.copyLink}
         </button>
         {canShare && (
           <button type="button" onClick={share} className={buttonClass("primary", true)}>
-            Condividi
+            {m.common.share}
           </button>
         )}
         <button
           type="button"
           disabled={pending}
           onClick={() => {
-            if (window.confirm("Il link attuale smetterà di funzionare. Continuare?")) load(true);
+            if (window.confirm(m.invite.confirmNewLink)) load(true);
           }}
           className={buttonClass("ghost", true)}
         >
-          ↻ Nuovo link
+          {m.invite.newLink}
         </button>
       </div>
       <p className="text-xs text-foreground/55">
-        Lo stesso link vale per più persone, fino al giorno dell&apos;incontro.
+        {m.invite.sameLinkMany}
       </p>
       {error && <p role="alert" className="text-sm text-red-500">{error}</p>}
     </div>

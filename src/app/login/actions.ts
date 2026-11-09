@@ -1,5 +1,6 @@
 "use server";
 
+import { getI18n } from "@/i18n/server";
 import { createClient } from "@/lib/supabase/server";
 import { getSiteUrl } from "@/lib/site-url";
 
@@ -18,8 +19,9 @@ export async function sendMagicLink(
     .trim()
     .toLowerCase();
 
+  const { m } = await getI18n();
   if (!EMAIL_REGEX.test(email)) {
-    return { status: "error", message: "Inserisci un indirizzo email valido." };
+    return { status: "error", message: m.login.errorEmail };
   }
 
   const supabase = await createClient();
@@ -37,14 +39,13 @@ export async function sendMagicLink(
     if (error.status === 429) {
       return {
         status: "error",
-        message:
-          "Troppe richieste in poco tempo. Aspetta qualche minuto e riprova.",
+        message: m.login.errorRateLimit,
       };
     }
     console.error("signInWithOtp", error);
     return {
       status: "error",
-      message: "Non è stato possibile inviare l'email. Riprova tra poco.",
+      message: m.login.errorSend,
     };
   }
 

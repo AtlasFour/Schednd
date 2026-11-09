@@ -2,8 +2,10 @@ import type { Metadata } from "next";
 import { notFound, redirect } from "next/navigation";
 import { Suspense } from "react";
 import { SubmitButton } from "@/components/form";
+import { NavForm } from "@/components/navigation";
 import { InviteBox } from "@/components/invite-box";
 import { Badge, Card, Page, PageSkeleton } from "@/components/ui";
+import { getI18n } from "@/i18n/server";
 import { requireUser } from "@/lib/auth";
 import { activeSchedule, getGroupDetail, inviteUrl, nextDates } from "@/lib/groups";
 import { describeRecurrence } from "@/lib/schedule";
@@ -16,7 +18,10 @@ import {
 } from "../../actions";
 import { GroupInfoForm, ScheduleForm } from "./settings-forms";
 
-export const metadata: Metadata = { title: "Impostazioni gruppo" };
+export async function generateMetadata(): Promise<Metadata> {
+  const { m } = await getI18n();
+  return { title: m.settings.metaTitle };
+}
 
 export default function SettingsPage(props: PageProps<"/groups/[id]/settings">) {
   return (
@@ -29,6 +34,7 @@ export default function SettingsPage(props: PageProps<"/groups/[id]/settings">) 
 async function Settings({ params }: PageProps<"/groups/[id]/settings">) {
   const { id } = await params;
   const { supabase, user } = await requireUser();
+  const { locale, m: msg } = await getI18n();
   const group = await getGroupDetail(supabase, id);
 
   if (!group) notFound();
@@ -44,20 +50,19 @@ async function Settings({ params }: PageProps<"/groups/[id]/settings">) {
 
   return (
     <Page
-      title="Impostazioni"
+      title={msg.settings.title}
       subtitle={group.name}
       back={{ href: `/groups/${group.id}`, label: group.name }}
     >
-      <Card title="Dettagli del gruppo">
+      <Card title={msg.settings.details}>
         <GroupInfoForm group={group} />
       </Card>
 
-      <Card title="Ricorrenza">
+      <Card title={msg.settings.schedule}>
         {schedule && (
           <p className="mb-4 text-sm text-foreground/70">
-            Ora: <strong>{describeRecurrence(schedule)}</strong>. Per cambiare
-            in modo permanente giorno, orario o frequenza, scegli la data del
-            nuovo primo incontro.
+            {msg.settings.scheduleNow} <strong>{describeRecurrence(schedule, locale)}</strong>.{" "}
+            {msg.settings.scheduleExplain}
           </p>
         )}
         <ScheduleForm
@@ -69,10 +74,10 @@ async function Settings({ params }: PageProps<"/groups/[id]/settings">) {
         />
       </Card>
 
-      <Card title={`Membri (${group.memberships.length})`}>
+      <Card title={msg.group.members(group.memberships.length)}>
         <ul className="flex flex-col divide-y divide-foreground/10">
           {group.memberships.map((m) => {
-            const name = m.profiles?.display_name ?? "Utente";
+            const name = m.profiles?.display_name ?? msg.common.user;
             const isMe = m.user_id === user.id;
             return (
               <li key={m.user_id} className="flex flex-col gap-2 py-3">
@@ -81,26 +86,26 @@ async function Settings({ params }: PageProps<"/groups/[id]/settings">) {
                     {name}
                     {isMe && <span className="text-foreground/50"> (tu)</span>}
                   </span>
-                  {m.role === "owner" && <Badge tone="brand">owner</Badge>}
+                  {m.role === "owner" && <Badge tone="brand">{msg.common.owner}</Badge>}
                 </div>
                 {!isMe && (
                   <div className="flex gap-2">
-                    <form action={transferOwnership.bind(null, group.id, m.user_id)}>
+                    <NavForm action={transferOwnership.bind(null, group.id, m.user_id)}>
                       <SubmitButton
                         variant="secondary"
                         small
-                        confirm={`Vuoi rendere ${name} owner del gruppo? Tu diventerai un membro normale.`}
+                        confirm={msg.settings.confirmMakeOwner(name)}
                       >
-                        Rendi owner
+                        {msg.settings.makeOwner}
                       </SubmitButton>
-                    </form>
+                    </NavForm>
                     <form action={removeMember.bind(null, group.id, m.user_id)}>
                       <SubmitButton
                         variant="danger"
                         small
-                        confirm={`Vuoi rimuovere ${name} dal gruppo?`}
+                        confirm={msg.settings.confirmRemove(name)}
                       >
-                        Rimuovi
+                        {msg.settings.remove}
                       </SubmitButton>
                     </form>
                   </div>
@@ -111,33 +116,32 @@ async function Settings({ params }: PageProps<"/groups/[id]/settings">) {
         </ul>
       </Card>
 
-      <Card title="Link d'invito">
+      <Card title={msg.settings.inviteLink}>
         <InviteBox url={url} code={group.invite_code} groupName={group.name} />
         <form action={regenerateInviteCode.bind(null, group.id)} className="mt-4">
           <SubmitButton
             variant="ghost"
             small
-            confirm="Il link attuale smetterà di funzionare. Continuare?"
+            confirm={msg.settings.confirmNewLink}
           >
-            ↻ Genera un nuovo link
+            {msg.settings.newLink}
           </SubmitButton>
         </form>
       </Card>
 
-      <Card title="Zona pericolosa" className="border-red-500/30">
+      <Card title={msg.settings.danger} className="border-red-500/30">
         <p className="mb-3 text-sm text-foreground/70">
-          Eliminando il gruppo si perdono tutti i suoi dati, per tutti i membri.
-          Se vuoi solo uscire, prima rendi owner un altro membro.
+          {msg.settings.dangerText}
         </p>
-        <form action={deleteGroup.bind(null, group.id)}>
+        <NavForm action={deleteGroup.bind(null, group.id)}>
           <SubmitButton
             variant="danger"
             small
-            confirm={`Eliminare definitivamente "${group.name}"? L'operazione non si può annullare.`}
+            confirm={msg.settings.confirmDelete(group.name)}
           >
-            Elimina il gruppo
+            {msg.settings.delete}
           </SubmitButton>
-        </form>
+        </NavForm>
       </Card>
     </Page>
   );

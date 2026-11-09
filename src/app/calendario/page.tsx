@@ -4,6 +4,8 @@ import { Suspense } from "react";
 import { LiveRefresh } from "@/components/live-refresh";
 import { MeetingCard } from "@/components/meeting-card";
 import { cx, Page, PageSkeleton } from "@/components/ui";
+import { getI18n } from "@/i18n/server";
+import type { Messages } from "@/i18n/messages";
 import { requireUser } from "@/lib/auth";
 import {
   firstDay,
@@ -20,7 +22,6 @@ import {
 } from "@/lib/calendar";
 import type { GroupRow, MemberRole, ScheduleRow } from "@/lib/groups";
 import {
-  ATTENDANCE_LABELS,
   fetchOccurrences,
   meetingsBetween,
   type AttendanceStatus,
@@ -29,7 +30,10 @@ import {
 } from "@/lib/meetings";
 import { addDays, capitalize, formatMediumDate, formatTime, todayInTimeZone } from "@/lib/schedule";
 
-export const metadata: Metadata = { title: "Calendario" };
+export async function generateMetadata(): Promise<Metadata> {
+  const { m } = await getI18n();
+  return { title: m.calendar.title };
+}
 
 type MyGroup = {
   role: MemberRole;
@@ -67,6 +71,7 @@ export default function CalendarPage(props: PageProps<"/calendario">) {
 async function Calendar({ searchParams }: PageProps<"/calendario">) {
   const { mese, giorno } = await searchParams;
   const { supabase, user } = await requireUser();
+  const { locale, m: msg } = await getI18n();
 
   const today = todayInTimeZone("Europe/Rome");
   const month: Month = parseMonth(mese) ?? monthOf(today);
@@ -92,7 +97,7 @@ async function Calendar({ searchParams }: PageProps<"/calendario">) {
   const groups: MeetingGroup[] = ((memberships ?? []) as unknown as MyGroup[])
     .filter((m): m is MyGroup & { groups: NonNullable<MyGroup["groups"]> } => m.groups !== null)
     .map((m) => ({ ...m.groups, memberCount: m.groups.memberships[0]?.count ?? 1 }))
-    .sort((a, b) => a.name.localeCompare(b.name, "it"));
+    .sort((a, b) => a.name.localeCompare(b.name, locale));
 
   const colors = new Map(groups.map((g, i) => [g.id, groupColor(g.id, i)]));
   const occurrences = await fetchOccurrences(
@@ -125,34 +130,38 @@ async function Calendar({ searchParams }: PageProps<"/calendario">) {
   const count = [...byDay.values()].reduce((n, l) => n + l.filter((e) => !isSkipped(e)).length, 0);
 
   return (
-    <Page title="Calendario" back={{ href: "/", label: "Home" }}>
+    <Page title={msg.calendar.title} back={{ href: "/", label: msg.common.home }}>
       <LiveRefresh />
 
       <div className="flex items-center justify-between gap-2">
         <Link
+          replace
+          scroll={false}
           href={href(shiftMonth(month, -1))}
-          aria-label="Mese precedente"
+          aria-label={msg.calendar.prevMonth}
           className="ui-btn flex size-10 items-center justify-center rounded-xl border border-foreground/15 text-lg hover:bg-foreground/5"
         >
           ‹
         </Link>
         <div className="text-center">
-          <h2 className="text-lg font-semibold">{monthLabel(month)}</h2>
+          <h2 className="text-lg font-semibold">{monthLabel(month, locale)}</h2>
           <p className="text-xs text-foreground/55">
-            {count === 1 ? "1 incontro" : `${count} incontri`}
+            {msg.common.meetings(count)}
             {monthParam !== formatMonthParam(monthOf(today)) && (
               <>
                 {" · "}
-                <Link href="/calendario" className="text-brand underline">
-                  oggi
+                <Link href="/calendario" replace className="text-brand underline">
+                  {msg.calendar.today}
                 </Link>
               </>
             )}
           </p>
         </div>
         <Link
+          replace
+          scroll={false}
           href={href(shiftMonth(month, 1))}
-          aria-label="Mese successivo"
+          aria-label={msg.calendar.nextMonth}
           className="ui-btn flex size-10 items-center justify-center rounded-xl border border-foreground/15 text-lg hover:bg-foreground/5"
         >
           ›
@@ -161,7 +170,7 @@ async function Calendar({ searchParams }: PageProps<"/calendario">) {
 
       <div className="ui-card rounded-2xl border border-foreground/10 p-2">
         <div className="grid grid-cols-7 pb-1 text-center text-xs font-medium text-foreground/50">
-          {WEEKDAY_INITIALS.map((d, i) => (
+          {WEEKDAY_INITIALS[locale].map((d, i) => (
             <span key={i}>{d}</span>
           ))}
         </div>
@@ -171,7 +180,7 @@ async function Calendar({ searchParams }: PageProps<"/calendario">) {
             const entries = byDay.get(day) ?? [];
             const isToday = day === today;
             const isSelected = day === selected;
-            const label = `${capitalize(formatMediumDate(day))}${entries.length ? `, ${entries.length} incontri` : ""}`;
+            const label = `${capitalize(formatMediumDate(day, locale))}${entries.length ? msg.calendar.dayMeetings(entries.length) : ""}`;
             const cellClass = cx(
               "ui-day flex aspect-square flex-col items-center justify-start gap-1 rounded-xl pt-1 text-sm",
               !inMonth && "opacity-30",
@@ -193,7 +202,7 @@ async function Calendar({ searchParams }: PageProps<"/calendario">) {
               </>
             );
             return inMonth ? (
-              <Link key={day} href={href(month, day)} scroll={false} aria-label={label} aria-current={isSelected ? "date" : undefined} className={cellClass}>
+              <Link key={day} href={href(month, day)} replace scroll={false} aria-label={label} aria-current={isSelected ? "date" : undefined} className={cellClass}>
                 {content}
               </Link>
             ) : (
@@ -216,7 +225,7 @@ async function Calendar({ searchParams }: PageProps<"/calendario">) {
           {(guestRows ?? []).length > 0 && (
             <li className="flex items-center gap-1.5">
               <span className="ui-dot size-2.5 rounded-full" style={{ backgroundColor: "#94a3b8" }} />
-              Come ospite
+              {msg.calendar.asGuest}
             </li>
           )}
         </ul>
@@ -224,9 +233,9 @@ async function Calendar({ searchParams }: PageProps<"/calendario">) {
 
       {selected && (
         <section className="flex flex-col gap-3">
-          <h2 className="text-lg font-semibold">{capitalize(formatMediumDate(selected))}</h2>
+          <h2 className="text-lg font-semibold">{capitalize(formatMediumDate(selected, locale))}</h2>
           {selectedEntries.length === 0 ? (
-            <p className="text-sm text-foreground/60">Nessun incontro in questo giorno.</p>
+            <p className="text-sm text-foreground/60">{msg.calendar.noMeetingsDay}</p>
           ) : (
             <ul className="flex flex-col gap-3">
               {selectedEntries.map((e) => (
@@ -238,7 +247,7 @@ async function Calendar({ searchParams }: PageProps<"/calendario">) {
                   {e.kind === "member" ? (
                     <MeetingCard meeting={e.meeting} />
                   ) : (
-                    <GuestEntry meeting={e.meeting} />
+                    <GuestEntry meeting={e.meeting} msg={msg} />
                   )}
                 </li>
               ))}
@@ -250,7 +259,7 @@ async function Calendar({ searchParams }: PageProps<"/calendario">) {
   );
 }
 
-function GuestEntry({ meeting: m }: { meeting: GuestMeeting }) {
+function GuestEntry({ meeting: m, msg }: { meeting: GuestMeeting; msg: Messages }) {
   return (
     <Link
       href={`/groups/${m.group_id}/${m.original_date}`}
@@ -258,15 +267,15 @@ function GuestEntry({ meeting: m }: { meeting: GuestMeeting }) {
     >
       <p className="font-semibold">
         {formatTime(m.start_time)} · {m.group_name}{" "}
-        <span className="text-xs font-normal text-foreground/50">(ospite)</span>
+        <span className="text-xs font-normal text-foreground/50">{msg.calendar.guestTag}</span>
       </p>
       {m.game && <p className="text-sm text-foreground/60">🎲 {m.game}</p>}
       <p className="mt-1 text-sm">
         {m.skipped
-          ? "⏭️ Incontro saltato"
+          ? msg.home.skipped
           : m.my_status
-            ? `${ATTENDANCE_LABELS[m.my_status].emoji} ${ATTENDANCE_LABELS[m.my_status].label}`
-            : "Non hai ancora risposto"}
+            ? `${msg.labels.attendance[m.my_status].emoji} ${msg.labels.attendance[m.my_status].label}`
+            : msg.home.notAnswered}
       </p>
     </Link>
   );

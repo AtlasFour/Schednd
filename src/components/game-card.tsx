@@ -1,5 +1,8 @@
+"use client";
+
 import type { ReactNode } from "react";
-import { formatPlayers, formatPlayingTime, GAME_KIND_LABELS, type LibraryGame } from "@/lib/library";
+import { useI18n } from "@/i18n/client";
+import type { LibraryGame } from "@/lib/library";
 
 const KIND_EMOJI: Record<LibraryGame["kind"], string> = {
   board: "🎲",
@@ -10,9 +13,10 @@ const KIND_EMOJI: Record<LibraryGame["kind"], string> = {
 };
 
 export function GameCard({ game, children }: { game: LibraryGame; children?: ReactNode }) {
+  const { m } = useI18n();
   const details = [
-    formatPlayers(game.min_players, game.max_players),
-    formatPlayingTime(game.playing_minutes),
+    m.labels.players(game.min_players, game.max_players),
+    m.labels.playingTime(game.playing_minutes),
   ].filter(Boolean);
   return (
     <article className="ui-card flex items-start gap-3 rounded-2xl border border-foreground/10 p-3">
@@ -43,14 +47,14 @@ export function GameCard({ game, children }: { game: LibraryGame; children?: Rea
               target="_blank"
               rel="noreferrer"
               className="ml-1 text-xs font-normal text-foreground/40 hover:text-brand"
-              title="Apri su BoardGameGeek"
+              title={m.library.openOnBgg}
             >
               BGG ↗
             </a>
           )}
         </p>
         <p className="text-xs text-foreground/60">
-          {details.length > 0 ? details.join(" · ") : GAME_KIND_LABELS[game.kind]}
+          {details.length > 0 ? details.join(" · ") : m.labels.gameKind[game.kind]}
         </p>
         {children}
       </div>

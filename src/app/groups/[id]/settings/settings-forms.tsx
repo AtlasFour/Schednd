@@ -2,12 +2,14 @@
 
 import { useActionState } from "react";
 import { FormMessage, SubmitButton } from "@/components/form";
+import { useI18n } from "@/i18n/client";
 import { initialFormState } from "@/lib/form";
 import type { GroupRow } from "@/lib/groups";
 import { changeSchedule, updateGroup } from "../../actions";
 import { GroupInfoFields, ScheduleFields } from "../../group-fields";
 
 export function GroupInfoForm({ group }: { group: GroupRow }) {
+  const { m } = useI18n();
   const [state, formAction] = useActionState(
     updateGroup.bind(null, group.id),
     initialFormState,
@@ -16,7 +18,7 @@ export function GroupInfoForm({ group }: { group: GroupRow }) {
     <form action={formAction} className="flex flex-col gap-4">
       <GroupInfoFields group={group} />
       <FormMessage state={state} />
-      <SubmitButton pendingLabel="Salvataggio…">Salva</SubmitButton>
+      <SubmitButton pendingLabel={m.common.saving}>{m.common.save}</SubmitButton>
     </form>
   );
 }
@@ -34,6 +36,7 @@ export function ScheduleForm({
   startTime: string;
   minDate: string;
 }) {
+  const { m } = useI18n();
   const [state, formAction] = useActionState(
     changeSchedule.bind(null, groupId),
     initialFormState,
@@ -45,14 +48,14 @@ export function ScheduleForm({
         intervalWeeks={intervalWeeks}
         startTime={startTime}
         minDate={minDate}
-        dateLabel="Primo incontro con la nuova ricorrenza"
+        dateLabel={m.settings.newScheduleFirst}
       />
       <FormMessage state={state} />
       <SubmitButton
-        pendingLabel="Salvataggio…"
-        confirm="Confermi il cambio di ricorrenza? Vale per tutti gli incontri da quella data in poi."
+        pendingLabel={m.common.saving}
+        confirm={m.settings.confirmSchedule}
       >
-        Cambia ricorrenza
+        {m.settings.changeSchedule}
       </SubmitButton>
     </form>
   );

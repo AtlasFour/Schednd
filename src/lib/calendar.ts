@@ -1,11 +1,21 @@
+import type { Locale } from "../i18n/config";
 import { addDays } from "./schedule";
 
-const MONTHS = [
-  "gennaio", "febbraio", "marzo", "aprile", "maggio", "giugno",
-  "luglio", "agosto", "settembre", "ottobre", "novembre", "dicembre",
-];
+const MONTHS: Record<Locale, string[]> = {
+  it: [
+    "gennaio", "febbraio", "marzo", "aprile", "maggio", "giugno",
+    "luglio", "agosto", "settembre", "ottobre", "novembre", "dicembre",
+  ],
+  en: [
+    "January", "February", "March", "April", "May", "June",
+    "July", "August", "September", "October", "November", "December",
+  ],
+};
 
-export const WEEKDAY_INITIALS = ["L", "M", "M", "G", "V", "S", "D"];
+export const WEEKDAY_INITIALS: Record<Locale, string[]> = {
+  it: ["L", "M", "M", "G", "V", "S", "D"],
+  en: ["M", "T", "W", "T", "F", "S", "S"],
+};
 
 export type Month = { year: number; month: number }; // month: 1-12
 
@@ -31,9 +41,9 @@ export function shiftMonth({ year, month }: Month, delta: number): Month {
   return { year: Math.floor(index / 12), month: (index % 12) + 1 };
 }
 
-/** "Novembre 2026" */
-export function monthLabel({ year, month }: Month): string {
-  const name = MONTHS[month - 1];
+/** "Novembre 2026" / "November 2026" */
+export function monthLabel({ year, month }: Month, locale: Locale = "it"): string {
+  const name = MONTHS[locale][month - 1];
   return `${name.charAt(0).toUpperCase()}${name.slice(1)} ${year}`;
 }
 

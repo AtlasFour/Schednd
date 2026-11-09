@@ -2,7 +2,8 @@
 
 import { useOptimistic, useState, useTransition } from "react";
 import { setAttendance } from "@/app/meetings/actions";
-import { ATTENDANCE_LABELS, type AttendanceStatus } from "@/lib/meetings";
+import { useI18n } from "@/i18n/client";
+import type { AttendanceStatus } from "@/lib/meetings";
 import { cx } from "./ui";
 
 const ORDER: AttendanceStatus[] = ["yes", "maybe", "no"];
@@ -26,6 +27,7 @@ export function AttendanceButtons({
   disabled?: boolean;
   compact?: boolean;
 }) {
+  const { m } = useI18n();
   const [optimistic, setOptimistic] = useOptimistic(status);
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
@@ -45,7 +47,7 @@ export function AttendanceButtons({
     <div className="flex flex-col gap-1">
       <div
         role="group"
-        aria-label="La tua presenza"
+        aria-label={m.meeting.yourAttendance}
         className={cx("grid grid-cols-3 gap-2", pending && "opacity-80")}
       >
         {ORDER.map((s) => {
@@ -65,8 +67,8 @@ export function AttendanceButtons({
                   : "border-foreground/15 hover:bg-foreground/5",
               )}
             >
-              <span aria-hidden>{ATTENDANCE_LABELS[s].emoji}</span>
-              {ATTENDANCE_LABELS[s].label}
+              <span aria-hidden>{m.labels.attendance[s].emoji}</span>
+              {m.labels.attendance[s].label}
             </button>
           );
         })}

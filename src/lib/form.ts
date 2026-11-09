@@ -2,6 +2,9 @@ export type FormState = { error?: string; success?: string };
 
 export const initialFormState: FormState = {};
 
+/** Esito di un'azione che, se riuscita, porta a un'altra pagina. */
+export type NavResult = FormState & { redirectTo?: string };
+
 export function getString(formData: FormData, key: string): string {
   const value = formData.get(key);
   return typeof value === "string" ? value.trim() : "";
@@ -28,13 +31,4 @@ export function isDate(value: string) {
 
 export function isTime(value: string) {
   return TIME_RE.test(value);
-}
-
-/** Messaggio leggibile a partire da un errore di Supabase/Postgres. */
-export function dbErrorMessage(error: { message?: string; code?: string } | null): string {
-  if (!error) return "Si è verificato un errore.";
-  // Le funzioni SQL dell'app sollevano messaggi già in italiano (codice P0001).
-  if (error.code === "P0001" && error.message) return error.message;
-  if (error.code === "23514") return "Alcuni valori non sono validi.";
-  return "Si è verificato un errore. Riprova tra poco.";
 }

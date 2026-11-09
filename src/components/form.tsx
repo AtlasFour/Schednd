@@ -3,6 +3,7 @@
 import { useFormStatus } from "react-dom";
 import type { ReactNode } from "react";
 import { buttonClass, cx, type ButtonVariant } from "./ui";
+import { useI18n } from "@/i18n/client";
 import type { FormState } from "@/lib/form";
 
 export function SubmitButton({
@@ -22,6 +23,7 @@ export function SubmitButton({
   confirm?: string;
 }) {
   const { pending } = useFormStatus();
+  const { m } = useI18n();
   return (
     <button
       type="submit"
@@ -33,7 +35,7 @@ export function SubmitButton({
         }
       }}
     >
-      {pending ? (pendingLabel ?? "Attendi…") : children}
+      {pending ? (pendingLabel ?? m.common.wait) : children}
     </button>
   );
 }

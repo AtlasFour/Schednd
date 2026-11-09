@@ -1,4 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { getI18n } from "@/i18n/server";
 import { getGroupDetail, type GroupRow, type ScheduleRow } from "./groups";
 
 export type ParticipantRole = "owner" | "member" | "guest";
@@ -33,7 +34,7 @@ export type MeetingContext = {
 function sortParticipants(list: Participant[]) {
   const order: Record<ParticipantRole, number> = { owner: 0, member: 1, guest: 2 };
   return list.sort(
-    (a, b) => order[a.role] - order[b.role] || a.name.localeCompare(b.name, "it"),
+    (a, b) => order[a.role] - order[b.role] || a.name.localeCompare(b.name),
   );
 }
 
@@ -49,6 +50,7 @@ export async function getMeetingContext(
   userId: string,
 ): Promise<MeetingContext | null> {
   const group = await getGroupDetail(supabase, groupId);
+  const { m: msg } = await getI18n();
 
   if (group) {
     const { data: guests } = await supabase
@@ -66,12 +68,12 @@ export async function getMeetingContext(
     const participants: Participant[] = [
       ...group.memberships.map((m) => ({
         user_id: m.user_id,
-        name: m.profiles?.display_name ?? "Utente",
+        name: m.profiles?.display_name ?? msg.common.user,
         role: m.role,
       })),
       ...guestRows.map((g) => ({
         user_id: g.user_id,
-        name: g.profiles?.display_name ?? "Ospite",
+        name: g.profiles?.display_name ?? msg.common.guest,
         role: "guest" as const,
       })),
     ];

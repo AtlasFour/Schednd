@@ -57,6 +57,10 @@ Le migrazioni sono in `supabase/migrations/`, numerate in ordine. Per ognuna non
 | `0004_guests.sql` | ospiti "una tantum": link per un singolo incontro, presenza e voto degli ospiti |
 | `0005_notifications.sql` | notifiche: iscrizioni push, coda degli avvisi, trigger sugli eventi, promemoria giornalieri |
 | `0006_libraries.sql` | librerie dei giochi: catalogo, libreria personale con preferiti, import BoardGameGeek, libreria del gruppo |
+| `0007_i18n.sql` | lingua dell'utente (italiano/inglese) e notifiche nella lingua di chi le riceve |
+
+## Lingue
+L'app è in italiano e inglese. I testi sono in `src/i18n/messages/it.ts` ed `en.ts` (stesse chiavi, controllate da TypeScript). La lingua si sceglie da **Profilo → Lingua**; se non è stata scelta si usa quella del browser.
 
 ## Sviluppo
 ```bash
