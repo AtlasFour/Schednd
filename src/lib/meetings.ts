@@ -36,10 +36,11 @@ export type OccurrenceRow = {
   notes: string | null;
   attendances: AttendanceRow[];
   proposals?: OccurrenceProposalSummary[];
+  occurrence_guests?: { user_id: string }[];
 };
 
 export const OCCURRENCE_SELECT =
-  "id, group_id, original_date, start_date, start_time, status, game_title_override, location_override, notes, attendances(user_id, status, note), proposals(id, type, status, ballots(user_id))";
+  "id, group_id, original_date, start_date, start_time, status, game_title_override, location_override, notes, attendances(user_id, status, note), proposals(id, type, status, ballots(user_id)), occurrence_guests(user_id)";
 
 export type MeetingGroup = Pick<
   GroupRow,
@@ -63,7 +64,9 @@ export type Meeting = {
   attendances: AttendanceRow[];
   counts: Record<AttendanceStatus, number> & { noAnswer: number };
   minAttendees: number | null;
+  /** Membri del gruppo + ospiti dell'incontro. */
   memberCount: number;
+  guestCount: number;
   myStatus: AttendanceStatus | null;
   myNote: string | null;
   today: string;
@@ -90,6 +93,8 @@ export function buildMeeting(
   today: string,
 ): Meeting {
   const attendances = occurrence?.attendances ?? [];
+  const guestCount = occurrence?.occurrence_guests?.length ?? 0;
+  const participants = group.memberCount + guestCount;
   const mine = attendances.find((a) => a.user_id === userId);
   const open = (occurrence?.proposals ?? []).filter(
     (p) => p.status === "open" || p.status === "needs_owner",
@@ -105,9 +110,10 @@ export function buildMeeting(
     location: occurrence?.location_override ?? group.default_location,
     notes: occurrence?.notes ?? null,
     attendances,
-    counts: countAttendances(attendances, group.memberCount),
+    counts: countAttendances(attendances, participants),
     minAttendees: group.min_attendees,
-    memberCount: group.memberCount,
+    memberCount: participants,
+    guestCount,
     myStatus: mine?.status ?? null,
     myNote: mine?.note ?? null,
     today,

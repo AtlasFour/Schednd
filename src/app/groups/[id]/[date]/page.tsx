@@ -1,15 +1,18 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
+import { promoteGuest, removeGuest } from "@/app/guests/actions";
 import { AttendanceButtons } from "@/components/attendance-buttons";
+import { SubmitButton } from "@/components/form";
+import { GuestLinkBox } from "@/components/guest-link-box";
 import { LiveRefresh } from "@/components/live-refresh";
 import { AttendanceSummary } from "@/components/meeting-card";
 import { ProposalCard } from "@/components/proposal-card";
-import { ButtonLink, Card, Page, PageSkeleton } from "@/components/ui";
+import { Badge, ButtonLink, Card, Page, PageSkeleton } from "@/components/ui";
 import { requireUser } from "@/lib/auth";
 import { isDate } from "@/lib/form";
-import { APPROVAL_RULE_LABELS, getGroupDetail, MODE_LABELS } from "@/lib/groups";
-import { closeDueProposals, fetchProposals } from "@/lib/proposals";
+import { APPROVAL_RULE_LABELS, MODE_LABELS } from "@/lib/groups";
+import { getMeetingContext, type Participant } from "@/lib/meeting-context";
 import {
   ATTENDANCE_LABELS,
   meetingForDate,
@@ -17,7 +20,14 @@ import {
   type AttendanceStatus,
   type OccurrenceRow,
 } from "@/lib/meetings";
-import { capitalize, formatMediumDate, formatTime, relativeDay } from "@/lib/schedule";
+import { closeDueProposals, fetchProposals } from "@/lib/proposals";
+import {
+  capitalize,
+  formatMediumDate,
+  formatShortDate,
+  formatTime,
+  relativeDay,
+} from "@/lib/schedule";
 import { AttendanceNoteForm, OccurrenceOwnerForm } from "./meeting-forms";
 
 export const metadata: Metadata = { title: "Incontro" };
@@ -35,8 +45,9 @@ async function MeetingDetail({ params }: PageProps<"/groups/[id]/[date]">) {
   if (!isDate(date)) notFound();
 
   const { supabase, user } = await requireUser();
-  const group = await getGroupDetail(supabase, id);
-  if (!group) notFound();
+  const ctx = await getMeetingContext(supabase, id, date, user.id);
+  if (!ctx) notFound();
+  const { group, viewer, participants } = ctx;
 
   await closeDueProposals(supabase);
   const { data: occurrence } = await supabase
@@ -45,45 +56,63 @@ async function MeetingDetail({ params }: PageProps<"/groups/[id]/[date]">) {
     .eq("group_id", id)
     .eq("original_date", date)
     .maybeSingle();
+  const occ = (occurrence ?? undefined) as OccurrenceRow | undefined;
 
   const meeting = meetingForDate(
-    { ...group, memberCount: group.memberships.length },
+    { ...group, memberCount: ctx.memberCount },
     date,
-    (occurrence ?? undefined) as OccurrenceRow | undefined,
+    occ,
     user.id,
   );
   if (!meeting) notFound();
 
-  const isOwner = group.memberships.some((m) => m.user_id === user.id && m.role === "owner");
+  const isOwner = viewer === "owner";
+  const isGuest = viewer === "guest";
   const isPast = meeting.date < meeting.today;
-  const proposals = occurrence ? await fetchProposals(supabase, (occurrence as OccurrenceRow).id) : [];
-  const nameRecord = Object.fromEntries(
-    group.memberships.map((m) => [m.user_id, m.profiles?.display_name ?? "Utente"]),
-  );
+  const proposals = occ ? await fetchProposals(supabase, occ.id) : [];
 
-  const names = new Map(Object.entries(nameRecord));
+  const byId = new Map(participants.map((p) => [p.user_id, p]));
+  const nameRecord = Object.fromEntries(participants.map((p) => [p.user_id, p.name]));
   const byStatus = (status: AttendanceStatus) =>
     meeting.attendances
       .filter((a) => a.status === status)
-      .map((a) => ({ id: a.user_id, name: names.get(a.user_id) ?? "Ex membro", note: a.note }))
+      .map((a) => ({
+        id: a.user_id,
+        name: byId.get(a.user_id)?.name ?? "Ex partecipante",
+        note: a.note,
+        guest: byId.get(a.user_id)?.role === "guest",
+      }))
       .sort((a, b) => a.name.localeCompare(b.name, "it"));
   const answered = new Set(meeting.attendances.map((a) => a.user_id));
-  const noAnswer = group.memberships
-    .filter((m) => !answered.has(m.user_id))
-    .map((m) => ({ id: m.user_id, name: m.profiles?.display_name ?? "Utente", note: null }));
+  const noAnswer = participants
+    .filter((p) => !answered.has(p.user_id))
+    .map((p) => ({ id: p.user_id, name: p.name, note: null, guest: p.role === "guest" }));
+  const guests = participants.filter((p) => p.role === "guest");
 
   return (
     <Page
       title={capitalize(formatMediumDate(meeting.date))}
       subtitle={`${formatTime(meeting.startTime)} · ${relativeDay(meeting.date, meeting.today)} · ${group.name}`}
-      back={{ href: `/groups/${group.id}`, label: group.name }}
+      back={isGuest ? { href: "/", label: "Home" } : { href: `/groups/${group.id}`, label: group.name }}
     >
       <LiveRefresh />
+
+      {isGuest && (
+        <p className="rounded-xl border border-brand/30 bg-brand/10 p-3 text-sm">
+          👋 Sei <strong>ospite</strong> di questo incontro di <strong>{group.name}</strong>.
+        </p>
+      )}
 
       {meeting.skipped && (
         <p className="rounded-xl border border-foreground/15 bg-foreground/5 p-3 text-sm">
           ⏭️ <strong>Questo incontro è stato saltato.</strong>
           {isOwner && " Puoi ripristinarlo qui sotto."}
+        </p>
+      )}
+
+      {meeting.date !== meeting.originalDate && (
+        <p className="rounded-xl border border-brand/30 bg-brand/10 p-3 text-sm">
+          📅 Incontro spostato: era previsto per {formatShortDate(meeting.originalDate)}.
         </p>
       )}
 
@@ -149,7 +178,7 @@ async function MeetingDetail({ params }: PageProps<"/groups/[id]/[date]">) {
       <section id="proposte" className="flex scroll-mt-4 flex-col gap-3">
         <div className="flex items-center justify-between gap-2">
           <h2 className="text-lg font-semibold">Proposte</h2>
-          {!isPast && !meeting.skipped && (
+          {!isGuest && !isPast && !meeting.skipped && (
             <ButtonLink href={`/groups/${group.id}/${meeting.originalDate}/proponi`} small>
               + Proponi
             </ButtonLink>
@@ -161,8 +190,9 @@ async function MeetingDetail({ params }: PageProps<"/groups/[id]/[date]">) {
           </p>
         ) : proposals.length === 0 ? (
           <p className="text-sm text-foreground/60">
-            Nessuna proposta. Puoi proporre un cambio di data, di gioco o di
-            saltare l&apos;incontro.
+            {isGuest
+              ? "Nessuna proposta per questo incontro."
+              : "Nessuna proposta. Puoi proporre un cambio di data, di gioco o di saltare l'incontro."}
           </p>
         ) : (
           proposals.map((p) => (
@@ -193,6 +223,41 @@ async function MeetingDetail({ params }: PageProps<"/groups/[id]/[date]">) {
         </div>
       </Card>
 
+      {!isGuest && !isPast && !meeting.skipped && (
+        <Card title={`Ospiti${guests.length ? ` (${guests.length})` : ""}`}>
+          <div className="flex flex-col gap-4">
+            {guests.length > 0 && (
+              <GuestList
+                guests={guests}
+                groupId={group.id}
+                originalDate={meeting.originalDate}
+                canManage={isOwner}
+              />
+            )}
+            <GuestLinkBox
+              groupId={group.id}
+              originalDate={meeting.originalDate}
+              label={`${group.name} · ${formatShortDate(meeting.date)} ${formatTime(meeting.startTime)}`}
+            />
+          </div>
+        </Card>
+      )}
+
+      {isGuest && !isPast && (
+        <form
+          action={removeGuest.bind(null, group.id, meeting.originalDate, user.id, true)}
+          className="self-start"
+        >
+          <SubmitButton
+            variant="danger"
+            small
+            confirm="Vuoi davvero lasciare questo incontro? Non lo vedrai più."
+          >
+            Lascia l&apos;incontro
+          </SubmitButton>
+        </form>
+      )}
+
       {isOwner && !isPast && (
         <Card title="Decisioni dell'owner">
           <p className="mb-4 text-sm text-foreground/70">
@@ -203,8 +268,8 @@ async function MeetingDetail({ params }: PageProps<"/groups/[id]/[date]">) {
             groupId={group.id}
             originalDate={meeting.originalDate}
             skipped={meeting.skipped}
-            gameOverride={(occurrence as OccurrenceRow | null)?.game_title_override ?? null}
-            locationOverride={(occurrence as OccurrenceRow | null)?.location_override ?? null}
+            gameOverride={occ?.game_title_override ?? null}
+            locationOverride={occ?.location_override ?? null}
             notes={meeting.notes}
             defaultGame={group.default_game_title}
             defaultLocation={group.default_location}
@@ -215,13 +280,57 @@ async function MeetingDetail({ params }: PageProps<"/groups/[id]/[date]">) {
   );
 }
 
+function GuestList({
+  guests,
+  groupId,
+  originalDate,
+  canManage,
+}: {
+  guests: Participant[];
+  groupId: string;
+  originalDate: string;
+  canManage: boolean;
+}) {
+  return (
+    <ul className="flex flex-col divide-y divide-foreground/10">
+      {guests.map((g) => (
+        <li key={g.user_id} className="flex flex-col gap-2 py-2">
+          <span>{g.name}</span>
+          {canManage && (
+            <div className="flex gap-2">
+              <form action={promoteGuest.bind(null, groupId, g.user_id)}>
+                <SubmitButton
+                  variant="secondary"
+                  small
+                  confirm={`Aggiungere ${g.name} come membro del gruppo?`}
+                >
+                  Aggiungi al gruppo
+                </SubmitButton>
+              </form>
+              <form action={removeGuest.bind(null, groupId, originalDate, g.user_id, false)}>
+                <SubmitButton
+                  variant="danger"
+                  small
+                  confirm={`Rimuovere ${g.name} da questo incontro?`}
+                >
+                  Rimuovi
+                </SubmitButton>
+              </form>
+            </div>
+          )}
+        </li>
+      ))}
+    </ul>
+  );
+}
+
 function PeopleList({
   title,
   people,
   muted,
 }: {
   title: string;
-  people: { id: string; name: string; note: string | null }[];
+  people: { id: string; name: string; note: string | null; guest: boolean }[];
   muted?: boolean;
 }) {
   if (people.length === 0) return null;
@@ -234,6 +343,12 @@ function PeopleList({
         {people.map((p) => (
           <li key={p.id} className={muted ? "text-foreground/60" : undefined}>
             {p.name}
+            {p.guest && (
+              <>
+                {" "}
+                <Badge>ospite</Badge>
+              </>
+            )}
             {p.note && <span className="text-foreground/60"> — {p.note}</span>}
           </li>
         ))}

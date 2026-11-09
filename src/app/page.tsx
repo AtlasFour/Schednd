@@ -7,12 +7,20 @@ import { LiveRefresh } from "@/components/live-refresh";
 import { MeetingCard } from "@/components/meeting-card";
 import type { GroupRow, MemberRole, ScheduleRow } from "@/lib/groups";
 import {
+  ATTENDANCE_LABELS,
   fetchOccurrences,
   upcomingMeetings,
+  type AttendanceStatus,
   type Meeting,
   type MeetingGroup,
 } from "@/lib/meetings";
-import { addDays, formatShortDate, formatTime, todayInTimeZone } from "@/lib/schedule";
+import {
+  addDays,
+  capitalize,
+  formatShortDate,
+  formatTime,
+  todayInTimeZone,
+} from "@/lib/schedule";
 import { closeDueProposals } from "@/lib/proposals";
 import { getSupabaseEnv } from "@/lib/supabase/env";
 import { goToInviteCode } from "./groups/actions";
@@ -36,6 +44,17 @@ type MyGroup = {
     | null;
 };
 
+type GuestMeeting = {
+  group_id: string;
+  group_name: string;
+  original_date: string;
+  start_date: string;
+  start_time: string;
+  skipped: boolean;
+  game: string | null;
+  my_status: AttendanceStatus | null;
+};
+
 /** Quanti giorni avanti mostrare nella home. */
 const HOME_WINDOW_DAYS = 21;
 
@@ -56,7 +75,7 @@ export default function HomePage() {
 async function Home() {
   const { supabase, user } = await requireUser();
 
-  const [{ data: profile }, { data: memberships }] = await Promise.all([
+  const [{ data: profile }, { data: memberships }, { data: guestRows }] = await Promise.all([
     supabase.from("profiles").select("display_name").eq("id", user.id).maybeSingle(),
     supabase
       .from("memberships")
@@ -64,7 +83,9 @@ async function Home() {
         "role, groups(id, name, timezone, default_game_title, default_location, min_attendees, status, group_schedules(id, anchor_date, interval_weeks, start_time, valid_until), memberships(count))",
       )
       .eq("user_id", user.id),
+    supabase.rpc("my_guest_meetings"),
   ]);
+  const guestMeetings = (guestRows ?? []) as GuestMeeting[];
 
   const groups: (MeetingGroup & { role: MemberRole })[] = (
     (memberships ?? []) as unknown as MyGroup[]
@@ -112,6 +133,38 @@ async function Home() {
           👤 Profilo
         </ButtonLink>
       </header>
+
+      {guestMeetings.length > 0 && (
+        <section className="flex flex-col gap-3">
+          <h2 className="text-lg font-semibold">Sei ospite</h2>
+          <ul className="flex flex-col gap-3">
+            {guestMeetings.map((m) => (
+              <li key={`${m.group_id}-${m.original_date}`}>
+                <Link
+                  href={`/groups/${m.group_id}/${m.original_date}`}
+                  className="flex items-center justify-between gap-3 rounded-2xl border border-brand/30 bg-brand/5 p-4"
+                >
+                  <div className="min-w-0">
+                    <p className="font-semibold">
+                      {capitalize(formatShortDate(m.start_date))} · {formatTime(m.start_time)}
+                    </p>
+                    <p className="truncate text-sm">{m.group_name}</p>
+                    {m.game && <p className="truncate text-sm text-foreground/60">🎲 {m.game}</p>}
+                    <p className="mt-1 text-sm">
+                      {m.skipped
+                        ? "⏭️ Incontro saltato"
+                        : m.my_status
+                          ? `${ATTENDANCE_LABELS[m.my_status].emoji} ${ATTENDANCE_LABELS[m.my_status].label}`
+                          : "Non hai ancora risposto"}
+                    </p>
+                  </div>
+                  <span aria-hidden className="text-foreground/40">›</span>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
 
       {groups.length > 0 && (
         <section className="flex flex-col gap-3">
