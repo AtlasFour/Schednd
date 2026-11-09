@@ -42,5 +42,6 @@ export function notificationSetupStatus() {
     cronSecret: Boolean(process.env.CRON_SECRET),
     smtp: getSmtpConfig() !== null,
     bgg: Boolean(process.env.BGG_API_TOKEN),
+    telegram: Boolean(process.env.TELEGRAM_BOT_TOKEN),
   };
 }

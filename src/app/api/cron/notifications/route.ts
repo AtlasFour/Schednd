@@ -1,4 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
+import { queueChannelReminders } from "@/lib/notifications/channel-reminders";
 import { processNotificationQueue } from "@/lib/notifications/process";
 import { createAdminClient } from "@/lib/supabase/admin";
 
@@ -30,8 +31,14 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "Errore nel calcolo dei promemoria" }, { status: 500 });
   }
 
+  // Riepiloghi nelle chat di gruppo collegate (Telegram).
+  const chatReminders = await queueChannelReminders(admin).catch((err) => {
+    console.error("queueChannelReminders", err);
+    return 0;
+  });
+
   // Più giri, nel caso la coda superi il blocco di 200.
-  let total = { claimed: 0, push: 0, email: 0, failed: 0 };
+  let total = { claimed: 0, push: 0, email: 0, failed: 0, chats: 0 };
   for (let i = 0; i < 5; i++) {
     const r = await processNotificationQueue();
     total = {
@@ -39,9 +46,10 @@ export async function GET(request: NextRequest) {
       push: total.push + r.push,
       email: total.email + r.email,
       failed: total.failed + r.failed,
+      chats: total.chats + r.chats,
     };
-    if (r.claimed < 200) break;
+    if (r.claimed < 200 && r.chats < 100) break;
   }
 
-  return NextResponse.json({ enqueued, ...total });
+  return NextResponse.json({ enqueued, chatReminders, ...total });
 }

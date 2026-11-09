@@ -1,6 +1,7 @@
 import { createTransport } from "nodemailer";
 import { sendNotification, type PushSubscription } from "web-push";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { processChannelOutbox } from "./channels";
 import { getPublicSiteUrl, getSmtpConfig, getVapidConfig } from "./config";
 
 type QueueRow = {
@@ -23,16 +24,29 @@ type SubscriptionRow = {
 
 type ProfileRow = { id: string; notify_push: boolean; notify_email: boolean; locale: string | null };
 
-export type ProcessResult = { claimed: number; push: number; email: number; failed: number };
+export type ProcessResult = {
+  claimed: number;
+  push: number;
+  email: number;
+  failed: number;
+  chats: number;
+};
 
 /**
  * Invia le notifiche in coda (push e/o email secondo le preferenze).
  * Non fa nulla se le variabili d'ambiente necessarie non sono impostate.
  */
 export async function processNotificationQueue(limit = 200): Promise<ProcessResult> {
-  const result: ProcessResult = { claimed: 0, push: 0, email: 0, failed: 0 };
+  const result: ProcessResult = { claimed: 0, push: 0, email: 0, failed: 0, chats: 0 };
   const admin = createAdminClient();
   if (!admin) return result;
+
+  // Avvisi nelle chat di gruppo collegate (Telegram).
+  try {
+    result.chats = await processChannelOutbox(admin);
+  } catch (err) {
+    console.error("processChannelOutbox", err);
+  }
 
   const vapid = getVapidConfig();
   const smtp = getSmtpConfig();

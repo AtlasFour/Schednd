@@ -17,6 +17,7 @@ import {
   transferOwnership,
 } from "../../actions";
 import { GroupInfoForm, ScheduleForm } from "./settings-forms";
+import { TelegramCard, type ChannelInfo } from "./telegram-card";
 
 export async function generateMetadata(): Promise<Metadata> {
   const { m } = await getI18n();
@@ -35,7 +36,15 @@ async function Settings({ params }: PageProps<"/groups/[id]/settings">) {
   const { id } = await params;
   const { supabase, user } = await requireUser();
   const { locale, m: msg } = await getI18n();
-  const group = await getGroupDetail(supabase, id);
+  const [group, { data: channel }] = await Promise.all([
+    getGroupDetail(supabase, id),
+    supabase
+      .from("group_channels")
+      .select("chat_title, locale, events")
+      .eq("group_id", id)
+      .eq("provider", "telegram")
+      .maybeSingle(),
+  ]);
 
   if (!group) notFound();
 
@@ -129,6 +138,14 @@ async function Settings({ params }: PageProps<"/groups/[id]/settings">) {
             {msg.settings.newLink}
           </SubmitButton>
         </form>
+      </Card>
+
+      <Card title={`✈️ ${msg.channels.title}`}>
+        <TelegramCard
+          groupId={group.id}
+          configured={Boolean(process.env.TELEGRAM_BOT_TOKEN)}
+          channel={(channel as ChannelInfo | null) ?? null}
+        />
       </Card>
 
       <Card title={msg.settings.danger} className="border-red-500/30">

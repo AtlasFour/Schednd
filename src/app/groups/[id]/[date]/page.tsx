@@ -34,6 +34,8 @@ import { deleteExtraMeeting } from "@/app/meetings/actions";
 import { meetingToEvent } from "@/lib/calendar-events";
 import { googleCalendarUrl } from "@/lib/ics";
 import { getSiteUrl } from "@/lib/site-url";
+import { meetingSummaryLines, peopleByStatus } from "@/lib/share-text";
+import { ShareCard } from "./share-card";
 import { AttendanceNoteForm, MoveOccurrenceForm, OccurrenceOwnerForm } from "./meeting-forms";
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -84,7 +86,8 @@ async function MeetingDetail({ params }: PageProps<"/groups/[id]/[date]">) {
   if (!meeting) notFound();
 
   const isOwner = viewer === "owner";
-  const calendarEvent = meetingToEvent(group, meeting, await getSiteUrl(), msg, {
+  const siteUrl = await getSiteUrl();
+  const calendarEvent = meetingToEvent(group, meeting, siteUrl, msg, {
     guest: viewer === "guest",
   });
   const isGuest = viewer === "guest";
@@ -194,6 +197,42 @@ async function MeetingDetail({ params }: PageProps<"/groups/[id]/[date]">) {
               />
             )}
           </div>
+        </Card>
+      )}
+
+      {!isPast && (
+        <Card title={msg.share.title}>
+          <ShareCard
+            text={[
+              ...meetingSummaryLines(
+                {
+                  groupName: group.name,
+                  date: meeting.date,
+                  startTime: meeting.startTime,
+                  skipped: meeting.skipped,
+                  game: meeting.game,
+                  location: group.mode === "online" ? null : meeting.location,
+                  onlineLink: group.mode === "in_person" ? null : group.online_link,
+                  notes: meeting.notes,
+                  minAttendees: meeting.minAttendees,
+                  openProposals: meeting.openProposals,
+                  people: peopleByStatus(
+                    participants.map((p) => ({
+                      user_id: p.user_id,
+                      name: p.role === "guest" ? `${p.name} ${msg.calendar.guestTag}` : p.name,
+                    })),
+                    meeting.attendances,
+                    locale,
+                    msg.common.formerParticipant,
+                  ),
+                },
+                msg,
+                locale,
+              ),
+              "",
+              `${msg.share.answer} ${siteUrl}/groups/${group.id}/${meeting.originalDate}`,
+            ].join("\n")}
+          />
         </Card>
       )}
 

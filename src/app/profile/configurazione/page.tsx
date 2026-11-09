@@ -32,6 +32,7 @@ async function Config() {
     { label: m.config.rowCron, env: "CRON_SECRET", ok: status.cronSecret },
     { label: m.config.rowSmtp, env: "SMTP_HOST, SMTP_USER, SMTP_PASSWORD", ok: status.smtp, optional: true },
     { label: m.config.rowBgg, env: "BGG_API_TOKEN", ok: status.bgg, optional: true },
+    { label: m.config.rowTelegram, env: "TELEGRAM_BOT_TOKEN", ok: status.telegram, optional: true },
   ];
 
   return (
@@ -61,6 +62,10 @@ async function Config() {
 
       <Card title={m.config.step2}>
         <Steps items={m.config.step2Items} />
+      </Card>
+
+      <Card title={m.config.telegramTitle}>
+        <Steps items={m.config.telegramItems} />
       </Card>
 
       <Card title={m.config.bggTitle}>

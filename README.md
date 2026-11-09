@@ -59,6 +59,14 @@ Le migrazioni sono in `supabase/migrations/`, numerate in ordine. Per ognuna non
 | `0006_libraries.sql` | librerie dei giochi: catalogo, libreria personale con preferiti, import BoardGameGeek, libreria del gruppo |
 | `0007_i18n.sql` | lingua dell'utente (italiano/inglese) e notifiche nella lingua di chi le riceve |
 | `0008_single_events_calendar.sql` | eventi singoli, incontri straordinari, spostamento di un incontro, link segreto per il calendario del telefono |
+| `0009_group_channels.sql` | avvisi nelle chat di gruppo Telegram: collegamento con codice, scelta degli avvisi, coda dei messaggi |
+
+## Chat di gruppo (Telegram e WhatsApp)
+- **WhatsApp**: nella pagina di ogni incontro, "Condividi su WhatsApp" apre WhatsApp con il riepilogo già scritto (data, gioco, chi c'è, link): si sceglie il gruppo e si invia. WhatsApp non permette ai bot di scrivere nei gruppi di amici, quindi l'invio è manuale.
+- **Telegram** (facoltativo): un bot scrive da solo gli avvisi nella chat del gruppo.
+  1. Su Telegram apri **@BotFather**, scrivi `/newbot`, scegli nome e nome utente (deve finire con `bot`).
+  2. Copia il token che ti dà e mettilo su Vercel nella variabile `TELEGRAM_BOT_TOKEN` (non incollarlo in nessuna chat), poi **Redeploy**.
+  3. Nelle impostazioni del gruppo su Schednd: **Avvisi su Telegram → Collega un gruppo Telegram** e segui i passaggi. Lì scegli anche quali avvisi mandare e la lingua.
 
 ## Velocità
 Ogni pagina fa alcune richieste al database: se il server di Vercel e quello di Supabase sono lontani (es. Stati Uniti ed Europa) ogni richiesta costa ~100 ms in più.
