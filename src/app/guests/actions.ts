@@ -3,7 +3,7 @@
 import { redirect } from "next/navigation";
 import { requireUser } from "@/lib/auth";
 import { dbErrorMessage, isDate } from "@/lib/form";
-import { revalidateApp } from "@/lib/revalidate";
+import { afterMutation } from "@/lib/revalidate";
 import { getSiteUrl } from "@/lib/site-url";
 
 export type GuestLinkResult = { url?: string; error?: string };
@@ -23,7 +23,7 @@ async function guestLink(
     console.error(rpc, error);
     return { error: dbErrorMessage(error) };
   }
-  revalidateApp();
+  afterMutation();
   return { url: `${await getSiteUrl()}/ospite/${data}` };
 }
 
@@ -43,7 +43,7 @@ export async function acceptGuestInvite(token: string): Promise<void> {
     console.error("accept_guest_invite", error);
     redirect(`/ospite/${encodeURIComponent(token)}?errore=1`);
   }
-  revalidateApp();
+  afterMutation();
   redirect(`/groups/${row.group_id}/${row.original_date}`);
 }
 
@@ -60,7 +60,7 @@ export async function removeGuest(
     p_user_id: userId,
   });
   if (error) console.error("remove_guest", error);
-  revalidateApp();
+  afterMutation();
   if (leaving && !error) redirect("/");
 }
 
@@ -71,5 +71,5 @@ export async function promoteGuest(groupId: string, userId: string): Promise<voi
     p_user_id: userId,
   });
   if (error) console.error("promote_guest", error);
-  revalidateApp();
+  afterMutation();
 }

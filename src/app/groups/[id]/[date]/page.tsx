@@ -20,7 +20,8 @@ import {
   type AttendanceStatus,
   type OccurrenceRow,
 } from "@/lib/meetings";
-import { closeDueProposals, fetchProposals } from "@/lib/proposals";
+import { fetchProposals } from "@/lib/proposals";
+import { closeDueProposals } from "@/lib/proposals-server";
 import {
   capitalize,
   formatMediumDate,
