@@ -1,6 +1,6 @@
 "use server";
 
-import { refresh } from "next/cache";
+import { revalidateApp } from "@/lib/revalidate";
 import { requireUser } from "@/lib/auth";
 import { dbErrorMessage, getOptionalString, getString, type FormState } from "@/lib/form";
 
@@ -23,6 +23,6 @@ export async function updateProfile(_prev: FormState, formData: FormData): Promi
     return { error: dbErrorMessage(error) };
   }
 
-  refresh();
+  revalidateApp();
   return { success: "Profilo aggiornato." };
 }

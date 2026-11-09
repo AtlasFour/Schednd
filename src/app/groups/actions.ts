@@ -1,6 +1,6 @@
 "use server";
 
-import { refresh } from "next/cache";
+import { revalidateApp } from "@/lib/revalidate";
 import { redirect } from "next/navigation";
 import { requireUser } from "@/lib/auth";
 import {
@@ -113,6 +113,7 @@ export async function createGroup(_prev: FormState, formData: FormData): Promise
     return { error: dbErrorMessage(error) };
   }
 
+  revalidateApp();
   redirect(`/groups/${data}?nuovo=1`);
 }
 
@@ -139,7 +140,7 @@ export async function updateGroup(
     return { error: "Solo l'owner può modificare il gruppo." };
   }
 
-  refresh();
+  revalidateApp();
   return { success: "Modifiche salvate." };
 }
 
@@ -164,7 +165,7 @@ export async function changeSchedule(
     return { error: dbErrorMessage(error) };
   }
 
-  refresh();
+  revalidateApp();
   return { success: "Ricorrenza aggiornata." };
 }
 
@@ -172,7 +173,7 @@ export async function regenerateInviteCode(groupId: string): Promise<void> {
   const { supabase } = await requireUser();
   const { error } = await supabase.rpc("regenerate_invite_code", { p_group_id: groupId });
   if (error) console.error("regenerate_invite_code", error);
-  refresh();
+  revalidateApp();
 }
 
 export async function removeMember(groupId: string, userId: string): Promise<void> {
@@ -183,7 +184,7 @@ export async function removeMember(groupId: string, userId: string): Promise<voi
     .eq("group_id", groupId)
     .eq("user_id", userId);
   if (error) console.error("removeMember", error);
-  refresh();
+  revalidateApp();
 }
 
 export async function transferOwnership(groupId: string, userId: string): Promise<void> {
@@ -194,10 +195,11 @@ export async function transferOwnership(groupId: string, userId: string): Promis
   });
   if (error) {
     console.error("transfer_ownership", error);
-    refresh();
+    revalidateApp();
     return;
   }
   // Non essendo più owner, le impostazioni non sono più accessibili.
+  revalidateApp();
   redirect(`/groups/${groupId}`);
 }
 
@@ -206,9 +208,10 @@ export async function deleteGroup(groupId: string): Promise<void> {
   const { error } = await supabase.from("groups").delete().eq("id", groupId);
   if (error) {
     console.error("deleteGroup", error);
-    refresh();
+    revalidateApp();
     return;
   }
+  revalidateApp();
   redirect("/");
 }
 
@@ -221,9 +224,10 @@ export async function leaveGroup(groupId: string): Promise<void> {
     .eq("user_id", user.id);
   if (error) {
     console.error("leaveGroup", error);
-    refresh();
+    revalidateApp();
     return;
   }
+  revalidateApp();
   redirect("/");
 }
 
@@ -234,6 +238,7 @@ export async function joinGroup(code: string): Promise<void> {
     console.error("join_group", error);
     redirect(`/join/${encodeURIComponent(code)}?errore=1`);
   }
+  revalidateApp();
   redirect(`/groups/${data}`);
 }
 

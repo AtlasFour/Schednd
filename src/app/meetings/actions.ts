@@ -1,6 +1,6 @@
 "use server";
 
-import { refresh } from "next/cache";
+import { revalidateApp } from "@/lib/revalidate";
 import { requireUser } from "@/lib/auth";
 import { dbErrorMessage, getString, isDate, type FormState } from "@/lib/form";
 import type { AttendanceStatus } from "@/lib/meetings";
@@ -28,7 +28,7 @@ export async function setAttendance(
     console.error("set_attendance", error);
     return { error: dbErrorMessage(error) };
   }
-  refresh();
+  revalidateApp();
   return {};
 }
 
@@ -65,6 +65,6 @@ export async function updateOccurrence(
     console.error("update_occurrence", error);
     return { error: dbErrorMessage(error) };
   }
-  refresh();
+  revalidateApp();
   return { success: "Incontro aggiornato." };
 }

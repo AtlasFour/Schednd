@@ -53,8 +53,11 @@ export type ProposalRow = {
   ballots: BallotRow[];
 };
 
+// Tra proposals e proposal_options ci sono due collegamenti (le opzioni della
+// proposta e l'opzione vincente): va indicato quale usare, altrimenti
+// Supabase risponde con un errore di ambiguità.
 export const PROPOSAL_SELECT =
-  "id, type, reason, created_by, created_at, closes_at, status, winning_option_id, proposal_options(id, position, new_start_date, new_start_time, game_title), ballots(user_id, option_ids)";
+  "id, type, reason, created_by, created_at, closes_at, status, winning_option_id, proposal_options!proposal_options_proposal_id_fkey(id, position, new_start_date, new_start_time, game_title), ballots(user_id, option_ids)";
 
 export function isOpen(status: ProposalStatus) {
   return status === "open" || status === "needs_owner";
@@ -81,7 +84,11 @@ export function formatDeadline(iso: string, timeZone: string): string {
   }).format(new Date(iso));
 }
 
-export async function fetchProposals(supabase: SupabaseClient, occurrenceId: string) {
+/** Proposte di un incontro; null se il caricamento non riesce. */
+export async function fetchProposals(
+  supabase: SupabaseClient,
+  occurrenceId: string,
+): Promise<ProposalRow[] | null> {
   const { data, error } = await supabase
     .from("proposals")
     .select(PROPOSAL_SELECT)
@@ -89,7 +96,7 @@ export async function fetchProposals(supabase: SupabaseClient, occurrenceId: str
     .order("created_at", { ascending: false });
   if (error) {
     console.error("fetchProposals", error);
-    return [];
+    return null;
   }
   const rows = (data ?? []) as ProposalRow[];
   for (const p of rows) p.proposal_options.sort((a, b) => a.position - b.position);

@@ -12,6 +12,20 @@ import { createClient } from "@/lib/supabase/client";
 export function LiveRefresh() {
   const router = useRouter();
 
+  // Quando si torna sull'app (es. riaprendola dal telefono) i dati si
+  // ricaricano: gli eventi in tempo reale non arrivano a schermo spento.
+  useEffect(() => {
+    const onVisible = () => {
+      if (document.visibilityState === "visible") router.refresh();
+    };
+    document.addEventListener("visibilitychange", onVisible);
+    window.addEventListener("pageshow", onVisible);
+    return () => {
+      document.removeEventListener("visibilitychange", onVisible);
+      window.removeEventListener("pageshow", onVisible);
+    };
+  }, [router]);
+
   useEffect(() => {
     let supabase: ReturnType<typeof createClient>;
     try {
