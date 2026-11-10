@@ -34,7 +34,8 @@ const pixelDisplay = Press_Start_2P({
  * Applica il tema scelto (salvato nel browser) prima che la pagina venga
  * disegnata, così non si vede il "lampo" del tema classico.
  */
-const themeScript = `try{var t=localStorage.getItem("schednd-theme");if(t==="pixel")document.documentElement.dataset.theme="pixel"}catch(e){}`;
+// Il tema pixel art è quello predefinito: il classico solo se scelto dal profilo.
+const themeScript = `try{if(localStorage.getItem("schednd-theme")!=="classic")document.documentElement.dataset.theme="pixel"}catch(e){document.documentElement.dataset.theme="pixel"}`;
 
 export const metadata: Metadata = {
   title: {
