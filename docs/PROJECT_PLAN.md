@@ -159,7 +159,7 @@ Stato: **v0.4**. Tutte le scelte principali sono decise (§1).
 - P2: Storico delle partite.
 
 ### 6.7 Grafica
-- ✅ **Tema pixel art**, selezionabile da Profilo → Tema grafico (salvato sul dispositivo): palette retrò, font Pixelify Sans / Press Start 2P, angoli squadrati, bordi spessi e ombre piene. I componenti hanno classi semantiche (`ui-card`, `ui-btn`, `ui-input`…), così altri temi si possono aggiungere solo con il CSS.
+- ✅ **Tema pixel art**, predefinito; il tema classico si sceglie da Profilo → Tema grafico (salvato sul dispositivo): palette retrò, font Pixelify Sans / Press Start 2P, angoli squadrati, bordi spessi e ombre piene. I componenti hanno classi semantiche (`ui-card`, `ui-btn`, `ui-input`…), così altri temi si possono aggiungere solo con il CSS.
 
 ---
 
