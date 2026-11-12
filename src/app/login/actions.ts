@@ -46,8 +46,11 @@ export async function sendMagicLink(
       if (inviteError) console.error("approve_invited_access", inviteError);
     }
     const { data: access, error: accessError } = await admin.rpc("register_access_attempt", { p_email: email });
-    if (accessError) console.error("register_access_attempt", accessError);
-    else if (access === "blocked") return { status: "error", message: m.access.blocked };
+    if (accessError) {
+      // Se non si riesce a verificare, non si lascia entrare.
+      console.error("register_access_attempt", accessError);
+      return { status: "error", message: m.access.checkFailed };
+    } else if (access === "blocked") return { status: "error", message: m.access.blocked };
     else if (access === "pending") {
       // Avvisa subito gli amministratori della nuova richiesta.
       after(() => processNotificationQueue().catch((err) => console.error(err)));
@@ -98,7 +101,13 @@ export async function verifyEmailCode(prev: LoginState, formData: FormData): Pro
     console.error("verifyOtp code", error.code, error.message);
     return { status: "sent", email, codeError: m.login.codeInvalid };
   }
-  const next = await completeLogin(supabase);
-  if (!next) return { status: "sent", email, codeError: m.access.errorPending };
-  redirect(next);
+  const result = await completeLogin(supabase);
+  if (!("next" in result)) {
+    return {
+      status: "sent",
+      email,
+      codeError: result.blocked === "verifica" ? m.access.checkFailed : m.access.errorPending,
+    };
+  }
+  redirect(result.next);
 }

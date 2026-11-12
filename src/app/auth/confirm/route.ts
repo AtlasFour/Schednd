@@ -28,8 +28,9 @@ export async function GET(request: NextRequest) {
     const supabase = await createClient();
     const { error } = await supabase.auth.exchangeCodeForSession(code);
     if (!error) {
-      const next = await completeLogin(supabase, searchParams.get("next"));
-      return NextResponse.redirect(new URL(next ?? "/login?errore=in_attesa", origin));
+      const result = await completeLogin(supabase, searchParams.get("next"));
+      const target = "next" in result ? result.next : `/login?errore=${result.blocked}`;
+      return NextResponse.redirect(new URL(target, origin));
     }
     console.error("exchangeCodeForSession", error.code, error.message);
     // Di solito succede quando il link viene aperto in un browser diverso

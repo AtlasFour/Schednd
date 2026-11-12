@@ -6,18 +6,20 @@ import { NEXT_PATH_COOKIE, safeNextPath } from "@/lib/next-path";
 /**
  * Dopo un accesso riuscito (link o codice): lingua dell'account salvata nel
  * cookie e pagina a cui tornare. Da chiamare in Server Actions e Route Handlers.
- * Restituisce null se l'email non è (ancora) approvata: la sessione viene chiusa.
+ * Se l'email non è (ancora) approvata, o il controllo non riesce, la sessione
+ * viene chiusa e si restituisce il motivo.
  */
 export async function completeLogin(
   supabase: SupabaseClient,
   nextParam?: string | null,
-): Promise<string | null> {
-  // L'accesso è su approvazione: chi non è approvato viene fatto uscire.
+): Promise<{ next: string } | { blocked: "in_attesa" | "verifica" }> {
+  // L'accesso è su approvazione: chi non è approvato (o se il controllo non
+  // riesce) viene fatto uscire.
   const { data: access, error } = await supabase.rpc("my_access_status");
-  if (error) console.error("my_access_status", error);
-  if (!error && access !== "approved") {
+  if (error || access !== "approved") {
+    if (error) console.error("my_access_status", error);
     await supabase.auth.signOut();
-    return null;
+    return { blocked: error ? "verifica" : "in_attesa" };
   }
 
   const cookieStore = await cookies();
@@ -26,7 +28,7 @@ export async function completeLogin(
   const locale = await accountLocale(supabase, cookieStore.get(LOCALE_COOKIE)?.value);
   cookieStore.delete(NEXT_PATH_COOKIE);
   cookieStore.set(LOCALE_COOKIE, locale, { path: "/", maxAge: 60 * 60 * 24 * 365, sameSite: "lax" });
-  return next;
+  return { next };
 }
 
 /**
