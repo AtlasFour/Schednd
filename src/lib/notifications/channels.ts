@@ -37,8 +37,19 @@ export async function processChannelOutbox(admin: SupabaseClient, limit = 100): 
   if (rows.length === 0) return 0;
 
   const site = getPublicSiteUrl();
-  const sentIds: number[] = [];
-  const failedIds: number[] = [];
+  let sentIds: number[] = [];
+  let failedIds: number[] = [];
+  // Esiti salvati a piccoli gruppi: niente messaggi doppi se ci si interrompe a metà.
+  const flush = async () => {
+    const sent = sentIds;
+    const failed = failedIds;
+    sentIds = [];
+    failedIds = [];
+    await Promise.all([
+      sent.length ? admin.from("channel_outbox").update({ sent_at: new Date().toISOString() }).in("id", sent) : null,
+      failed.length ? admin.from("channel_outbox").update({ claimed_at: null }).in("id", failed) : null,
+    ]);
+  };
   const goneChats = new Set<string>();
   let sent = 0;
 
@@ -82,15 +93,11 @@ export async function processChannelOutbox(admin: SupabaseClient, limit = 100): 
       console.error("telegram", result.error_code, result.description);
       failedIds.push(row.id);
     }
+    if (sentIds.length + failedIds.length >= 10) await flush();
   }
 
+  await flush();
   await Promise.all([
-    sentIds.length
-      ? admin.from("channel_outbox").update({ sent_at: new Date().toISOString() }).in("id", sentIds)
-      : null,
-    failedIds.length
-      ? admin.from("channel_outbox").update({ claimed_at: null }).in("id", failedIds)
-      : null,
     goneChats.size
       ? admin.from("group_channels").delete().eq("provider", "telegram").in("chat_id", [...goneChats])
       : null,

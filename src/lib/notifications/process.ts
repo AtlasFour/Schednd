@@ -90,21 +90,47 @@ export async function processNotificationQueue(limit = 200): Promise<ProcessResu
   }
   const prefs = new Map(((profiles ?? []) as ProfileRow[]).map((p) => [p.id, p]));
 
-  // Email degli utenti che le vogliono (solo se l'SMTP è configurato).
+  // Email degli utenti che le vogliono (solo se l'SMTP è configurato), lette
+  // tutte insieme.
   const emails = new Map<string, string>();
-  if (smtp) {
-    for (const id of userIds.filter((id) => prefs.get(id)?.notify_email)) {
-      const { data: u } = await admin.auth.admin.getUserById(id);
-      if (u.user?.email) emails.set(id, u.user.email);
+  const wantEmail = userIds.filter((id) => prefs.get(id)?.notify_email);
+  if (smtp && wantEmail.length) {
+    const { data: rowsEmail, error: emailError } = await admin.rpc("user_emails", { p_user_ids: wantEmail });
+    if (emailError) {
+      // Migrazione 0014 non ancora eseguita: lettura una per una.
+      for (const id of wantEmail) {
+        const { data: u } = await admin.auth.admin.getUserById(id);
+        if (u.user?.email) emails.set(id, u.user.email);
+      }
+    } else {
+      for (const r of (rowsEmail ?? []) as { user_id: string; email: string }[]) emails.set(r.user_id, r.email);
     }
   }
+  // Una sola connessione al server di posta per tutto il blocco.
   const mailer = smtp
-    ? createTransport({ host: smtp.host, port: smtp.port, secure: smtp.secure, auth: smtp.auth })
+    ? createTransport({ pool: true, maxConnections: 2, host: smtp.host, port: smtp.port, secure: smtp.secure, auth: smtp.auth })
     : null;
 
   const deadSubscriptions = new Set<string>();
-  const sentIds: number[] = [];
-  const failedIds: number[] = [];
+  let sentIds: number[] = [];
+  let failedIds: number[] = [];
+  let failedTotal = 0;
+
+  // Gli esiti si salvano a piccoli gruppi: se la funzione si interrompe a metà,
+  // le notifiche già inviate non vengono rispedite.
+  const flush = async () => {
+    const sent = sentIds;
+    const failed = failedIds;
+    sentIds = [];
+    failedIds = [];
+    failedTotal += failed.length;
+    await Promise.all([
+      sent.length
+        ? admin.from("notification_queue").update({ sent_at: new Date().toISOString() }).in("id", sent)
+        : null,
+      failed.length ? admin.from("notification_queue").update({ claimed_at: null }).in("id", failed) : null,
+    ]);
+  };
 
   for (const row of rows) {
     const pref = prefs.get(row.user_id);
@@ -185,21 +211,16 @@ export async function processNotificationQueue(limit = 200): Promise<ProcessResu
     // Senza canali attivi la notifica si considera chiusa: non va ritentata.
     if (delivered || !hadError) sentIds.push(row.id);
     else failedIds.push(row.id);
+    if (sentIds.length + failedIds.length >= 20) await flush();
   }
 
-  result.failed = failedIds.length;
+  await flush();
+  result.failed = failedTotal;
+  mailer?.close();
 
-  await Promise.all([
-    sentIds.length
-      ? admin.from("notification_queue").update({ sent_at: new Date().toISOString() }).in("id", sentIds)
-      : null,
-    failedIds.length
-      ? admin.from("notification_queue").update({ claimed_at: null }).in("id", failedIds)
-      : null,
-    deadSubscriptions.size
-      ? admin.from("push_subscriptions").delete().in("id", [...deadSubscriptions])
-      : null,
-  ]);
+  if (deadSubscriptions.size) {
+    await admin.from("push_subscriptions").delete().in("id", [...deadSubscriptions]);
+  }
 
   return result;
 }

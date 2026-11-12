@@ -2,6 +2,7 @@ import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import { NEXT_PATH_COOKIE } from "../next-path";
 import { getSupabaseEnv } from "./env";
+import { ACCESS_COOKIE, ACCESS_COOKIE_TTL, checkAccessCookie, makeAccessCookie } from "./access-cookie";
 import { USER_HEADER } from "./user-header";
 
 /** Pagine visibili anche senza aver fatto login. */
@@ -93,6 +94,31 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
+  // Accesso su approvazione: ogni tanto si ricontrolla che l'utente sia
+  // ancora approvato (chi viene bloccato esce entro qualche minuto).
+  let accessCookie: string | null = null;
+  if (claims?.sub && !isPublicPath(pathname)) {
+    const cached = await checkAccessCookie(request.cookies.get(ACCESS_COOKIE)?.value, claims.sub);
+    if (!cached) {
+      const { data: access, error } = await supabase.rpc("my_access_status");
+      if (error) {
+        // Problema momentaneo: si lascia passare e si riprova alla prossima pagina.
+        console.error("my_access_status", error.message);
+      } else if (access !== "approved") {
+        await supabase.auth.signOut();
+        const url = request.nextUrl.clone();
+        url.pathname = "/login";
+        url.search = `?errore=${access === "blocked" ? "bloccato" : "in_attesa"}`;
+        const redirect = NextResponse.redirect(url);
+        response.cookies.getAll().forEach((cookie) => redirect.cookies.set(cookie));
+        redirect.cookies.delete(ACCESS_COOKIE);
+        return redirect;
+      } else {
+        accessCookie = await makeAccessCookie(claims.sub);
+      }
+    }
+  }
+
   if (claims?.sub) {
     // Le pagine leggono l'utente già verificato qui, senza chiederlo di nuovo
     // a Supabase (una richiesta in meno per ogni pagina).
@@ -102,6 +128,15 @@ export async function updateSession(request: NextRequest) {
     );
     const next = NextResponse.next({ request });
     response.cookies.getAll().forEach((cookie) => next.cookies.set(cookie));
+    if (accessCookie) {
+      next.cookies.set(ACCESS_COOKIE, accessCookie, {
+        path: "/",
+        maxAge: ACCESS_COOKIE_TTL,
+        httpOnly: true,
+        sameSite: "lax",
+        secure: request.nextUrl.protocol === "https:",
+      });
+    }
     response.headers.forEach((value, key) => {
       if (!key.startsWith("x-middleware-") && key !== "set-cookie") next.headers.set(key, value);
     });

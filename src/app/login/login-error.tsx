@@ -25,6 +25,7 @@ export function LoginError({ code }: { code: string | null }) {
     scaduto: m.login.errorExpired,
     in_attesa: m.access.errorPending,
     verifica: m.access.checkFailed,
+    bloccato: m.access.blocked,
   };
   const message = messages[hashCode ?? code ?? ""];
   if (!message) return null;
