@@ -63,6 +63,7 @@ Le migrazioni sono in `supabase/migrations/`, numerate in ordine. Per ognuna non
 | `0010_telegram_accounts.sql` | account Telegram personali: presenze e voti con i pulsanti del bot, avvisi in privato |
 | `0011_access_requests.sql` | accesso su approvazione: elenco delle email che provano ad accedere, amministratori |
 | `0012_access_invites.sql` | chi arriva da un link d'invito (gruppo o ospite) entra senza approvazione |
+| `0013_hardening.sql` | sicurezza delle proposte, scadenza dei cambi data, pareggi che decadono, link ospite solo per incontri futuri |
 
 ## Accesso su approvazione
 Ogni email che prova ad accedere viene registrata; entra solo chi è approvato da un amministratore (**Profilo → 🔐 Gestisci gli accessi**). Gli utenti già registrati restano approvati.

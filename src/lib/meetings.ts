@@ -129,7 +129,11 @@ export function buildMeeting(
   };
 }
 
-/** Prossimi `count` incontri di un gruppo, con le presenze. */
+/**
+ * Prossimi `count` incontri di un gruppo (da oggi), con le presenze.
+ * Usa la data effettiva: un incontro rinviato compare nella nuova data anche
+ * se la data originale è già passata.
+ */
 export function upcomingMeetings(
   group: MeetingGroup,
   occurrences: OccurrenceRow[],
@@ -137,18 +141,8 @@ export function upcomingMeetings(
   count: number,
 ): Meeting[] {
   const today = todayInTimeZone(group.timezone);
-  const byDate = new Map(
-    occurrences.filter((o) => o.group_id === group.id).map((o) => [o.original_date, o]),
-  );
-  const scheduled = upcomingDates(group.group_schedules.map(toSchedule), today, count).map((d) =>
-    buildMeeting(group, d.date, d.startTime, byDate.get(d.date), userId, today),
-  );
-  // Incontri fuori ricorrenza (straordinari, evento singolo).
-  const seen = new Set(scheduled.map((m) => m.originalDate));
-  const extras = occurrences
-    .filter((o) => o.group_id === group.id && o.is_extra && !seen.has(o.original_date) && o.start_date >= today)
-    .map((o) => buildMeeting(group, o.original_date, o.start_time, o, userId, today));
-  return [...scheduled, ...extras]
+  // Un anno basta per trovare i prossimi incontri anche con ricorrenze rade.
+  return meetingsBetween(group, occurrences, userId, today, addDays(today, 366))
     .sort((a, b) => (a.date === b.date ? a.startTime.localeCompare(b.startTime) : a.date.localeCompare(b.date)))
     .slice(0, count);
 }
@@ -217,7 +211,8 @@ export async function fetchOccurrences(
     .from("occurrences")
     .select(OCCURRENCE_SELECT)
     .in("group_id", groupIds)
-    .gte("original_date", fromDate);
+    // Anche gli incontri con data originale precedente ma spostati in avanti.
+    .or(`original_date.gte.${fromDate},start_date.gte.${fromDate}`);
   if (error) {
     console.error("fetchOccurrences", error);
     return [];

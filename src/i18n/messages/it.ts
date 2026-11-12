@@ -34,6 +34,10 @@ export const it = {
     confirmTitle: "Accedi a Schednd",
     confirmText: "Tocca il pulsante per completare l'accesso.",
     confirmButton: "Entra in Schednd",
+    errorTitle: "Qualcosa non ha funzionato",
+    errorText: "Può essere un problema momentaneo di connessione o del server. Riprova tra poco.",
+    errorRetry: "Riprova",
+    errorHome: "Torna alla home",
   },
 
   home: {
@@ -682,6 +686,7 @@ export const it = {
     linkCopy: "Copia link",
     linkWhatsapp: "Invia su WhatsApp",
     linkMessage: (url: string) => `Ecco il tuo link per entrare in Schednd (vale una volta sola): ${url}`,
+    checkFailed: "Non è stato possibile verificare il tuo accesso. Riprova tra qualche minuto.",
   },
   // </pages>
 

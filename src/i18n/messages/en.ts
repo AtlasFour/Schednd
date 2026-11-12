@@ -33,6 +33,10 @@ export const en: Messages = {
     confirmTitle: "Sign in to Schednd",
     confirmText: "Tap the button to finish signing in.",
     confirmButton: "Enter Schednd",
+    errorTitle: "Something went wrong",
+    errorText: "It may be a temporary connection or server problem. Please try again shortly.",
+    errorRetry: "Try again",
+    errorHome: "Back to home",
   },
 
   home: {
@@ -681,6 +685,7 @@ export const en: Messages = {
     linkCopy: "Copy link",
     linkWhatsapp: "Send on WhatsApp",
     linkMessage: (url) => `Here is your link to sign in to Schednd (works once): ${url}`,
+    checkFailed: "Couldn't verify your access. Try again in a few minutes.",
   },
   // </pages>
 
