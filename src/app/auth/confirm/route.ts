@@ -1,91 +1,43 @@
-import type { EmailOtpType } from "@supabase/supabase-js";
 import { NextResponse, type NextRequest } from "next/server";
-import { isLocale, LOCALE_COOKIE, localeFromAcceptLanguage, type Locale } from "@/i18n/config";
-import { NEXT_PATH_COOKIE, safeNextPath } from "@/lib/next-path";
+import { completeLogin } from "@/lib/login-complete";
 import { createClient } from "@/lib/supabase/server";
 
 /**
  * Destinazione del link di accesso inviato via email.
  *
- * Supporta due formati:
- * - `?token_hash=...&type=email` (consigliato: funziona anche se il link
- *   viene aperto in un browser diverso da quello in cui è stato richiesto);
- * - `?code=...` (formato predefinito di Supabase).
+ * - `?token_hash=...&type=email` (modello email consigliato): rimanda alla
+ *   pagina /auth/accedi, dove si conferma con un tocco. Così i programmi di
+ *   posta che aprono i link da soli per controllarli non "consumano" l'accesso.
+ * - `?code=...` (formato predefinito di Supabase): funziona solo nello stesso
+ *   browser in cui è stato richiesto il link.
+ * - `?error_code=...`: Supabase segnala un link scaduto o già usato.
  */
 export async function GET(request: NextRequest) {
   const { searchParams, origin } = request.nextUrl;
   const tokenHash = searchParams.get("token_hash");
-  const type = searchParams.get("type") as EmailOtpType | null;
   const code = searchParams.get("code");
-  const next =
-    safeNextPath(searchParams.get("next")) ??
-    safeNextPath(request.cookies.get(NEXT_PATH_COOKIE)?.value) ??
-    "/";
+  const errorCode = searchParams.get("error_code");
 
-  const supabase = await createClient();
+  if (tokenHash) {
+    const url = new URL("/auth/accedi", origin);
+    url.search = searchParams.toString();
+    return NextResponse.redirect(url);
+  }
 
-  if (tokenHash && type) {
-    const { error } = await supabase.auth.verifyOtp({
-      type,
-      token_hash: tokenHash,
-    });
-    if (!error) {
-      return redirectAfterLogin(next, origin, await accountLocale(supabase, request));
-    }
-    console.error("verifyOtp", error);
-  } else if (code) {
+  if (code) {
+    const supabase = await createClient();
     const { error } = await supabase.auth.exchangeCodeForSession(code);
     if (!error) {
-      return redirectAfterLogin(next, origin, await accountLocale(supabase, request));
+      const next = await completeLogin(supabase, searchParams.get("next"));
+      return NextResponse.redirect(new URL(next, origin));
     }
-    console.error("exchangeCodeForSession", error);
+    console.error("exchangeCodeForSession", error.code, error.message);
     // Di solito succede quando il link viene aperto in un browser diverso
     // da quello in cui è stato richiesto (es. il browser interno di Gmail).
-    return NextResponse.redirect(
-      new URL("/login?errore=altro_browser", origin),
-    );
+    return NextResponse.redirect(new URL("/login?errore=altro_browser", origin));
   }
 
-  return NextResponse.redirect(new URL("/login?errore=link_non_valido", origin));
+  const reason = errorCode === "otp_expired" ? "scaduto" : "link_non_valido";
+  return NextResponse.redirect(new URL(`/login?errore=${reason}`, origin));
 }
 
-function redirectAfterLogin(next: string, origin: string, locale: Locale) {
-  const response = NextResponse.redirect(new URL(next, origin));
-  response.cookies.delete(NEXT_PATH_COOKIE);
-  response.cookies.set(LOCALE_COOKIE, locale, {
-    path: "/",
-    maxAge: 60 * 60 * 24 * 365,
-    sameSite: "lax",
-  });
-  return response;
-}
-
-/**
- * Lingua dell'account: quella salvata nel profilo; se non è mai stata
- * scelta, quella di questo dispositivo (cookie o browser), che viene salvata
- * nel profilo così anche le notifiche arrivano nella lingua giusta.
- */
-async function accountLocale(
-  supabase: Awaited<ReturnType<typeof createClient>>,
-  request: NextRequest,
-): Promise<Locale> {
-  const fromDevice = (() => {
-    const cookie = request.cookies.get(LOCALE_COOKIE)?.value;
-    return isLocale(cookie) ? cookie : localeFromAcceptLanguage(request.headers.get("accept-language"));
-  })();
-  try {
-    const { data: auth } = await supabase.auth.getUser();
-    const userId = auth.user?.id;
-    if (!userId) return fromDevice;
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("locale")
-      .eq("id", userId)
-      .maybeSingle();
-    if (isLocale(profile?.locale)) return profile.locale;
-    await supabase.from("profiles").update({ locale: fromDevice }).eq("id", userId);
-  } catch (err) {
-    console.error("accountLocale", err);
-  }
-  return fromDevice;
-}

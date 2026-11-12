@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
 import { getI18n } from "@/i18n/server";
+import { LoginError } from "./login-error";
 import { LoginForm } from "./login-form";
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -46,21 +47,5 @@ async function ErrorBanner({
   searchParams,
 }: Pick<PageProps<"/login">, "searchParams">) {
   const { errore } = await searchParams;
-  const { m } = await getI18n();
-  const errors: Record<string, string> = {
-    link_non_valido: m.login.errorInvalidLink,
-    altro_browser: m.login.errorOtherBrowser,
-  };
-  const message = typeof errore === "string" ? errors[errore] : undefined;
-
-  if (!message) return null;
-
-  return (
-    <p
-      role="alert"
-      className="rounded-xl border border-red-500/30 bg-red-500/10 p-3 text-sm text-red-500"
-    >
-      {message}
-    </p>
-  );
+  return <LoginError code={typeof errore === "string" ? errore : null} />;
 }
