@@ -43,12 +43,24 @@ export function CalendarSubscribe() {
   const webcal = url.replace(/^https?:\/\//, "webcal://");
   return (
     <div className="flex flex-col gap-3">
-      <div className="flex flex-col gap-2">
-        <a href={googleSubscribeUrl(url)} target="_blank" rel="noreferrer" className={buttonClass("primary", true)}>
-          {m.events.calendarGoogle}
-        </a>
-        <a href={webcal} className={buttonClass("secondary", true)}>
-          {m.events.calendarApple}
+      <a href={webcal} className={buttonClass("primary", true)}>
+        {m.events.calendarApple}
+      </a>
+      <div className="flex flex-col gap-2 rounded-xl bg-foreground/5 p-3 text-sm">
+        <p className="font-medium">{m.events.googleHowTitle}</p>
+        <p className="text-foreground/70">{m.events.googleHowIntro}</p>
+        <ol className="list-decimal space-y-1 pl-5 text-foreground/80">
+          {m.events.googleHowSteps.map((step) => (
+            <li key={step}>{step}</li>
+          ))}
+        </ol>
+        <a
+          href={googleSubscribeUrl(url)}
+          target="_blank"
+          rel="noreferrer"
+          className={`${buttonClass("secondary", true)} h-auto py-2 text-center`}
+        >
+          {m.events.googleOnComputer}
         </a>
       </div>
       <p className="truncate rounded-lg bg-foreground/5 px-3 py-2 font-mono text-xs">{url}</p>

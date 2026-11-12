@@ -537,6 +537,15 @@ export const it = {
     icsOpen: "Apri in Schednd",
     icsGuest: "(ospite)",
     icsCalendarName: "Schednd · i miei incontri",
+    googleHowTitle: "Google Calendar: si fa una volta dal computer",
+    googleHowIntro: "L'app Google Calendar del telefono non permette di aggiungere calendari tramite link. Fallo una volta da un computer: poi il calendario compare anche sul telefono.",
+    googleHowSteps: [
+      "Tocca \"Copia link\" e mandalo a te stesso (es. per email).",
+      "Sul computer apri calendar.google.com → a sinistra \"Altri calendari\" → \"+\" → \"Da URL\".",
+      "Incolla il link e tocca \"Aggiungi calendario\".",
+      "Sul telefono, nell'app Google Calendar: Impostazioni → \"Schednd · i miei incontri\" → attiva \"Sincronizza\".",
+    ] as string[],
+    googleOnComputer: "Sei già al computer? Apri Google Calendar",
   },
 
   share: {

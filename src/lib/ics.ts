@@ -30,7 +30,7 @@ export function eventRange(e: Pick<CalendarEvent, "date" | "time" | "timeZone" |
 function escapeText(text: string) {
   return text
     .replace(/\\/g, "\\\\")
-    .replace(/;/g, "\;")
+    .replace(/;/g, "\\;")
     .replace(/,/g, "\\,")
     .replace(/\r?\n/g, "\\n");
 }

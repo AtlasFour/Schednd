@@ -27,7 +27,7 @@ describe("ics", () => {
   it("protegge virgole e punti e virgola e spezza le righe lunghe", () => {
     const ics = buildIcs([event]);
     expect(ics).toContain("LOCATION:Da Marco\\, via Roma 1");
-    expect(ics).toContain("porta i dadi\\, la mappa\; e la pizza");
+    expect(ics).toContain("porta i dadi\\, la mappa\\; e la pizza");
     for (const line of ics.split("\r\n")) {
       expect(new TextEncoder().encode(line).length).toBeLessThanOrEqual(75);
     }
