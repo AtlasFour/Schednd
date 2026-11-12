@@ -62,6 +62,7 @@ Le migrazioni sono in `supabase/migrations/`, numerate in ordine. Per ognuna non
 | `0009_group_channels.sql` | avvisi nelle chat di gruppo Telegram: collegamento con codice, scelta degli avvisi, coda dei messaggi |
 | `0010_telegram_accounts.sql` | account Telegram personali: presenze e voti con i pulsanti del bot, avvisi in privato |
 | `0011_access_requests.sql` | accesso su approvazione: elenco delle email che provano ad accedere, amministratori |
+| `0012_access_invites.sql` | chi arriva da un link d'invito (gruppo o ospite) entra senza approvazione |
 
 ## Accesso su approvazione
 Ogni email che prova ad accedere viene registrata; entra solo chi è approvato da un amministratore (**Profilo → 🔐 Gestisci gli accessi**). Gli utenti già registrati restano approvati.
@@ -69,7 +70,7 @@ Per diventare amministratore, dopo aver eseguito `0011_access_requests.sql` lanc
 ```sql
 insert into public.app_admins (user_id) select id from auth.users where email = 'la-tua-email@esempio.it';
 ```
-Finché non c'è nessun amministratore, chiunque può entrare. Quando arriva una nuova richiesta gli amministratori ricevono un avviso; approvando, all'utente arriva subito l'email per entrare.
+Chi arriva da un link d'invito valido (a un gruppo o da ospite) entra senza approvazione. Finché non c'è nessun amministratore, chiunque può entrare. Quando arriva una nuova richiesta gli amministratori ricevono un avviso; approvando, all'utente arriva subito l'email per entrare.
 
 ## Email di accesso (consigliato)
 Il link "classico" di Supabase funziona solo se viene aperto nello stesso browser in cui è stato richiesto, e alcuni programmi di posta lo "consumano" aprendolo da soli. Con questo modello l'email contiene anche un **codice** da inserire nella pagina di accesso, e il link chiede un tocco di conferma:

@@ -1,7 +1,9 @@
 "use server";
 
 import { getI18n } from "@/i18n/server";
+import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
+import { NEXT_PATH_COOKIE, safeNextPath } from "@/lib/next-path";
 import { completeLogin } from "@/lib/login-complete";
 import { after } from "next/server";
 import { processNotificationQueue } from "@/lib/notifications/process";
@@ -34,6 +36,15 @@ export async function sendMagicLink(
   // approvate ricevono il link (senza la chiave di servizio si salta il controllo).
   const admin = createAdminClient();
   if (admin) {
+    // Chi arriva da un link d'invito valido (gruppo o ospite) entra senza approvazione.
+    const invitePath = safeNextPath((await cookies()).get(NEXT_PATH_COOKIE)?.value);
+    if (invitePath && /^\/(join|ospite)\//.test(invitePath)) {
+      const { error: inviteError } = await admin.rpc("approve_invited_access", {
+        p_email: email,
+        p_path: invitePath,
+      });
+      if (inviteError) console.error("approve_invited_access", inviteError);
+    }
     const { data: access, error: accessError } = await admin.rpc("register_access_attempt", { p_email: email });
     if (accessError) console.error("register_access_attempt", accessError);
     else if (access === "blocked") return { status: "error", message: m.access.blocked };
