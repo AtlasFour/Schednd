@@ -9,6 +9,7 @@ import { getSmtpConfig } from "@/lib/notifications/config";
 import { NotificationSettings } from "./notification-settings";
 import { ProfileForm } from "./profile-form";
 import { CalendarSubscribe } from "./calendar-subscribe";
+import { TelegramAccount } from "./telegram-account";
 import { LanguagePicker } from "./language-picker";
 import { ThemePicker } from "./theme-picker";
 
@@ -28,11 +29,14 @@ export default function ProfilePage() {
 async function Profile() {
   const { supabase, user } = await requireUser();
   const { locale, m } = await getI18n();
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("display_name, timezone, bgg_username, notify_email")
-    .eq("id", user.id)
-    .maybeSingle();
+  const [{ data: profile }, { data: telegram }] = await Promise.all([
+    supabase
+      .from("profiles")
+      .select("display_name, timezone, bgg_username, notify_email")
+      .eq("id", user.id)
+      .maybeSingle(),
+    supabase.from("telegram_accounts").select("telegram_username, notify_private").eq("user_id", user.id).maybeSingle(),
+  ]);
 
   return (
     <Page title={m.profile.title} subtitle={user.email} back={{ href: "/", label: m.common.home }}>
@@ -51,6 +55,11 @@ async function Profile() {
         <ThemePicker />
         <p className="mt-2 text-xs text-foreground/50">{m.profile.thisDevice}</p>
       </Card>
+      {process.env.TELEGRAM_BOT_TOKEN && (
+        <Card title={`✈️ ${m.bot.profileTitle}`}>
+          <TelegramAccount account={telegram ?? null} />
+        </Card>
+      )}
       <Card title={m.events.calendarTitle}>
         <CalendarSubscribe />
       </Card>

@@ -1,7 +1,12 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { MESSAGES } from "@/i18n/messages";
 import { isLocale } from "@/i18n/config";
-import { escapeTelegramHtml, getTelegramToken, sendTelegramMessage } from "@/lib/telegram";
+import {
+  escapeTelegramHtml,
+  getTelegramToken,
+  sendTelegramMessage,
+  type InlineKeyboard,
+} from "@/lib/telegram";
 import { getPublicSiteUrl } from "./config";
 
 type ChannelPost = {
@@ -13,6 +18,7 @@ type ChannelPost = {
   provider: string;
   chat_id: string;
   locale: string;
+  reply_markup: InlineKeyboard | null;
 };
 
 /**
@@ -45,18 +51,20 @@ export async function processChannelOutbox(admin: SupabaseClient, limit = 100): 
     const link = new URL(row.url, site).toString();
     // Il riepilogo dei promemoria è già formattato (HTML); gli altri testi no.
     const body = row.kind === "reminder" ? row.body : escapeTelegramHtml(row.body);
-    const html =
-      `<b>${escapeTelegramHtml(row.title)}</b>\n${body}\n\n` +
-      `<a href="${escapeTelegramHtml(link)}">${escapeTelegramHtml(m.share.open)}</a>`;
+    // Con i pulsanti il link a Schednd è già tra i pulsanti.
+    const html = row.reply_markup
+      ? `<b>${escapeTelegramHtml(row.title)}</b>\n${body}`
+      : `<b>${escapeTelegramHtml(row.title)}</b>\n${body}\n\n` +
+        `<a href="${escapeTelegramHtml(link)}">${escapeTelegramHtml(m.share.open)}</a>`;
 
     let chatId = row.chat_id;
-    let result = await sendTelegramMessage(chatId, html);
+    let result = await sendTelegramMessage(chatId, html, row.reply_markup);
     // Il gruppo è diventato "supergruppo": Telegram comunica il nuovo id.
     if (!result.ok && result.parameters?.migrate_to_chat_id) {
       const newId = String(result.parameters.migrate_to_chat_id);
       await admin.from("group_channels").update({ chat_id: newId }).eq("chat_id", chatId);
       chatId = newId;
-      result = await sendTelegramMessage(chatId, html);
+      result = await sendTelegramMessage(chatId, html, row.reply_markup);
     }
 
     if (result.ok) {

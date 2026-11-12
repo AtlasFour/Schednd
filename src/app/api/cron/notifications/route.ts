@@ -1,6 +1,8 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { queueChannelReminders } from "@/lib/notifications/channel-reminders";
+import { getPublicSiteUrl } from "@/lib/notifications/config";
 import { processNotificationQueue } from "@/lib/notifications/process";
+import { ensureTelegramWebhook, getTelegramToken } from "@/lib/telegram";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 /**
@@ -30,6 +32,9 @@ export async function GET(request: NextRequest) {
     console.error("run_daily_notifications", error);
     return NextResponse.json({ error: "Errore nel calcolo dei promemoria" }, { status: 500 });
   }
+
+  // Tiene aggiornata la configurazione del bot (es. nuovi tipi di eventi).
+  if (getTelegramToken()) await ensureTelegramWebhook(getPublicSiteUrl());
 
   // Riepiloghi nelle chat di gruppo collegate (Telegram).
   const chatReminders = await queueChannelReminders(admin).catch((err) => {

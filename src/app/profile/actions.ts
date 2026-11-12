@@ -5,6 +5,14 @@ import { isLocale, LOCALE_COOKIE } from "@/i18n/config";
 import { afterMutation } from "@/lib/revalidate";
 import { requireUser } from "@/lib/auth";
 import { getSiteUrl } from "@/lib/site-url";
+import { getPublicSiteUrl } from "@/lib/notifications/config";
+import {
+  ensureTelegramWebhook,
+  escapeTelegramHtml,
+  getBotUsername,
+  getTelegramToken,
+  sendTelegramMessage,
+} from "@/lib/telegram";
 import {getOptionalString, getString, type FormState} from "@/lib/form";
 import { dbErrorMessage, getI18n } from "@/i18n/server";
 
@@ -56,4 +64,35 @@ export async function getCalendarLink(regenerate = false): Promise<{ url?: strin
     return { error: await dbErrorMessage(error) };
   }
   return { url: `${await getSiteUrl()}/api/calendar/${data}.ics` };
+}
+
+/** Prepara il collegamento dell'account Telegram (link al bot con codice). */
+export async function createTelegramAccountLink(): Promise<{ url?: string; error?: string }> {
+  const { supabase } = await requireUser();
+  const { m } = await getI18n();
+  if (!getTelegramToken()) return { error: m.channels.notConfigured };
+  const { data: code, error } = await supabase.rpc("create_telegram_account_code");
+  if (error || typeof code !== "string") return { error: await dbErrorMessage(error) };
+  const [username] = await Promise.all([getBotUsername(), ensureTelegramWebhook(getPublicSiteUrl())]);
+  if (!username) return { error: m.channels.notConfigured };
+  return { url: `https://t.me/${username}?start=${code}` };
+}
+
+export async function setTelegramPrivate(on: boolean): Promise<FormState> {
+  const { supabase } = await requireUser();
+  const { error } = await supabase.rpc("set_telegram_private_notifications", { p_on: on });
+  if (error) return { error: await dbErrorMessage(error) };
+  return {};
+}
+
+export async function unlinkTelegramAccount(): Promise<FormState> {
+  const { supabase } = await requireUser();
+  const { m } = await getI18n();
+  const { data: chatId, error } = await supabase.rpc("unlink_telegram_account");
+  if (error) return { error: await dbErrorMessage(error) };
+  if (typeof chatId === "string" && getTelegramToken()) {
+    await sendTelegramMessage(chatId, escapeTelegramHtml(m.bot.accountUnlinked));
+  }
+  afterMutation();
+  return {};
 }
