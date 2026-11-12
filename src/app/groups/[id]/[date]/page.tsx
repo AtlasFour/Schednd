@@ -9,7 +9,7 @@ import { GuestLinkBox } from "@/components/guest-link-box";
 import { LiveRefresh } from "@/components/live-refresh";
 import { AttendanceSummary } from "@/components/meeting-card";
 import { ProposalCard } from "@/components/proposal-card";
-import { Badge, buttonClass, ButtonLink, Card, Page, PageSkeleton } from "@/components/ui";
+import { Badge, buttonClass, ButtonLink, Card, Columns, Page, PageSkeleton } from "@/components/ui";
 import { getI18n } from "@/i18n/server";
 import type { Messages } from "@/i18n/messages";
 import { requireUser } from "@/lib/auth";
@@ -115,269 +115,279 @@ async function MeetingDetail({ params }: PageProps<"/groups/[id]/[date]">) {
 
   return (
     <Page
+      wide
       title={capitalize(formatMediumDate(meeting.date, locale))}
       subtitle={`${formatTime(meeting.startTime)} · ${relativeDay(meeting.date, meeting.today, locale)} · ${group.name}`}
       back={isGuest ? { href: "/", label: msg.common.home } : { href: `/groups/${group.id}`, label: group.name }}
     >
       <LiveRefresh />
 
-      {isGuest && (
-        <p className="rounded-xl border border-brand/30 bg-brand/10 p-3 text-sm">
-          {msg.meetingPage.guestBannerBefore} <strong>{msg.meetingPage.guestWord}</strong>{" "}
-          {msg.meetingPage.guestBannerAfter} <strong>{group.name}</strong>.
-        </p>
-      )}
+      <Columns
+        main={
+          <>
+              {isGuest && (
+                <p className="rounded-xl border border-brand/30 bg-brand/10 p-3 text-sm">
+                  {msg.meetingPage.guestBannerBefore} <strong>{msg.meetingPage.guestWord}</strong>{" "}
+                  {msg.meetingPage.guestBannerAfter} <strong>{group.name}</strong>.
+                </p>
+              )}
 
-      {meeting.skipped && (
-        <p className="rounded-xl border border-foreground/15 bg-foreground/5 p-3 text-sm">
-          ⏭️ <strong>{msg.meetingPage.skipped}</strong>
-          {isOwner && msg.meetingPage.canRestore}
-        </p>
-      )}
+              {meeting.skipped && (
+                <p className="rounded-xl border border-foreground/15 bg-foreground/5 p-3 text-sm">
+                  ⏭️ <strong>{msg.meetingPage.skipped}</strong>
+                  {isOwner && msg.meetingPage.canRestore}
+                </p>
+              )}
 
-      {meeting.date !== meeting.originalDate && (
-        <p className="rounded-xl border border-brand/30 bg-brand/10 p-3 text-sm">
-          {msg.meetingPage.moved(formatShortDate(meeting.originalDate, locale))}
-        </p>
-      )}
+              {meeting.date !== meeting.originalDate && (
+                <p className="rounded-xl border border-brand/30 bg-brand/10 p-3 text-sm">
+                  {msg.meetingPage.moved(formatShortDate(meeting.originalDate, locale))}
+                </p>
+              )}
 
-      <Card>
-        <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-2 text-sm">
-          <dt className="text-foreground/60">{msg.meetingPage.game}</dt>
-          <dd>{meeting.game ?? "—"}</dd>
-          <dt className="text-foreground/60">{msg.meetingPage.where}</dt>
-          <dd>
-            {msg.labels.mode[group.mode]}
-            {meeting.location && ` · ${meeting.location}`}
-          </dd>
-          {group.online_link && (
-            <>
-              <dt className="text-foreground/60">{msg.meetingPage.link}</dt>
-              <dd className="truncate">
-                <a
-                  href={group.online_link}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="text-brand underline"
+              <Card>
+                <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-2 text-sm">
+                  <dt className="text-foreground/60">{msg.meetingPage.game}</dt>
+                  <dd>{meeting.game ?? "—"}</dd>
+                  <dt className="text-foreground/60">{msg.meetingPage.where}</dt>
+                  <dd>
+                    {msg.labels.mode[group.mode]}
+                    {meeting.location && ` · ${meeting.location}`}
+                  </dd>
+                  {group.online_link && (
+                    <>
+                      <dt className="text-foreground/60">{msg.meetingPage.link}</dt>
+                      <dd className="truncate">
+                        <a
+                          href={group.online_link}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="text-brand underline"
+                        >
+                          {group.online_link}
+                        </a>
+                      </dd>
+                    </>
+                  )}
+                </dl>
+                {meeting.notes && (
+                  <p className="mt-3 whitespace-pre-line rounded-xl bg-brand/10 p-3 text-sm">
+                    📌 {meeting.notes}
+                  </p>
+                )}
+              </Card>
+
+              {!meeting.skipped && (
+                <Card title={isPast ? msg.meetingPage.yourAttendance : msg.meetingPage.areYouIn}>
+                  <div className="flex flex-col gap-3">
+                    <AttendanceButtons
+                      groupId={group.id}
+                      originalDate={meeting.originalDate}
+                      status={meeting.myStatus}
+                      disabled={isPast}
+                    />
+                    {isPast && (
+                      <p className="text-xs text-foreground/50">
+                        {msg.meetingPage.pastLocked}
+                      </p>
+                    )}
+                    {!isPast && meeting.myStatus && (
+                      <AttendanceNoteForm
+                        key={`${meeting.myStatus}-${meeting.myNote ?? ""}`}
+                        groupId={group.id}
+                        originalDate={meeting.originalDate}
+                        status={meeting.myStatus}
+                        note={meeting.myNote}
+                      />
+                    )}
+                  </div>
+                </Card>
+              )}
+
+              {!isPast && (
+                <Card title={msg.share.title}>
+                  <ShareCard
+                    text={[
+                      ...meetingSummaryLines(
+                        {
+                          groupName: group.name,
+                          date: meeting.date,
+                          startTime: meeting.startTime,
+                          skipped: meeting.skipped,
+                          game: meeting.game,
+                          location: group.mode === "online" ? null : meeting.location,
+                          onlineLink: group.mode === "in_person" ? null : group.online_link,
+                          notes: meeting.notes,
+                          minAttendees: meeting.minAttendees,
+                          openProposals: meeting.openProposals,
+                          people: peopleByStatus(
+                            participants.map((p) => ({
+                              user_id: p.user_id,
+                              name: p.role === "guest" ? `${p.name} ${msg.calendar.guestTag}` : p.name,
+                            })),
+                            meeting.attendances,
+                            locale,
+                            msg.common.formerParticipant,
+                          ),
+                        },
+                        msg,
+                        locale,
+                      ),
+                      "",
+                      `${msg.share.answer} ${siteUrl}/groups/${group.id}/${meeting.originalDate}`,
+                    ].join("\n")}
+                  />
+                </Card>
+              )}
+
+              {!meeting.skipped && !isPast && (
+                <Card title={msg.events.addToCalendar}>
+                  <div className="flex flex-wrap gap-2">
+                    <a
+                      href={googleCalendarUrl(calendarEvent)}
+                      target="_blank"
+                      rel="noreferrer"
+                      className={buttonClass("secondary", true)}
+                    >
+                      {msg.events.googleCalendar}
+                    </a>
+                    <a
+                      href={`/groups/${group.id}/${meeting.originalDate}/ics`}
+                      className={buttonClass("secondary", true)}
+                    >
+                      {msg.events.icsFile}
+                    </a>
+                  </div>
+                </Card>
+              )}
+
+              <section id="proposte" className="flex scroll-mt-4 flex-col gap-3">
+                <div className="flex items-center justify-between gap-2">
+                  <h2 className="text-lg font-semibold">{msg.meetingPage.proposals}</h2>
+                  {!isGuest && !isPast && !meeting.skipped && (
+                    <ButtonLink href={`/groups/${group.id}/${meeting.originalDate}/proponi`} small>
+                      {msg.meetingPage.propose}
+                    </ButtonLink>
+                  )}
+                </div>
+                {proposals === null ? (
+                  <p role="alert" className="text-sm text-red-500">
+                    {msg.meetingPage.loadError}
+                  </p>
+                ) : proposals.length === 0 ? (
+                  <p className="text-sm text-foreground/60">
+                    {isGuest
+                      ? msg.meetingPage.noProposalsGuest
+                      : msg.meetingPage.noProposals}
+                  </p>
+                ) : (
+                  proposals.map((p) => (
+                    <ProposalCard
+                      key={p.id}
+                      proposal={p}
+                      userId={user.id}
+                      isOwner={isOwner}
+                      ownerDecidesRule={group.approval_rule === "owner_decides"}
+                      names={nameRecord}
+                      timeZone={group.timezone}
+                    />
+                  ))
+                )}
+                <p className="text-xs text-foreground/50">
+                  {msg.meetingPage.groupRule} {msg.labels.approvalRule[group.approval_rule].label}.{" "}
+                  {msg.labels.approvalRule[group.approval_rule].hint}
+                </p>
+              </section>
+          </>
+        }
+        side={
+          <>
+              <Card title={msg.meetingPage.whoIsIn}>
+                <div className="flex flex-col gap-4">
+                  <AttendanceSummary meeting={meeting} />
+                  <PeopleList guestLabel={msg.common.guest} title={`${msg.labels.attendance.yes.emoji} ${msg.meetingPage.listYes}`} people={byStatus("yes")} />
+                  <PeopleList guestLabel={msg.common.guest} title={`${msg.labels.attendance.maybe.emoji} ${msg.meetingPage.listMaybe}`} people={byStatus("maybe")} />
+                  <PeopleList guestLabel={msg.common.guest} title={`${msg.labels.attendance.no.emoji} ${msg.meetingPage.listNo}`} people={byStatus("no")} />
+                  <PeopleList guestLabel={msg.common.guest} title={msg.meetingPage.listNoAnswer} people={noAnswer} muted />
+                </div>
+              </Card>
+
+              {!isGuest && !isPast && !meeting.skipped && (
+                <Card title={msg.meetingPage.guests(guests.length)}>
+                  <div className="flex flex-col gap-4">
+                    {guests.length > 0 && (
+                      <GuestList
+                        guests={guests}
+                        groupId={group.id}
+                        originalDate={meeting.originalDate}
+                        canManage={isOwner}
+                        msg={msg}
+                      />
+                    )}
+                    <GuestLinkBox
+                      groupId={group.id}
+                      originalDate={meeting.originalDate}
+                      label={`${group.name} · ${formatShortDate(meeting.date, locale)} ${formatTime(meeting.startTime)}`}
+                    />
+                  </div>
+                </Card>
+              )}
+
+              {isGuest && !isPast && (
+                <NavForm
+                  action={removeGuest.bind(null, group.id, meeting.originalDate, user.id, true)}
+                  className="self-start"
                 >
-                  {group.online_link}
-                </a>
-              </dd>
-            </>
-          )}
-        </dl>
-        {meeting.notes && (
-          <p className="mt-3 whitespace-pre-line rounded-xl bg-brand/10 p-3 text-sm">
-            📌 {meeting.notes}
-          </p>
-        )}
-      </Card>
+                  <SubmitButton
+                    variant="danger"
+                    small
+                    confirm={msg.meetingPage.confirmLeave}
+                  >
+                    {msg.meetingPage.leave}
+                  </SubmitButton>
+                </NavForm>
+              )}
 
-      {!meeting.skipped && (
-        <Card title={isPast ? msg.meetingPage.yourAttendance : msg.meetingPage.areYouIn}>
-          <div className="flex flex-col gap-3">
-            <AttendanceButtons
-              groupId={group.id}
-              originalDate={meeting.originalDate}
-              status={meeting.myStatus}
-              disabled={isPast}
-            />
-            {isPast && (
-              <p className="text-xs text-foreground/50">
-                {msg.meetingPage.pastLocked}
-              </p>
-            )}
-            {!isPast && meeting.myStatus && (
-              <AttendanceNoteForm
-                key={`${meeting.myStatus}-${meeting.myNote ?? ""}`}
-                groupId={group.id}
-                originalDate={meeting.originalDate}
-                status={meeting.myStatus}
-                note={meeting.myNote}
-              />
-            )}
-          </div>
-        </Card>
-      )}
-
-      {!isPast && (
-        <Card title={msg.share.title}>
-          <ShareCard
-            text={[
-              ...meetingSummaryLines(
-                {
-                  groupName: group.name,
-                  date: meeting.date,
-                  startTime: meeting.startTime,
-                  skipped: meeting.skipped,
-                  game: meeting.game,
-                  location: group.mode === "online" ? null : meeting.location,
-                  onlineLink: group.mode === "in_person" ? null : group.online_link,
-                  notes: meeting.notes,
-                  minAttendees: meeting.minAttendees,
-                  openProposals: meeting.openProposals,
-                  people: peopleByStatus(
-                    participants.map((p) => ({
-                      user_id: p.user_id,
-                      name: p.role === "guest" ? `${p.name} ${msg.calendar.guestTag}` : p.name,
-                    })),
-                    meeting.attendances,
-                    locale,
-                    msg.common.formerParticipant,
-                  ),
-                },
-                msg,
-                locale,
-              ),
-              "",
-              `${msg.share.answer} ${siteUrl}/groups/${group.id}/${meeting.originalDate}`,
-            ].join("\n")}
-          />
-        </Card>
-      )}
-
-      {!meeting.skipped && !isPast && (
-        <Card title={msg.events.addToCalendar}>
-          <div className="flex flex-wrap gap-2">
-            <a
-              href={googleCalendarUrl(calendarEvent)}
-              target="_blank"
-              rel="noreferrer"
-              className={buttonClass("secondary", true)}
-            >
-              {msg.events.googleCalendar}
-            </a>
-            <a
-              href={`/groups/${group.id}/${meeting.originalDate}/ics`}
-              className={buttonClass("secondary", true)}
-            >
-              {msg.events.icsFile}
-            </a>
-          </div>
-        </Card>
-      )}
-
-      <section id="proposte" className="flex scroll-mt-4 flex-col gap-3">
-        <div className="flex items-center justify-between gap-2">
-          <h2 className="text-lg font-semibold">{msg.meetingPage.proposals}</h2>
-          {!isGuest && !isPast && !meeting.skipped && (
-            <ButtonLink href={`/groups/${group.id}/${meeting.originalDate}/proponi`} small>
-              {msg.meetingPage.propose}
-            </ButtonLink>
-          )}
-        </div>
-        {proposals === null ? (
-          <p role="alert" className="text-sm text-red-500">
-            {msg.meetingPage.loadError}
-          </p>
-        ) : proposals.length === 0 ? (
-          <p className="text-sm text-foreground/60">
-            {isGuest
-              ? msg.meetingPage.noProposalsGuest
-              : msg.meetingPage.noProposals}
-          </p>
-        ) : (
-          proposals.map((p) => (
-            <ProposalCard
-              key={p.id}
-              proposal={p}
-              userId={user.id}
-              isOwner={isOwner}
-              ownerDecidesRule={group.approval_rule === "owner_decides"}
-              names={nameRecord}
-              timeZone={group.timezone}
-            />
-          ))
-        )}
-        <p className="text-xs text-foreground/50">
-          {msg.meetingPage.groupRule} {msg.labels.approvalRule[group.approval_rule].label}.{" "}
-          {msg.labels.approvalRule[group.approval_rule].hint}
-        </p>
-      </section>
-
-      <Card title={msg.meetingPage.whoIsIn}>
-        <div className="flex flex-col gap-4">
-          <AttendanceSummary meeting={meeting} />
-          <PeopleList guestLabel={msg.common.guest} title={`${msg.labels.attendance.yes.emoji} ${msg.meetingPage.listYes}`} people={byStatus("yes")} />
-          <PeopleList guestLabel={msg.common.guest} title={`${msg.labels.attendance.maybe.emoji} ${msg.meetingPage.listMaybe}`} people={byStatus("maybe")} />
-          <PeopleList guestLabel={msg.common.guest} title={`${msg.labels.attendance.no.emoji} ${msg.meetingPage.listNo}`} people={byStatus("no")} />
-          <PeopleList guestLabel={msg.common.guest} title={msg.meetingPage.listNoAnswer} people={noAnswer} muted />
-        </div>
-      </Card>
-
-      {!isGuest && !isPast && !meeting.skipped && (
-        <Card title={msg.meetingPage.guests(guests.length)}>
-          <div className="flex flex-col gap-4">
-            {guests.length > 0 && (
-              <GuestList
-                guests={guests}
-                groupId={group.id}
-                originalDate={meeting.originalDate}
-                canManage={isOwner}
-                msg={msg}
-              />
-            )}
-            <GuestLinkBox
-              groupId={group.id}
-              originalDate={meeting.originalDate}
-              label={`${group.name} · ${formatShortDate(meeting.date, locale)} ${formatTime(meeting.startTime)}`}
-            />
-          </div>
-        </Card>
-      )}
-
-      {isGuest && !isPast && (
-        <NavForm
-          action={removeGuest.bind(null, group.id, meeting.originalDate, user.id, true)}
-          className="self-start"
-        >
-          <SubmitButton
-            variant="danger"
-            small
-            confirm={msg.meetingPage.confirmLeave}
-          >
-            {msg.meetingPage.leave}
-          </SubmitButton>
-        </NavForm>
-      )}
-
-      {isOwner && !isPast && (
-        <Card title={msg.meetingPage.ownerDecisions}>
-          <p className="mb-4 text-sm text-foreground/70">
-            {msg.meetingPage.ownerDecisionsText}
-          </p>
-          <div className="mb-5 flex flex-col gap-2 border-b border-foreground/10 pb-5">
-            <h3 className="text-sm font-medium">{msg.events.moveTitle}</h3>
-            <MoveOccurrenceForm
-              groupId={group.id}
-              originalDate={meeting.originalDate}
-              date={meeting.date}
-              time={meeting.startTime}
-              minDate={meeting.today}
-            />
-          </div>
-          <OccurrenceOwnerForm
-            groupId={group.id}
-            originalDate={meeting.originalDate}
-            skipped={meeting.skipped}
-            gameOverride={occ?.game_title_override ?? null}
-            locationOverride={occ?.location_override ?? null}
-            notes={meeting.notes}
-            defaultGame={group.default_game_title}
-            defaultLocation={group.default_location}
-          />
-          {meeting.isExtra && !meeting.isSingle && (
-            <NavForm
-              action={deleteExtraMeeting.bind(null, group.id, meeting.originalDate)}
-              className="mt-5 border-t border-foreground/10 pt-5"
-            >
-              <SubmitButton variant="danger" small confirm={msg.events.confirmDeleteExtra}>
-                {msg.events.deleteExtra}
-              </SubmitButton>
-            </NavForm>
-          )}
-        </Card>
-      )}
+              {isOwner && !isPast && (
+                <Card title={msg.meetingPage.ownerDecisions}>
+                  <p className="mb-4 text-sm text-foreground/70">
+                    {msg.meetingPage.ownerDecisionsText}
+                  </p>
+                  <div className="mb-5 flex flex-col gap-2 border-b border-foreground/10 pb-5">
+                    <h3 className="text-sm font-medium">{msg.events.moveTitle}</h3>
+                    <MoveOccurrenceForm
+                      groupId={group.id}
+                      originalDate={meeting.originalDate}
+                      date={meeting.date}
+                      time={meeting.startTime}
+                      minDate={meeting.today}
+                    />
+                  </div>
+                  <OccurrenceOwnerForm
+                    groupId={group.id}
+                    originalDate={meeting.originalDate}
+                    skipped={meeting.skipped}
+                    gameOverride={occ?.game_title_override ?? null}
+                    locationOverride={occ?.location_override ?? null}
+                    notes={meeting.notes}
+                    defaultGame={group.default_game_title}
+                    defaultLocation={group.default_location}
+                  />
+                  {meeting.isExtra && !meeting.isSingle && (
+                    <NavForm
+                      action={deleteExtraMeeting.bind(null, group.id, meeting.originalDate)}
+                      className="mt-5 border-t border-foreground/10 pt-5"
+                    >
+                      <SubmitButton variant="danger" small confirm={msg.events.confirmDeleteExtra}>
+                        {msg.events.deleteExtra}
+                      </SubmitButton>
+                    </NavForm>
+                  )}
+                </Card>
+              )}
+          </>
+        }
+      />
     </Page>
   );
 }
