@@ -663,6 +663,15 @@ export const en: Messages = {
     saved: "Done.",
     manageLink: "🔐 Manage access",
     pendingCount: (n) => (n === 1 ? "1 pending request" : `${n} pending requests`),
+    resend: "📧 Resend email",
+    resent: "Sign-in email sent again.",
+    resendFailed: "Couldn't send the email right now (maybe too many requests: try again in a few minutes). You can create a link and send it yourself.",
+    makeLink: "🔗 Create sign-in link",
+    linkReady: "Link ready: send it only to this person. It works once and expires after about an hour.",
+    linkFailed: "Couldn't create the link.",
+    linkCopy: "Copy link",
+    linkWhatsapp: "Send on WhatsApp",
+    linkMessage: (url) => `Here is your link to sign in to Schednd (works once): ${url}`,
   },
   // </pages>
 
