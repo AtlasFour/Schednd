@@ -5,7 +5,8 @@ import { FormMessage, SubmitButton } from "@/components/form";
 import { buttonClass, inputClass } from "@/components/ui";
 import { useI18n } from "@/i18n/client";
 import { initialFormState, type FormState } from "@/lib/form";
-import { addApprovedEmail, deleteAccess, setAccess } from "./actions";
+import { whatsappShareUrl } from "@/lib/share-text";
+import { addApprovedEmail, createLoginLink, deleteAccess, resendLoginEmail, setAccess } from "./actions";
 
 export type AccessRow = {
   email: string;
@@ -30,6 +31,8 @@ function AccessItem({ row }: { row: AccessRow }) {
   const { locale, m } = useI18n();
   const [pending, startTransition] = useTransition();
   const [state, setState] = useState<FormState>({});
+  const [link, setLink] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
   const run = (action: () => Promise<FormState>) => startTransition(async () => setState(await action()));
   const when = new Intl.DateTimeFormat(locale === "en" ? "en-GB" : "it-IT", {
     day: "numeric",
@@ -59,6 +62,33 @@ function AccessItem({ row }: { row: AccessRow }) {
             {row.status === "blocked" ? m.access.unblock : m.access.approve}
           </button>
         )}
+        {row.status === "approved" && (
+          <>
+            <button
+              type="button"
+              disabled={pending}
+              className={buttonClass("secondary", true)}
+              onClick={() => run(() => resendLoginEmail(row.email))}
+            >
+              {m.access.resend}
+            </button>
+            <button
+              type="button"
+              disabled={pending}
+              className={buttonClass("secondary", true)}
+              onClick={() =>
+                startTransition(async () => {
+                  setState({});
+                  const r = await createLoginLink(row.email);
+                  if (r.url) setLink(r.url);
+                  else setState({ error: r.error });
+                })
+              }
+            >
+              {m.access.makeLink}
+            </button>
+          </>
+        )}
         {row.status !== "blocked" && (
           <button
             type="button"
@@ -82,6 +112,33 @@ function AccessItem({ row }: { row: AccessRow }) {
           </button>
         )}
       </div>
+      {link && (
+        <div className="flex flex-col gap-2 rounded-xl bg-foreground/5 p-3">
+          <p className="text-xs text-foreground/70">{m.access.linkReady}</p>
+          <p className="truncate font-mono text-xs">{link}</p>
+          <div className="flex flex-wrap gap-2">
+            <a
+              href={whatsappShareUrl(m.access.linkMessage(link))}
+              target="_blank"
+              rel="noreferrer"
+              className={`${buttonClass("primary", true)} !bg-[#25D366] !text-white`}
+            >
+              {m.access.linkWhatsapp}
+            </a>
+            <button
+              type="button"
+              className={buttonClass("secondary", true)}
+              onClick={async () => {
+                await navigator.clipboard.writeText(link).catch(() => window.prompt("", link));
+                setCopied(true);
+                setTimeout(() => setCopied(false), 2000);
+              }}
+            >
+              {copied ? m.share.copied : m.access.linkCopy}
+            </button>
+          </div>
+        </div>
+      )}
       <FormMessage state={state} />
     </li>
   );

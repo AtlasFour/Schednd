@@ -664,6 +664,15 @@ export const it = {
     saved: "Fatto.",
     manageLink: "🔐 Gestisci gli accessi",
     pendingCount: (n: number) => (n === 1 ? "1 richiesta in attesa" : `${n} richieste in attesa`),
+    resend: "📧 Reinvia email",
+    resent: "Email di accesso inviata di nuovo.",
+    resendFailed: "Non è stato possibile inviare l'email ora (forse troppe richieste: riprova tra qualche minuto). Puoi creare un link e mandarlo tu.",
+    makeLink: "🔗 Crea link di accesso",
+    linkReady: "Link pronto: mandalo solo a questa persona. Vale una volta sola e scade dopo circa un'ora.",
+    linkFailed: "Non è stato possibile creare il link.",
+    linkCopy: "Copia link",
+    linkWhatsapp: "Invia su WhatsApp",
+    linkMessage: (url: string) => `Ecco il tuo link per entrare in Schednd (vale una volta sola): ${url}`,
   },
   // </pages>
 
