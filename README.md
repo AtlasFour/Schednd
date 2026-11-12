@@ -61,6 +61,15 @@ Le migrazioni sono in `supabase/migrations/`, numerate in ordine. Per ognuna non
 | `0008_single_events_calendar.sql` | eventi singoli, incontri straordinari, spostamento di un incontro, link segreto per il calendario del telefono |
 | `0009_group_channels.sql` | avvisi nelle chat di gruppo Telegram: collegamento con codice, scelta degli avvisi, coda dei messaggi |
 | `0010_telegram_accounts.sql` | account Telegram personali: presenze e voti con i pulsanti del bot, avvisi in privato |
+| `0011_access_requests.sql` | accesso su approvazione: elenco delle email che provano ad accedere, amministratori |
+
+## Accesso su approvazione
+Ogni email che prova ad accedere viene registrata; entra solo chi è approvato da un amministratore (**Profilo → 🔐 Gestisci gli accessi**). Gli utenti già registrati restano approvati.
+Per diventare amministratore, dopo aver eseguito `0011_access_requests.sql` lancia nel SQL Editor (con la tua email):
+```sql
+insert into public.app_admins (user_id) select id from auth.users where email = 'la-tua-email@esempio.it';
+```
+Finché non c'è nessun amministratore, chiunque può entrare. Quando arriva una nuova richiesta gli amministratori ricevono un avviso; approvando, all'utente arriva subito l'email per entrare.
 
 ## Email di accesso (consigliato)
 Il link "classico" di Supabase funziona solo se viene aperto nello stesso browser in cui è stato richiesto, e alcuni programmi di posta lo "consumano" aprendolo da soli. Con questo modello l'email contiene anche un **codice** da inserire nella pagina di accesso, e il link chiede un tocco di conferma:

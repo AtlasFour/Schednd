@@ -23,6 +23,7 @@ export function LoginError({ code }: { code: string | null }) {
     link_non_valido: m.login.errorInvalidLink,
     altro_browser: m.login.errorOtherBrowser,
     scaduto: m.login.errorExpired,
+    in_attesa: m.access.errorPending,
   };
   const message = messages[hashCode ?? code ?? ""];
   if (!message) return null;

@@ -20,5 +20,6 @@ export async function confirmEmailLink(formData: FormData) {
     console.error("verifyOtp", error.code, error.message);
     redirect(`/login?errore=${error.code === "otp_expired" ? "scaduto" : "link_non_valido"}`);
   }
-  redirect(await completeLogin(supabase, String(formData.get("next") ?? "") || null));
+  const next = await completeLogin(supabase, String(formData.get("next") ?? "") || null);
+  redirect(next ?? "/login?errore=in_attesa");
 }
