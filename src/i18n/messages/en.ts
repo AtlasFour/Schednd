@@ -636,6 +636,34 @@ export const en: Messages = {
     commandsTitle: "Command menu (optional)",
     commandsText: "On @BotFather send /setcommands, pick the bot and paste:",
   },
+
+  access: {
+    pendingTitle: "Request sent ✋",
+    pendingText: (email) => `Schednd is invite-only: the administrator needs to approve ${email}. Once approved, you will get an email to sign in.`,
+    blocked: "This address is not allowed to access Schednd.",
+    errorPending: "Your address is waiting for approval: you will get an email when you can sign in.",
+    title: "Access",
+    intro: "Anyone signing in with a new email lands here: they can only get in after you approve them. When you approve someone they immediately get the sign-in email.",
+    notAdmin: "This page is for app administrators only.",
+    pending: "Pending",
+    approved: "Approved",
+    blockedList: "Blocked",
+    none: "Nobody.",
+    attempts: (n) => (n === 1 ? "1 attempt" : `${n} attempts`),
+    lastSeen: (when) => `last: ${when}`,
+    approve: "Approve",
+    block: "Block",
+    unblock: "Unblock",
+    remove: "Remove",
+    confirmBlock: "Block this address? It won't be able to sign in anymore.",
+    addLabel: "Pre-approve an email",
+    addButton: "Add",
+    approvedSent: "Approved: we sent them the sign-in email.",
+    approvedNoMail: "Approved. Couldn't send the email right now: they can sign in from the login page.",
+    saved: "Done.",
+    manageLink: "🔐 Manage access",
+    pendingCount: (n) => (n === 1 ? "1 pending request" : `${n} pending requests`),
+  },
   // </pages>
 
   common: {
@@ -735,6 +763,9 @@ export const en: Messages = {
     invalidValues: "Some values are not valid.",
     invalidRequest: "Invalid request.",
     db: {
+      "Solo gli amministratori possono gestire gli accessi.": "Only administrators can manage access.",
+      "Stato non valido.": "Invalid status.",
+      "Indirizzo email non valido.": "Invalid email address.",
       "Aggiungi almeno un'opzione.": "Add at least one option.",
       "C'è già una proposta di questo tipo in corso per questo incontro.":
         "There is already an open proposal of this kind for this meeting.",

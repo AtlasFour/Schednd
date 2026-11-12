@@ -6,8 +6,20 @@ import { NEXT_PATH_COOKIE, safeNextPath } from "@/lib/next-path";
 /**
  * Dopo un accesso riuscito (link o codice): lingua dell'account salvata nel
  * cookie e pagina a cui tornare. Da chiamare in Server Actions e Route Handlers.
+ * Restituisce null se l'email non è (ancora) approvata: la sessione viene chiusa.
  */
-export async function completeLogin(supabase: SupabaseClient, nextParam?: string | null) {
+export async function completeLogin(
+  supabase: SupabaseClient,
+  nextParam?: string | null,
+): Promise<string | null> {
+  // L'accesso è su approvazione: chi non è approvato viene fatto uscire.
+  const { data: access, error } = await supabase.rpc("my_access_status");
+  if (error) console.error("my_access_status", error);
+  if (!error && access !== "approved") {
+    await supabase.auth.signOut();
+    return null;
+  }
+
   const cookieStore = await cookies();
   const next =
     safeNextPath(nextParam) ?? safeNextPath(cookieStore.get(NEXT_PATH_COOKIE)?.value) ?? "/";

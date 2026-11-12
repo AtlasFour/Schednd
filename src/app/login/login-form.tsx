@@ -18,6 +18,20 @@ export function LoginForm() {
   const [manualCode, setManualCode] = useState(false);
   const [dismissed, setDismissed] = useState<LoginState | null>(null);
 
+  if (sendState.status === "pending" && sendState !== dismissed) {
+    return (
+      <div className="flex flex-col gap-4">
+        <div className="rounded-2xl border border-amber-500/30 bg-amber-500/10 p-5 text-center">
+          <p className="font-medium">{m.access.pendingTitle}</p>
+          <p className="mt-1 text-sm text-foreground/70">{m.access.pendingText(sendState.email)}</p>
+        </div>
+        <button type="button" onClick={() => setDismissed(sendState)} className="text-sm text-brand underline">
+          {m.login.otherEmail}
+        </button>
+      </div>
+    );
+  }
+
   const sentEmail = sendState.status === "sent" && sendState !== dismissed ? sendState.email : null;
   if (sentEmail || manualCode) {
     return (

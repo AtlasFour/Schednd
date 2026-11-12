@@ -29,7 +29,7 @@ export async function GET(request: NextRequest) {
     const { error } = await supabase.auth.exchangeCodeForSession(code);
     if (!error) {
       const next = await completeLogin(supabase, searchParams.get("next"));
-      return NextResponse.redirect(new URL(next, origin));
+      return NextResponse.redirect(new URL(next ?? "/login?errore=in_attesa", origin));
     }
     console.error("exchangeCodeForSession", error.code, error.message);
     // Di solito succede quando il link viene aperto in un browser diverso

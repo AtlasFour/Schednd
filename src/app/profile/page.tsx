@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
 import { SubmitButton } from "@/components/form";
-import { Card, Page, PageSkeleton } from "@/components/ui";
+import { ButtonLink, Card, Page, PageSkeleton } from "@/components/ui";
 import { getI18n } from "@/i18n/server";
 import { requireUser } from "@/lib/auth";
 import { signOut } from "../actions";
@@ -29,17 +29,27 @@ export default function ProfilePage() {
 async function Profile() {
   const { supabase, user } = await requireUser();
   const { locale, m } = await getI18n();
-  const [{ data: profile }, { data: telegram }] = await Promise.all([
+  const [{ data: profile }, { data: telegram }, { data: accessRows, error: accessError }] = await Promise.all([
     supabase
       .from("profiles")
       .select("display_name, timezone, bgg_username, notify_email")
       .eq("id", user.id)
       .maybeSingle(),
     supabase.from("telegram_accounts").select("telegram_username, notify_private").eq("user_id", user.id).maybeSingle(),
+    // Risponde solo agli amministratori dell'app.
+    supabase.rpc("admin_list_access_requests"),
   ]);
+  const isAdmin = !accessError;
+  const pendingAccess = ((accessRows ?? []) as { status: string }[]).filter((r) => r.status === "pending").length;
 
   return (
     <Page title={m.profile.title} subtitle={user.email} back={{ href: "/", label: m.common.home }}>
+      {isAdmin && (
+        <ButtonLink href="/admin/accessi" variant="secondary">
+          {m.access.manageLink}
+          {pendingAccess > 0 && ` · ${m.access.pendingCount(pendingAccess)}`}
+        </ButtonLink>
+      )}
       <Card>
         <ProfileForm
           displayName={profile?.display_name ?? ""}
