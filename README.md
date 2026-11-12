@@ -61,6 +61,12 @@ Le migrazioni sono in `supabase/migrations/`, numerate in ordine. Per ognuna non
 | `0008_single_events_calendar.sql` | eventi singoli, incontri straordinari, spostamento di un incontro, link segreto per il calendario del telefono |
 | `0009_group_channels.sql` | avvisi nelle chat di gruppo Telegram: collegamento con codice, scelta degli avvisi, coda dei messaggi |
 
+## Email di accesso (consigliato)
+Il link "classico" di Supabase funziona solo se viene aperto nello stesso browser in cui è stato richiesto, e alcuni programmi di posta lo "consumano" aprendolo da soli. Con questo modello l'email contiene anche un **codice** da inserire nella pagina di accesso, e il link chiede un tocco di conferma:
+1. Supabase → *Authentication → Emails* (o *Email Templates*).
+2. In **Magic Link** e in **Confirm signup** sostituisci il contenuto con quello di `supabase/email-templates/accesso.html` e salva.
+3. In *Authentication → URL Configuration* il **Site URL** deve essere l'indirizzo del sito (es. `https://schednd.vercel.app`).
+
 ## Chat di gruppo (Telegram e WhatsApp)
 - **WhatsApp**: nella pagina di ogni incontro, "Condividi su WhatsApp" apre WhatsApp con il riepilogo già scritto (data, gioco, chi c'è, link): si sceglie il gruppo e si invia. WhatsApp non permette ai bot di scrivere nei gruppi di amici, quindi l'invio è manuale.
 - **Telegram** (facoltativo): un bot scrive da solo gli avvisi nella chat del gruppo.
