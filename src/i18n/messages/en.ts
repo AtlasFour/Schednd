@@ -536,6 +536,15 @@ export const en: Messages = {
     icsOpen: "Open in Schednd",
     icsGuest: "(guest)",
     icsCalendarName: "Schednd · my meetings",
+    googleHowTitle: "Google Calendar: do it once from a computer",
+    googleHowIntro: "The Google Calendar phone app can't add calendars from a link. Do it once from a computer: then the calendar shows up on your phone too.",
+    googleHowSteps: [
+      "Tap \"Copy link\" and send it to yourself (e.g. by email).",
+      "On a computer open calendar.google.com → on the left \"Other calendars\" → \"+\" → \"From URL\".",
+      "Paste the link and click \"Add calendar\".",
+      "On your phone, in the Google Calendar app: Settings → \"Schednd · my meetings\" → turn on \"Sync\".",
+    ],
+    googleOnComputer: "Already on a computer? Open Google Calendar",
   },
 
   share: {
