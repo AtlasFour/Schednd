@@ -97,7 +97,7 @@ async function Calendar({ searchParams }: PageProps<"/calendario">) {
   for (const list of Object.values(entries)) list.sort((a, b) => startTime(a).localeCompare(startTime(b)));
 
   return (
-    <Page title={msg.calendar.title} back={{ href: "/", label: msg.common.home }}>
+    <Page title={msg.calendar.title} back={{ href: "/", label: msg.common.home }} wide>
       <LiveRefresh />
       <CalendarView
         // Nuovi dati dal server (mese lontano): si riparte da quel mese.

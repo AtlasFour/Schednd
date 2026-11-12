@@ -11,16 +11,24 @@ export function Page({
   subtitle,
   back,
   actions,
+  wide,
   children,
 }: {
   title?: ReactNode;
   subtitle?: ReactNode;
   back?: { href: string; label: string };
   actions?: ReactNode;
+  /** Pagina larga sul computer (di solito con <Columns>). */
+  wide?: boolean;
   children: ReactNode;
 }) {
   return (
-    <main className="mx-auto flex w-full max-w-md flex-1 flex-col gap-5 px-5 py-6">
+    <main
+      className={cx(
+        "mx-auto flex w-full max-w-md flex-1 flex-col gap-5 px-5 py-6 lg:px-8 lg:py-10",
+        wide ? "lg:max-w-6xl" : "lg:max-w-2xl",
+      )}
+    >
       {back && (
         <BackLink
           href={back.href}
@@ -46,6 +54,19 @@ export function Page({
       )}
       {children}
     </main>
+  );
+}
+
+/**
+ * Due colonne sul computer (contenuto principale + colonna laterale),
+ * una sola colonna sul telefono (prima il principale, poi il laterale).
+ */
+export function Columns({ main, side }: { main: ReactNode; side: ReactNode }) {
+  return (
+    <div className="flex flex-col gap-5 lg:grid lg:grid-cols-[minmax(0,1fr)_22rem] lg:items-start lg:gap-8">
+      <div className="flex min-w-0 flex-col gap-5">{main}</div>
+      <div className="flex min-w-0 flex-col gap-5">{side}</div>
+    </div>
   );
 }
 
