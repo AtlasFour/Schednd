@@ -16,6 +16,9 @@ export async function setAccess(email: string, status: Status): Promise<FormStat
   const { m } = await getI18n();
   const { error } = await supabase.rpc("admin_set_access", { p_email: email, p_status: status });
   if (error) return { error: await dbErrorMessage(error) };
+  // Chi viene bloccato non può più rinnovare la sessione (sospensione su
+  // Supabase); sbloccandolo la sospensione viene tolta.
+  await setBan(email, status === "blocked");
   afterMutation();
   if (status !== "approved") return { success: m.access.saved };
   return (await sendLoginEmail(email)) ? { success: m.access.approvedSent } : { success: m.access.approvedNoMail };
@@ -72,6 +75,17 @@ export async function createLoginLink(email: string): Promise<{ url?: string; er
 
 export async function addApprovedEmail(_prev: FormState, formData: FormData): Promise<FormState> {
   return setAccess(getString(formData, "email").toLowerCase(), "approved");
+}
+
+async function setBan(email: string, banned: boolean) {
+  const admin = createAdminClient();
+  if (!admin) return;
+  const { data: userId } = await admin.rpc("user_id_by_email", { p_email: email });
+  if (typeof userId !== "string") return;
+  const { error } = await admin.auth.admin.updateUserById(userId, {
+    ban_duration: banned ? "876000h" : "none",
+  });
+  if (error) console.error("ban", error.status, error.message);
 }
 
 /**
