@@ -60,6 +60,7 @@ Le migrazioni sono in `supabase/migrations/`, numerate in ordine. Per ognuna non
 | `0007_i18n.sql` | lingua dell'utente (italiano/inglese) e notifiche nella lingua di chi le riceve |
 | `0008_single_events_calendar.sql` | eventi singoli, incontri straordinari, spostamento di un incontro, link segreto per il calendario del telefono |
 | `0009_group_channels.sql` | avvisi nelle chat di gruppo Telegram: collegamento con codice, scelta degli avvisi, coda dei messaggi |
+| `0010_telegram_accounts.sql` | account Telegram personali: presenze e voti con i pulsanti del bot, avvisi in privato |
 
 ## Email di accesso (consigliato)
 Il link "classico" di Supabase funziona solo se viene aperto nello stesso browser in cui è stato richiesto, e alcuni programmi di posta lo "consumano" aprendolo da soli. Con questo modello l'email contiene anche un **codice** da inserire nella pagina di accesso, e il link chiede un tocco di conferma:
@@ -73,6 +74,8 @@ Il link "classico" di Supabase funziona solo se viene aperto nello stesso browse
   1. Su Telegram apri **@BotFather**, scrivi `/newbot`, scegli nome e nome utente (deve finire con `bot`).
   2. Copia il token che ti dà e mettilo su Vercel nella variabile `TELEGRAM_BOT_TOKEN` (non incollarlo in nessuna chat), poi **Redeploy**.
   3. Nelle impostazioni del gruppo su Schednd: **Avvisi su Telegram → Collega un gruppo Telegram** e segui i passaggi. Lì scegli anche quali avvisi mandare e la lingua.
+  4. Comandi nel gruppo: `/prossimo`, `/chi`, `/calendario`, `/proposte` (in inglese `/next`, `/who`, `/calendar`, `/proposals`). Per il menu dei comandi: su @BotFather `/setcommands` e incolla la lista che trovi in *Profilo → Configurazione del server*.
+  5. Ognuno può collegare il proprio account da **Profilo → Telegram**: così risponde e vota con i pulsanti del bot e, se vuole, riceve i propri avvisi in privato.
 
 ## Velocità
 Ogni pagina fa alcune richieste al database: se il server di Vercel e quello di Supabase sono lontani (es. Stati Uniti ed Europa) ogni richiesta costa ~100 ms in più.

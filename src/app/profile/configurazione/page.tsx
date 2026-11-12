@@ -21,7 +21,7 @@ export default function ConfigPage() {
 
 async function Config() {
   await requireUser();
-  const { m } = await getI18n();
+  const { locale, m } = await getI18n();
   const status = notificationSetupStatus();
   const ready = status.serviceRole && status.vapidPublic && status.vapidPrivate && status.cronSecret;
 
@@ -66,6 +66,11 @@ async function Config() {
 
       <Card title={m.config.telegramTitle}>
         <Steps items={m.config.telegramItems} />
+        <p className="mt-3 text-sm font-medium">{m.bot.commandsTitle}</p>
+        <p className="text-sm text-foreground/70">{m.bot.commandsText}</p>
+        <pre className="mt-2 overflow-x-auto rounded-lg bg-foreground/5 p-3 font-mono text-xs">
+          {locale === "en" ? BOT_COMMANDS_EN : BOT_COMMANDS_IT}
+        </pre>
       </Card>
 
       <Card title={m.config.bggTitle}>
@@ -96,3 +101,13 @@ function Steps({ items }: { items: string[] }) {
     </ol>
   );
 }
+
+const BOT_COMMANDS_IT = `prossimo - Il prossimo incontro, con i pulsanti per rispondere
+chi - Chi c'è al prossimo incontro
+calendario - I prossimi incontri del gruppo
+proposte - Le proposte da votare`;
+
+const BOT_COMMANDS_EN = `next - The next meeting, with buttons to answer
+who - Who's in for the next meeting
+calendar - The group's upcoming meetings
+proposals - Proposals to vote on`;

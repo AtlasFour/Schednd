@@ -1,6 +1,7 @@
 import { createTransport } from "nodemailer";
 import { sendNotification, type PushSubscription } from "web-push";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { escapeTelegramHtml, getTelegramToken, sendTelegramMessage } from "@/lib/telegram";
 import { processChannelOutbox } from "./channels";
 import { getPublicSiteUrl, getSmtpConfig, getVapidConfig } from "./config";
 
@@ -69,6 +70,20 @@ export async function processNotificationQueue(limit = 200): Promise<ProcessResu
     admin.from("profiles").select("id, notify_push, notify_email, locale").in("id", userIds),
   ]);
 
+  // Avvisi in privato dal bot Telegram (per chi ha collegato l'account).
+  const telegramChats = new Map<string, string>();
+  if (getTelegramToken()) {
+    const { data: accounts } = await admin
+      .from("telegram_accounts")
+      .select("user_id, private_chat_id")
+      .in("user_id", userIds)
+      .eq("notify_private", true)
+      .not("private_chat_id", "is", null);
+    for (const a of (accounts ?? []) as { user_id: string; private_chat_id: string }[]) {
+      telegramChats.set(a.user_id, a.private_chat_id);
+    }
+  }
+
   const subsByUser = new Map<string, SubscriptionRow[]>();
   for (const s of (subs ?? []) as SubscriptionRow[]) {
     subsByUser.set(s.user_id, [...(subsByUser.get(s.user_id) ?? []), s]);
@@ -128,6 +143,22 @@ export async function processNotificationQueue(limit = 200): Promise<ProcessResu
             console.error("push", status, (err as Error).message);
           }
         }
+      }
+    }
+
+    const telegramChat = telegramChats.get(row.user_id);
+    if (telegramChat) {
+      const link = new URL(row.url, getPublicSiteUrl()).toString();
+      const openLabel = pref?.locale === "en" ? "Open Schednd" : "Apri Schednd";
+      const r = await sendTelegramMessage(
+        telegramChat,
+        `<b>${escapeTelegramHtml(row.title)}</b>\n${escapeTelegramHtml(row.body)}\n\n` +
+          `<a href="${escapeTelegramHtml(link)}">${openLabel}</a>`,
+      );
+      if (r.ok) delivered = true;
+      else if (r.error_code !== 403) {
+        hadError = true;
+        console.error("telegram private", r.error_code, r.description);
       }
     }
 
