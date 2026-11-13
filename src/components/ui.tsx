@@ -61,11 +61,32 @@ export function Page({
  * Due colonne sul computer (contenuto principale + colonna laterale),
  * una sola colonna sul telefono (prima il principale, poi il laterale).
  */
-export function Columns({ main, side }: { main: ReactNode; side: ReactNode }) {
+export function Columns({
+  main,
+  side,
+  sideFirstOnMobile,
+}: {
+  main: ReactNode;
+  side: ReactNode;
+  /** Sul telefono mostra prima la colonna laterale. */
+  sideFirstOnMobile?: boolean;
+}) {
   return (
     <div className="flex flex-col gap-5 lg:grid lg:grid-cols-[minmax(0,1fr)_22rem] lg:items-start lg:gap-8">
       <div className="flex min-w-0 flex-col gap-5">{main}</div>
-      <div className="flex min-w-0 flex-col gap-5">{side}</div>
+      <div className={cx("flex min-w-0 flex-col gap-5", sideFirstOnMobile && "order-first lg:order-none")}>{side}</div>
+    </div>
+  );
+}
+
+/**
+ * Riquadri in fila sul telefono, su due colonne "a mattoncini" sul computer
+ * (l'ordine resta lo stesso: prima la colonna di sinistra, poi la destra).
+ */
+export function Masonry({ children }: { children: ReactNode }) {
+  return (
+    <div className="flex flex-col gap-5 lg:block lg:columns-2 lg:gap-6 lg:[&>*]:mb-6 lg:[&>*]:break-inside-avoid">
+      {children}
     </div>
   );
 }

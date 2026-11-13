@@ -379,6 +379,8 @@ export const en: Messages = {
     asGuest: "As a guest",
     noMeetingsDay: "No meetings on this day.",
     guestTag: "(guest)",
+    showUpcoming: "← All upcoming",
+    openCalendar: "Open the calendar",
   },
 
   join: {

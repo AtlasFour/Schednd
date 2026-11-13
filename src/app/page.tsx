@@ -1,7 +1,10 @@
 import Link from "next/link";
 import { Suspense } from "react";
 import { SubmitButton } from "@/components/form";
-import { ButtonLink, Card, Columns, inputClass, Skeleton } from "@/components/ui";
+import { ButtonLink, Card, inputClass, Skeleton } from "@/components/ui";
+import { firstDay, lastDay, monthOf, shiftMonth } from "@/lib/calendar";
+import { CalendarView } from "./calendario/calendar-view";
+import { buildCalendarEntries } from "./calendario/entries";
 import { requireUser } from "@/lib/auth";
 import { LiveRefresh } from "@/components/live-refresh";
 import { MeetingCard } from "@/components/meeting-card";
@@ -77,49 +80,75 @@ async function Home() {
   const { locale, m } = await getI18n();
   const msg = m;
 
-  const [{ data: profile }, { data: memberships }, { data: guestRows }] = await Promise.all([
-    supabase.from("profiles").select("display_name").eq("id", user.id).maybeSingle(),
-    supabase
-      .from("memberships")
-      .select(
-        "role, groups(id, name, timezone, default_game_title, default_location, min_attendees, status, kind, group_schedules(id, anchor_date, interval_weeks, start_time, valid_until), memberships(count))",
-      )
-      .eq("user_id", user.id),
-    supabase.rpc("my_guest_meetings"),
-    closeDueProposals(supabase),
-  ]);
+  const [{ data: profile }, { data: memberships }, { data: guestRows }] =
+    await Promise.all([
+      supabase
+        .from("profiles")
+        .select("display_name")
+        .eq("id", user.id)
+        .maybeSingle(),
+      supabase
+        .from("memberships")
+        .select(
+          "role, groups(id, name, timezone, default_game_title, default_location, min_attendees, status, kind, group_schedules(id, anchor_date, interval_weeks, start_time, valid_until), memberships(count))",
+        )
+        .eq("user_id", user.id),
+      supabase.rpc("my_guest_meetings"),
+      closeDueProposals(supabase),
+    ]);
   const guestMeetings = (guestRows ?? []) as GuestMeeting[];
 
   const groups: (MeetingGroup & { role: MemberRole })[] = (
     (memberships ?? []) as unknown as MyGroup[]
   )
-    .filter((m): m is MyGroup & { groups: NonNullable<MyGroup["groups"]> } => m.groups !== null)
+    .filter(
+      (m): m is MyGroup & { groups: NonNullable<MyGroup["groups"]> } =>
+        m.groups !== null,
+    )
     .map((m) => ({
       ...m.groups,
       role: m.role,
       memberCount: m.groups.memberships[0]?.count ?? 1,
     }));
 
-  const yesterday = addDays(todayInTimeZone("Europe/Rome"), -1);
+  // Il calendario della home (sul computer) carica il mese prima e i tre dopo.
+  const today = todayInTimeZone("Europe/Rome");
+  const month = monthOf(today);
+  const loadedFrom = firstDay(shiftMonth(month, -1));
+  const loadedTo = lastDay(shiftMonth(month, 3));
   const occurrences = await fetchOccurrences(
     supabase,
     groups.map((g) => g.id),
-    yesterday,
+    addDays(loadedFrom, -62),
+  );
+  const { entries, legend } = buildCalendarEntries(
+    groups.slice().sort((a, b) => a.name.localeCompare(b.name, locale)),
+    occurrences,
+    guestMeetings,
+    user.id,
+    loadedFrom,
+    loadedTo,
   );
 
   const meetings = groups
     .flatMap((g) => upcomingMeetings(g, occurrences, user.id, 4))
     .filter((m) => m.date <= addDays(m.today, HOME_WINDOW_DAYS))
     .sort((a, b) =>
-      a.date === b.date ? a.startTime.localeCompare(b.startTime) : a.date.localeCompare(b.date),
+      a.date === b.date
+        ? a.startTime.localeCompare(b.startTime)
+        : a.date.localeCompare(b.date),
     );
 
   const nextByGroup = new Map<string, Meeting>();
-  for (const m of groups.flatMap((g) => upcomingMeetings(g, occurrences, user.id, 1))) {
+  for (const m of groups.flatMap((g) =>
+    upcomingMeetings(g, occurrences, user.id, 1),
+  )) {
     nextByGroup.set(m.groupId, m);
   }
 
-  const toAnswer = meetings.filter((m) => !m.skipped && m.myStatus === null).length;
+  const toAnswer = meetings.filter(
+    (m) => !m.skipped && m.myStatus === null,
+  ).length;
 
   return (
     <>
@@ -132,21 +161,45 @@ async function Home() {
           </h1>
         </div>
         <div className="flex shrink-0 gap-2">
-          <ButtonLink href="/calendario" variant="secondary" small aria-label={m.home.calendar}>
+          <ButtonLink
+            href="/calendario"
+            variant="secondary"
+            small
+            aria-label={m.home.calendar}
+          >
             📅<span className="hidden lg:inline"> {m.home.calendar}</span>
           </ButtonLink>
-          <ButtonLink href="/libreria" variant="secondary" small aria-label={m.home.myLibrary}>
+          <ButtonLink
+            href="/libreria"
+            variant="secondary"
+            small
+            aria-label={m.home.myLibrary}
+          >
             📚<span className="hidden lg:inline"> {m.home.myLibrary}</span>
           </ButtonLink>
-          <ButtonLink href="/profile" variant="secondary" small aria-label={m.common.profile}>
+          <ButtonLink
+            href="/profile"
+            variant="secondary"
+            small
+            aria-label={m.common.profile}
+          >
             👤 {m.common.profile}
           </ButtonLink>
         </div>
       </header>
 
-      <Columns
-        main={
-          <>
+      <CalendarView
+        today={today}
+        initialMonth={month}
+        initialDay={null}
+        loadedFrom={loadedFrom}
+        loadedTo={loadedTo}
+        entries={entries}
+        legend={legend}
+        hasGuest={guestMeetings.length > 0}
+        home={{
+          upcoming: (
+            <>
               {guestMeetings.length > 0 && (
                 <section className="flex flex-col gap-3">
                   <h2 className="text-lg font-semibold">{m.home.asGuest}</h2>
@@ -159,10 +212,17 @@ async function Home() {
                         >
                           <div className="min-w-0">
                             <p className="font-semibold">
-                              {capitalize(formatShortDate(m.start_date, locale))} · {formatTime(m.start_time)}
+                              {capitalize(
+                                formatShortDate(m.start_date, locale),
+                              )}{" "}
+                              · {formatTime(m.start_time)}
                             </p>
                             <p className="truncate text-sm">{m.group_name}</p>
-                            {m.game && <p className="truncate text-sm text-foreground/60">🎲 {m.game}</p>}
+                            {m.game && (
+                              <p className="truncate text-sm text-foreground/60">
+                                🎲 {m.game}
+                              </p>
+                            )}
                             <p className="mt-1 text-sm">
                               {m.skipped
                                 ? msg.home.skipped
@@ -171,7 +231,9 @@ async function Home() {
                                   : msg.home.notAnswered}
                             </p>
                           </div>
-                          <span aria-hidden className="text-foreground/40">›</span>
+                          <span aria-hidden className="text-foreground/40">
+                            ›
+                          </span>
                         </Link>
                       </li>
                     ))}
@@ -191,10 +253,12 @@ async function Home() {
                   </div>
                   {meetings.length === 0 ? (
                     <Card>
-                      <p className="text-sm text-foreground/70">{m.home.noUpcoming}</p>
+                      <p className="text-sm text-foreground/70">
+                        {m.home.noUpcoming}
+                      </p>
                     </Card>
                   ) : (
-                    <ul className="grid gap-3 xl:grid-cols-2">
+                    <ul className="flex flex-col gap-3">
                       {meetings.map((m) => (
                         <li key={`${m.groupId}-${m.originalDate}`}>
                           <MeetingCard meeting={m} />
@@ -204,10 +268,10 @@ async function Home() {
                   )}
                 </section>
               )}
-          </>
-        }
-        side={
-          <>
+            </>
+          ),
+          below: (
+            <>
               <section className="flex flex-col gap-3">
                 <div className="flex items-center justify-between">
                   <h2 className="text-lg font-semibold">{m.home.myGroups}</h2>
@@ -218,7 +282,9 @@ async function Home() {
 
                 {groups.length === 0 ? (
                   <Card>
-                    <p className="text-sm text-foreground/70">{m.home.noGroups}</p>
+                    <p className="text-sm text-foreground/70">
+                      {m.home.noGroups}
+                    </p>
                   </Card>
                 ) : (
                   <ul className="ui-card flex flex-col divide-y divide-foreground/10 rounded-2xl border border-foreground/10">
@@ -235,7 +301,9 @@ async function Home() {
                             >
                               <div className="min-w-0">
                                 <p className="truncate font-medium">
-                                  {g.kind === "single" && <span aria-hidden>📌 </span>}
+                                  {g.kind === "single" && (
+                                    <span aria-hidden>📌 </span>
+                                  )}
                                   {g.name}
                                 </p>
                                 <p className="truncate text-xs text-foreground/60">
@@ -250,7 +318,11 @@ async function Home() {
                                 </p>
                               </div>
                               <span className="flex shrink-0 items-center gap-2 text-foreground/40">
-                                {g.role === "owner" && <span className="text-xs">{m.common.owner}</span>}
+                                {g.role === "owner" && (
+                                  <span className="text-xs">
+                                    {m.common.owner}
+                                  </span>
+                                )}
                                 <span aria-hidden>›</span>
                               </span>
                             </Link>
@@ -277,8 +349,9 @@ async function Home() {
                   </SubmitButton>
                 </form>
               </Card>
-          </>
-        }
+            </>
+          ),
+        }}
       />
     </>
   );
@@ -300,8 +373,9 @@ function MissingConfig() {
       <h1 className="text-xl font-semibold">Configurazione mancante</h1>
       <p className="text-sm text-foreground/70">
         Le variabili <code>NEXT_PUBLIC_SUPABASE_URL</code> e{" "}
-        <code>NEXT_PUBLIC_SUPABASE_ANON_KEY</code> non sono impostate. Aggiungile
-        su Vercel (Settings → Environment Variables) e ripubblica il sito.
+        <code>NEXT_PUBLIC_SUPABASE_ANON_KEY</code> non sono impostate.
+        Aggiungile su Vercel (Settings → Environment Variables) e ripubblica il
+        sito.
       </p>
     </main>
   );

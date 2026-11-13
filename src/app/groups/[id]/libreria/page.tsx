@@ -45,6 +45,7 @@ async function GroupLibrary({ params, searchParams }: PageProps<"/groups/[id]/li
       title={m.library.groupTitle}
       subtitle={m.library.groupSubtitle(group.name, all.length)}
       back={{ href: `/groups/${id}`, label: group.name }}
+      wide
     >
       <nav aria-label={m.library.filterLabel} className="flex flex-wrap items-center gap-2">
         <span className="text-sm text-foreground/60">{m.library.players}</span>
@@ -70,7 +71,7 @@ async function GroupLibrary({ params, searchParams }: PageProps<"/groups/[id]/li
       ) : games.length === 0 ? (
         <p className="text-sm text-foreground/60">{m.library.noneForPlayers(filter ?? 0)}</p>
       ) : (
-        <ul className="flex flex-col gap-2">
+        <ul className="grid gap-2 md:grid-cols-2 xl:grid-cols-3">
           {games.map((g) => (
             <li key={g.game_id}>
               <GameCard game={g}>

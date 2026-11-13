@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
 import { SubmitButton } from "@/components/form";
-import { ButtonLink, Card, Page, PageSkeleton } from "@/components/ui";
+import { ButtonLink, Card, Masonry, Page, PageSkeleton } from "@/components/ui";
 import { getI18n } from "@/i18n/server";
 import { requireUser } from "@/lib/auth";
 import { signOut } from "../actions";
@@ -29,63 +29,91 @@ export default function ProfilePage() {
 async function Profile() {
   const { supabase, user } = await requireUser();
   const { locale, m } = await getI18n();
-  const [{ data: profile }, { data: telegram }, { data: accessRows, error: accessError }] = await Promise.all([
+  const [
+    { data: profile },
+    { data: telegram },
+    { data: accessRows, error: accessError },
+  ] = await Promise.all([
     supabase
       .from("profiles")
       .select("display_name, timezone, bgg_username, notify_email")
       .eq("id", user.id)
       .maybeSingle(),
-    supabase.from("telegram_accounts").select("telegram_username, notify_private").eq("user_id", user.id).maybeSingle(),
+    supabase
+      .from("telegram_accounts")
+      .select("telegram_username, notify_private")
+      .eq("user_id", user.id)
+      .maybeSingle(),
     // Risponde solo agli amministratori dell'app.
     supabase.rpc("admin_list_access_requests"),
   ]);
   const isAdmin = !accessError;
-  const pendingAccess = ((accessRows ?? []) as { status: string }[]).filter((r) => r.status === "pending").length;
+  const pendingAccess = ((accessRows ?? []) as { status: string }[]).filter(
+    (r) => r.status === "pending",
+  ).length;
 
   return (
-    <Page title={m.profile.title} subtitle={user.email} back={{ href: "/", label: m.common.home }}>
+    <Page
+      title={m.profile.title}
+      subtitle={user.email}
+      back={{ href: "/", label: m.common.home }}
+      wide
+    >
       {isAdmin && (
-        <ButtonLink href="/admin/accessi" variant="secondary">
+        <ButtonLink
+          href="/admin/accessi"
+          variant="secondary"
+          className="lg:self-start"
+        >
           {m.access.manageLink}
           {pendingAccess > 0 && ` · ${m.access.pendingCount(pendingAccess)}`}
         </ButtonLink>
       )}
-      <Card>
-        <ProfileForm
-          displayName={profile?.display_name ?? ""}
-          timezone={profile?.timezone ?? "Europe/Rome"}
-          bggUsername={profile?.bgg_username ?? null}
-        />
-      </Card>
-      <Card title={m.profile.language}>
-        <LanguagePicker current={locale} />
-        <p className="mt-2 text-xs text-foreground/50">{m.profile.languageHint}</p>
-      </Card>
-      <Card title={m.profile.theme}>
-        <ThemePicker />
-        <p className="mt-2 text-xs text-foreground/50">{m.profile.thisDevice}</p>
-      </Card>
-      {process.env.TELEGRAM_BOT_TOKEN && (
-        <Card title={`✈️ ${m.bot.profileTitle}`}>
-          <TelegramAccount account={telegram ?? null} />
+      <Masonry>
+        <Card>
+          <ProfileForm
+            displayName={profile?.display_name ?? ""}
+            timezone={profile?.timezone ?? "Europe/Rome"}
+            bggUsername={profile?.bgg_username ?? null}
+          />
         </Card>
-      )}
-      <Card title={m.events.calendarTitle}>
-        <CalendarSubscribe />
-      </Card>
-      <Card title={m.profile.notifications}>
-        <NotificationSettings
-          vapidPublicKey={process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY ?? null}
-          emailEnabled={profile?.notify_email ?? false}
-          emailAvailable={getSmtpConfig() !== null}
-        />
-      </Card>
+        <Card title={m.profile.language}>
+          <LanguagePicker current={locale} />
+          <p className="mt-2 text-xs text-foreground/50">
+            {m.profile.languageHint}
+          </p>
+        </Card>
+        <Card title={m.profile.theme}>
+          <ThemePicker />
+          <p className="mt-2 text-xs text-foreground/50">
+            {m.profile.thisDevice}
+          </p>
+        </Card>
+        {process.env.TELEGRAM_BOT_TOKEN && (
+          <Card title={`✈️ ${m.bot.profileTitle}`}>
+            <TelegramAccount account={telegram ?? null} />
+          </Card>
+        )}
+        <Card title={m.events.calendarTitle}>
+          <CalendarSubscribe />
+        </Card>
+        <Card title={m.profile.notifications}>
+          <NotificationSettings
+            vapidPublicKey={process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY ?? null}
+            emailEnabled={profile?.notify_email ?? false}
+            emailAvailable={getSmtpConfig() !== null}
+          />
+        </Card>
+      </Masonry>
       <form action={signOut} className="self-start">
         <SubmitButton variant="secondary" small>
           {m.profile.signOut}
         </SubmitButton>
       </form>
-      <a href="/profile/configurazione" className="self-start text-xs text-foreground/50 underline">
+      <a
+        href="/profile/configurazione"
+        className="self-start text-xs text-foreground/50 underline"
+      >
         {m.profile.serverConfig}
       </a>
     </Page>
