@@ -380,6 +380,8 @@ export const it = {
     asGuest: "Come ospite",
     noMeetingsDay: "Nessun incontro in questo giorno.",
     guestTag: "(ospite)",
+    showUpcoming: "← Tutti i prossimi",
+    openCalendar: "Apri il calendario",
   },
 
   join: {

@@ -7,7 +7,6 @@ import { requireUser } from "@/lib/auth";
 import {
   firstDay,
   formatMonthParam,
-  groupColor,
   lastDay,
   monthOf,
   parseMonth,
@@ -15,9 +14,10 @@ import {
   type Month,
 } from "@/lib/calendar";
 import type { GroupRow, MemberRole, ScheduleRow } from "@/lib/groups";
-import { fetchOccurrences, meetingsBetween, type MeetingGroup } from "@/lib/meetings";
+import { fetchOccurrences, type MeetingGroup } from "@/lib/meetings";
 import { addDays, todayInTimeZone } from "@/lib/schedule";
-import { CalendarView, GUEST_COLOR, type DayEntry, type GuestMeeting } from "./calendar-view";
+import { CalendarView, type GuestMeeting } from "./calendar-view";
+import { buildCalendarEntries } from "./entries";
 
 export async function generateMetadata(): Promise<Metadata> {
   const { m } = await getI18n();
@@ -72,29 +72,14 @@ async function Calendar({ searchParams }: PageProps<"/calendario">) {
     .map((m) => ({ ...m.groups, memberCount: m.groups.memberships[0]?.count ?? 1 }))
     .sort((a, b) => a.name.localeCompare(b.name, locale));
 
-  const colors = new Map(groups.map((g, i) => [g.id, groupColor(g.id, i)]));
   const occurrences = await fetchOccurrences(
     supabase,
     groups.map((g) => g.id),
     addDays(loadedFrom, -62),
   );
 
-  const entries: Record<string, DayEntry[]> = {};
-  const add = (d: string, entry: DayEntry) => (entries[d] ??= []).push(entry);
-
-  for (const g of groups) {
-    for (const m of meetingsBetween(g, occurrences, user.id, loadedFrom, loadedTo)) {
-      add(m.date, { kind: "member", color: colors.get(g.id)!, meeting: m });
-    }
-  }
   const guestMeetings = (guestRows ?? []) as GuestMeeting[];
-  for (const gm of guestMeetings) {
-    if (gm.start_date >= loadedFrom && gm.start_date <= loadedTo) {
-      add(gm.start_date, { kind: "guest", color: GUEST_COLOR, meeting: gm });
-    }
-  }
-  const startTime = (e: DayEntry) => (e.kind === "member" ? e.meeting.startTime : e.meeting.start_time);
-  for (const list of Object.values(entries)) list.sort((a, b) => startTime(a).localeCompare(startTime(b)));
+  const { entries, legend } = buildCalendarEntries(groups, occurrences, guestMeetings, user.id, loadedFrom, loadedTo);
 
   return (
     <Page title={msg.calendar.title} back={{ href: "/", label: msg.common.home }} wide>
@@ -108,7 +93,7 @@ async function Calendar({ searchParams }: PageProps<"/calendario">) {
         loadedFrom={loadedFrom}
         loadedTo={loadedTo}
         entries={entries}
-        legend={groups.map((g) => ({ id: g.id, name: g.name, color: colors.get(g.id)! }))}
+        legend={legend}
         hasGuest={guestMeetings.length > 0}
       />
     </Page>
