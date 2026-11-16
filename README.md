@@ -65,6 +65,7 @@ Le migrazioni sono in `supabase/migrations/`, numerate in ordine. Per ognuna non
 | `0012_access_invites.sql` | chi arriva da un link d'invito (gruppo o ospite) entra senza approvazione |
 | `0013_hardening.sql` | sicurezza delle proposte, scadenza dei cambi data, pareggi che decadono, link ospite solo per incontri futuri |
 | `0014_access_limits.sql` | limiti alle richieste di accesso, funzioni di servizio per blocco utenti e invio email |
+| `0015_revoke_anon.sql` | protezione in più: la chiave pubblica (anon) non può chiamare nessuna funzione del database |
 
 ## Accesso su approvazione
 Ogni email che prova ad accedere viene registrata; entra solo chi è approvato da un amministratore (**Profilo → 🔐 Gestisci gli accessi**). Gli utenti già registrati restano approvati.
