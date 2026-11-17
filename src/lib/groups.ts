@@ -43,6 +43,8 @@ export type GroupRow = {
   status: "active" | "paused" | "archived";
   invite_code: string;
   kind: GroupKind;
+  /** Ora (0-23, nel fuso del gruppo) in cui partono i promemoria. */
+  reminder_hour: number;
 };
 
 export type MemberRow = {
@@ -85,7 +87,7 @@ export function activeSchedule(group: { group_schedules: ScheduleRow[] }) {
 }
 
 const GROUP_DETAIL_SELECT =
-  "id, name, description, mode, default_location, online_link, timezone, duration_minutes, default_game_title, min_attendees, approval_rule, status, invite_code, kind, group_schedules(id, anchor_date, interval_weeks, start_time, valid_until), memberships(user_id, role, joined_at, profiles(display_name))";
+  "id, name, description, mode, default_location, online_link, timezone, duration_minutes, default_game_title, min_attendees, approval_rule, status, invite_code, kind, reminder_hour, group_schedules(id, anchor_date, interval_weeks, start_time, valid_until), memberships(user_id, role, joined_at, profiles(display_name))";
 
 export async function getGroupDetail(supabase: SupabaseClient, groupId: string) {
   const { data, error } = await supabase

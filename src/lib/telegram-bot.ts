@@ -27,13 +27,14 @@ export type BotGroup = Pick<
   | "min_attendees"
   | "status"
   | "kind"
+  | "reminder_hour"
 > & {
   group_schedules: ScheduleRow[];
   memberships: { user_id: string; profiles: { display_name: string } | null }[];
 };
 
 export const BOT_GROUP_SELECT =
-  "id, name, timezone, default_game_title, default_location, online_link, mode, min_attendees, status, kind, group_schedules(id, anchor_date, interval_weeks, start_time, valid_until), memberships(user_id, profiles(display_name))";
+  "id, name, timezone, default_game_title, default_location, online_link, mode, min_attendees, status, kind, reminder_hour, group_schedules(id, anchor_date, interval_weeks, start_time, valid_until), memberships(user_id, profiles(display_name))";
 
 export async function loadBotGroup(admin: SupabaseClient, groupId: string): Promise<BotGroup | null> {
   const { data } = await admin.from("groups").select(BOT_GROUP_SELECT).eq("id", groupId).maybeSingle();

@@ -242,6 +242,11 @@ export const en: Messages = {
     newScheduleFirst: "First meeting with the new schedule",
     confirmSchedule: "Confirm the schedule change? It applies to all meetings from that date on.",
     changeSchedule: "Change schedule",
+    remindersTitle: "⏰ Reminder time",
+    remindersText: "At this time (in the group's time zone) the \"in 2 days\" and \"game night tomorrow!\" alerts go out, plus the summaries in the linked Telegram chat.",
+    remindersHour: "Time",
+    remindersNote: "Times other than the morning need the hourly check to be active: see Server configuration.",
+    remindersSaved: "Time saved.",
   },
 
   meetingPage: {
@@ -492,6 +497,13 @@ export const en: Messages = {
     generateError: "This browser can't generate the keys. Try Chrome.",
     keysWarning: "⚠️ These keys only exist on this page: copy them to Vercel right away. If you reload the page new ones will be generated (all three would need to be copied again, and anyone who had turned on notifications would need to turn them on again).",
     secret: "secret",
+    hourlyTitle: "Reminders at each group's chosen time",
+    hourlyItems: [
+      "Vercel's free plan runs the automatic check only once a day (in the morning). For the times chosen in groups the check must run every hour: Supabase does it.",
+      "Open the project file supabase/setup/hourly-cron.sql and copy all of it.",
+      "In Supabase open SQL Editor, paste it and replace INCOLLA_QUI_IL_CRON_SECRET with your CRON_SECRET value from Vercel (twice in the text). Also check the site address.",
+      "Press Run. From then on reminders go out at the time chosen in each group.",
+    ],
   },
 
   events: {

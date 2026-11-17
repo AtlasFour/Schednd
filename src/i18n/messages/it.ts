@@ -243,6 +243,11 @@ export const it = {
     newScheduleFirst: "Primo incontro con la nuova ricorrenza",
     confirmSchedule: "Confermi il cambio di ricorrenza? Vale per tutti gli incontri da quella data in poi.",
     changeSchedule: "Cambia ricorrenza",
+    remindersTitle: "⏰ Orario dei promemoria",
+    remindersText: "A quest'ora (nel fuso orario del gruppo) partono gli avvisi \"tra 2 giorni\" e \"domani si gioca!\", e i riepiloghi nella chat Telegram collegata.",
+    remindersHour: "Ora",
+    remindersNote: "Per orari diversi dalla mattina deve essere attivo il controllo ogni ora: vedi Configurazione del server.",
+    remindersSaved: "Orario salvato.",
   },
 
   meetingPage: {
@@ -493,6 +498,13 @@ export const it = {
     generateError: "Questo browser non riesce a generare le chiavi. Prova con Chrome.",
     keysWarning: "⚠️ Queste chiavi esistono solo in questa pagina: copiale subito su Vercel. Se ricarichi la pagina ne verranno generate di nuove (andrebbero ricopiate tutte e tre, e chi aveva già attivato le notifiche dovrebbe riattivarle).",
     secret: "segreta",
+    hourlyTitle: "Promemoria all'ora scelta da ogni gruppo",
+    hourlyItems: [
+      "Il piano gratuito di Vercel fa partire il controllo automatico solo una volta al giorno (la mattina). Per gli orari scelti nei gruppi il controllo deve girare ogni ora: lo fa Supabase.",
+      "Apri il file supabase/setup/hourly-cron.sql del progetto e copia tutto il testo.",
+      "Su Supabase apri SQL Editor, incolla il testo e sostituisci INCOLLA_QUI_IL_CRON_SECRET con il valore di CRON_SECRET che hai su Vercel (due volte nel testo). Controlla anche l'indirizzo del sito.",
+      "Premi Run. Da quel momento i promemoria partono all'ora scelta in ogni gruppo.",
+    ] as string[],
   },
 
   events: {

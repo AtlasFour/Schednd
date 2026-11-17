@@ -66,6 +66,9 @@ Le migrazioni sono in `supabase/migrations/`, numerate in ordine. Per ognuna non
 | `0013_hardening.sql` | sicurezza delle proposte, scadenza dei cambi data, pareggi che decadono, link ospite solo per incontri futuri |
 | `0014_access_limits.sql` | limiti alle richieste di accesso, funzioni di servizio per blocco utenti e invio email |
 | `0015_revoke_anon.sql` | protezione in più: la chiave pubblica (anon) non può chiamare nessuna funzione del database |
+| `0016_reminder_hour.sql` | orario dei promemoria scelto per ogni gruppo |
+
+Facoltativo ma consigliato: `supabase/setup/hourly-cron.sql` fa partire il controllo delle notifiche ogni ora da Supabase (il piano gratuito di Vercel lo fa solo una volta al giorno), così i promemoria arrivano all'ora scelta in ogni gruppo. Istruzioni in *Profilo → Configurazione del server*.
 
 ## Accesso su approvazione
 Ogni email che prova ad accedere viene registrata; entra solo chi è approvato da un amministratore (**Profilo → 🔐 Gestisci gli accessi**). Gli utenti già registrati restano approvati.

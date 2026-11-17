@@ -307,3 +307,19 @@ export async function createExtraMeeting(
   afterMutation();
   return { redirectTo: `/groups/${groupId}/${data}` };
 }
+
+/** Ora dei promemoria del gruppo (solo l'owner, controllato dalle regole del database). */
+export async function setReminderHour(groupId: string, _prev: FormState, formData: FormData): Promise<FormState> {
+  const { m } = await getI18n();
+  const hour = Number(getString(formData, "reminder_hour"));
+  if (!Number.isInteger(hour) || hour < 0 || hour > 23) return { error: m.errors.invalidValues };
+  const { supabase } = await requireUser();
+  const { data, error } = await supabase.from("groups").update({ reminder_hour: hour }).eq("id", groupId).select("id");
+  if (error) {
+    console.error("setReminderHour", error);
+    return { error: await dbErrorMessage(error) };
+  }
+  if (!data?.length) return { error: m.groupActions.onlyOwnerEdit };
+  afterMutation();
+  return { success: m.settings.remindersSaved };
+}
