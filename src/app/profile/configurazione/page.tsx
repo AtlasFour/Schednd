@@ -64,6 +64,10 @@ async function Config() {
         <Steps items={m.config.step2Items} />
       </Card>
 
+      <Card title={m.config.hourlyTitle}>
+        <Steps items={m.config.hourlyItems} />
+      </Card>
+
       <Card title={m.config.telegramTitle}>
         <Steps items={m.config.telegramItems} />
         <p className="mt-3 text-sm font-medium">{m.bot.commandsTitle}</p>

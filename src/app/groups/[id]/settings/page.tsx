@@ -16,7 +16,7 @@ import {
   removeMember,
   transferOwnership,
 } from "../../actions";
-import { GroupInfoForm, ScheduleForm } from "./settings-forms";
+import { GroupInfoForm, ReminderHourForm, ScheduleForm } from "./settings-forms";
 import { TelegramCard, type ChannelInfo } from "./telegram-card";
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -138,6 +138,10 @@ async function Settings({ params }: PageProps<"/groups/[id]/settings">) {
             {msg.settings.newLink}
           </SubmitButton>
         </form>
+      </Card>
+
+      <Card title={msg.settings.remindersTitle}>
+        <ReminderHourForm groupId={group.id} hour={group.reminder_hour ?? 9} />
       </Card>
 
       <Card title={`✈️ ${msg.channels.title}`}>

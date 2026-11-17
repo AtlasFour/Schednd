@@ -1,7 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { isLocale } from "@/i18n/config";
 import { MESSAGES } from "@/i18n/messages";
-import { addDays, todayInTimeZone } from "@/lib/schedule";
+import { addDays, hourInTimeZone, todayInTimeZone } from "@/lib/schedule";
 import { getTelegramToken } from "@/lib/telegram";
 import {
   attendanceKeyboard,
@@ -30,8 +30,13 @@ export async function queueChannelReminders(admin: SupabaseClient): Promise<numb
     console.error("queueChannelReminders", error);
     return 0;
   }
+  // Solo i gruppi in cui è già arrivata l'ora scelta per i promemoria (il
+  // controllo gira ogni ora; le chiavi dei messaggi evitano i doppioni).
   const channels = ((data ?? []) as unknown as ChannelRow[]).filter(
-    (c) => c.groups && c.groups.status === "active",
+    (c) =>
+      c.groups &&
+      c.groups.status === "active" &&
+      hourInTimeZone(c.groups.timezone) >= (c.groups.reminder_hour ?? 9),
   );
   if (channels.length === 0) return 0;
 

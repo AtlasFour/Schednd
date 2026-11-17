@@ -125,6 +125,12 @@ export function formatTime(time: string): string {
 }
 
 /** Prima lettera maiuscola: "mercoledì 18 novembre" → "Mercoledì 18 novembre". */
+/** Ora attuale (0-23) in un fuso orario. */
+export function hourInTimeZone(timeZone: string, now = new Date()): number {
+  const hour = new Intl.DateTimeFormat("en-GB", { timeZone, hour: "2-digit", hourCycle: "h23" }).format(now);
+  return Number(hour);
+}
+
 export function capitalize(text: string): string {
   return text.charAt(0).toUpperCase() + text.slice(1);
 }

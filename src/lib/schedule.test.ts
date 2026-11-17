@@ -213,3 +213,15 @@ describe("meetingsBetween", async () => {
     ]);
   });
 });
+
+describe("hourInTimeZone", () => {
+  it("restituisce l'ora locale del fuso orario", async () => {
+    const { hourInTimeZone } = await import("./schedule");
+    // 17 novembre 2026, 20:30 UTC = 21:30 a Roma (ora solare), 15:30 a New York.
+    const when = new Date(Date.UTC(2026, 10, 17, 20, 30));
+    expect(hourInTimeZone("Europe/Rome", when)).toBe(21);
+    expect(hourInTimeZone("America/New_York", when)).toBe(15);
+    // Mezzanotte è 0, non 24.
+    expect(hourInTimeZone("UTC", new Date(Date.UTC(2026, 10, 17, 0, 10)))).toBe(0);
+  });
+});
